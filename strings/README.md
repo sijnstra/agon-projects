@@ -1,4 +1,4 @@
-# memdump
+# strings
 
 Usage: `strings [-nX] <file>`
 
