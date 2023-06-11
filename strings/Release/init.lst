@@ -1,4 +1,4 @@
-Zilog eZ80 Macro Assembler Version 4.3 (19073001) RELISTED23-May-23     23:10:10     page:   1
+Zilog eZ80 Macro Assembler Version 4.3 (19073001) RELISTED11-Jun-23     17:34:51     page:   1
 
 
 PC     Object              I  Line    Source 
@@ -117,7 +117,7 @@ PC     Object              I  Line    Source
                            A    20    ;
                            A    21    ; Start in mixed mode. Assumes MBASE is set to 
                            A    22    ;
-000000 C3 50 00            A    23    			JP		_start		; Jump to start
+000000 C3 51 00            A    23    			JP		_start		; Jump to start
 000003                     A    24    			DS		5
                            A    25    
 000008 49CF                A    26    RST_08:			RST.LIS		08h		; API call
@@ -146,43 +146,43 @@ PC     Object              I  Line    Source
 000043 00                  A    49    			DB	00h				; MOS header ve
 000044 00                  A    50    			DB	00h				; Flag for run 
                            A    51    
-000045 47554E5A 49502E42   A    52    _exec_name:		DB	"GUNZIP.BIN", 0		; The e
-00004D 494E00 
+000045 53545249 4E47532E   A    52    _exec_name:		DB	"STRINGS.BIN", 0		; T
+00004D 42494E00 
                            A    53    
                            A    54    ;
                            A    55    ; And the code follows on immediately after the
                            A    56    ;
-000050 5BFDE5              A    57    _start:			PUSH.LIL	IY			; Prese
+000051 5BFDE5              A    57    _start:			PUSH.LIL	IY			; Prese
                            A    58    
-000053 FD210000            A    59    			LD		IY, 0			; Preserve 
-000057 FD39                A    60    			ADD		IY, SP
-000059 5BFDE5              A    61    			PUSH.LIL	IY
-00005C 310080              A    62    			LD		SP, 8000h		; And set t
+000054 FD210000            A    59    			LD		IY, 0			; Preserve 
+000058 FD39                A    60    			ADD		IY, SP
+00005A 5BFDE5              A    61    			PUSH.LIL	IY
+00005D 310080              A    62    			LD		SP, 8000h		; And set t
                            A    63    	
-00005F F5                  A    64    			PUSH		AF			; Preserve 
-000060 5BC5                A    65    			PUSH.LIL	BC
-000062 5BD5                A    66    			PUSH.LIL	DE
-000064 5BDDE5              A    67    			PUSH.LIL	IX
+000060 F5                  A    64    			PUSH		AF			; Preserve 
+000061 5BC5                A    65    			PUSH.LIL	BC
+000063 5BD5                A    66    			PUSH.LIL	DE
+000065 5BDDE5              A    67    			PUSH.LIL	IX
                            A    68    
-000067 ED6E                A    69    			LD		A, MB			; Segment b
-000069 DD21 14 01          A    70    			LD		IX, argv_ptrs		; The a
-00006D CD 00 01            A    71    			CALL		_set_aix24		; Conve
-000070 5BDDE5              A    72    			PUSH.LIL	IX
-000073 CD 90 00            A    73    			CALL		_parse_params		; P
-000076 5BDDE1              A    74    			POP.LIL		IX			; IX: argv
-000079 0600                A    75    			LD		B, 0			;  C: argc
-00007B CD 48 01            A    76    			CALL		_main			; Start
+000068 ED6E                A    69    			LD		A, MB			; Segment b
+00006A DD21 15 01          A    70    			LD		IX, argv_ptrs		; The a
+00006E CD 01 01            A    71    			CALL		_set_aix24		; Conve
+000071 5BDDE5              A    72    			PUSH.LIL	IX
+000074 CD 91 00            A    73    			CALL		_parse_params		; P
+000077 5BDDE1              A    74    			POP.LIL		IX			; IX: argv
+00007A 0600                A    75    			LD		B, 0			;  C: argc
+00007C CD 49 01            A    76    			CALL		_main			; Start
                            A    77    
-00007E 5BDDE1              A    78    			POP.LIL		IX			; Restore t
-000081 5BD1                A    79    			POP.LIL		DE
-000083 5BC1                A    80    			POP.LIL		BC
-000085 F1                  A    81    			POP		AF
+00007F 5BDDE1              A    78    			POP.LIL		IX			; Restore t
+000082 5BD1                A    79    			POP.LIL		DE
+000084 5BC1                A    80    			POP.LIL		BC
+000086 F1                  A    81    			POP		AF
                            A    82    
-000086 5BFDE1              A    83    			POP.LIL		IY			; Get the p
-000089 FDF9                A    84    			LD		SP, IY			; Restore t
+000087 5BFDE1              A    83    			POP.LIL		IY			; Get the p
+00008A FDF9                A    84    			LD		SP, IY			; Restore t
                            A    85    			
-00008B 5BFDE1              A    86    			POP.LIL		IY			; Restore I
-00008E 49C9                A    87    			RET.L					; Return to
+00008C 5BFDE1              A    86    			POP.LIL		IY			; Restore I
+00008F 49C9                A    87    			RET.L					; Return to
                            A    88    			
                            A    89    ; Parse the parameter string into a C array
                            A    90    ; Parameters
@@ -192,40 +192,40 @@ PC     Object              I  Line    Source
                            A    94    ; Returns:
                            A    95    ; -   C: Number of parameters parsed
                            A    96    ;
-000090 01 45 00            A    97    _parse_params:		LD		BC, _exec_name		
-000093 CD EE 00            A    98    			CALL		_set_abc24		; Conve
-000096 5BDD0F00            A    99    			LD.LIL		(IX+0), BC		; ARGV[
-00009A 5BDD23              A   100    			INC.LIL		IX
-00009D 5BDD23              A   101    			INC.LIL		IX
-0000A0 5BDD23              A   102    			INC.LIL		IX
-0000A3 CD E5 00            A   103    			CALL		_skip_spaces		; S
+000091 01 45 00            A    97    _parse_params:		LD		BC, _exec_name		
+000094 CD EF 00            A    98    			CALL		_set_abc24		; Conve
+000097 5BDD0F00            A    99    			LD.LIL		(IX+0), BC		; ARGV[
+00009B 5BDD23              A   100    			INC.LIL		IX
+00009E 5BDD23              A   101    			INC.LIL		IX
+0000A1 5BDD23              A   102    			INC.LIL		IX
+0000A4 CD E6 00            A   103    			CALL		_skip_spaces		; S
                            A   104    ;
-0000A6 010100              A   105    			LD		BC, 1			; C: ARGC =
-0000A9 060F                A   106    			LD		B, argv_ptrs_max - 1	; B
+0000A7 010100              A   105    			LD		BC, 1			; C: ARGC =
+0000AA 060F                A   106    			LD		B, argv_ptrs_max - 1	; B
                            A   107    ;
-0000AB C5                  A   108    _parse_params_1:	PUSH		BC			; S
-0000AC 5BE5                A   109    			PUSH.LIL	HL			; Stack sta
-0000AE CD D4 00            A   110    			CALL		_get_token		; Get t
-0000B1 79                  A   111    			LD		A, C			; A: Length
-0000B2 5BD1                A   112    			POP.LIL		DE			; Start add
-0000B4 C1                  A   113    			POP		BC			; ARGC
-0000B5 B7                  A   114    			OR		A			; Check for A=0
-0000B6 C8                  A   115    			RET		Z
+0000AC C5                  A   108    _parse_params_1:	PUSH		BC			; S
+0000AD 5BE5                A   109    			PUSH.LIL	HL			; Stack sta
+0000AF CD D5 00            A   110    			CALL		_get_token		; Get t
+0000B2 79                  A   111    			LD		A, C			; A: Length
+0000B3 5BD1                A   112    			POP.LIL		DE			; Start add
+0000B5 C1                  A   113    			POP		BC			; ARGC
+0000B6 B7                  A   114    			OR		A			; Check for A=0
+0000B7 C8                  A   115    			RET		Z
                            A   116    ;
-0000B7 5BDD1F00            A   117    			LD.LIL		(IX+0), DE		; Store
-0000BB 5BE5                A   118    			PUSH.LIL	HL			; DE=HL
-0000BD 5BD1                A   119    			POP.LIL		DE
-0000BF CD E5 00            A   120    			CALL		_skip_spaces		; A
-0000C2 AF                  A   121    			XOR		A
-0000C3 5B12                A   122    			LD.LIL		(DE), A			; Zero-
-0000C5 5BDD23              A   123    			INC.LIL		IX
-0000C8 5BDD23              A   124    			INC.LIL		IX
-0000CB 5BDD23              A   125    			INC.LIL		IX			; Advance t
-0000CE 0C                  A   126    			INC		C			; Increment ARG
-0000CF 79                  A   127    			LD		A, C			; Check for
-0000D0 B8                  A   128    			CP		B
-0000D1 38 D8               A   129    			JR		C, _parse_params_1	; And l
-0000D3 C9                  A   130    			RET
+0000B8 5BDD1F00            A   117    			LD.LIL		(IX+0), DE		; Store
+0000BC 5BE5                A   118    			PUSH.LIL	HL			; DE=HL
+0000BE 5BD1                A   119    			POP.LIL		DE
+0000C0 CD E6 00            A   120    			CALL		_skip_spaces		; A
+0000C3 AF                  A   121    			XOR		A
+0000C4 5B12                A   122    			LD.LIL		(DE), A			; Zero-
+0000C6 5BDD23              A   123    			INC.LIL		IX
+0000C9 5BDD23              A   124    			INC.LIL		IX
+0000CC 5BDD23              A   125    			INC.LIL		IX			; Advance t
+0000CF 0C                  A   126    			INC		C			; Increment ARG
+0000D0 79                  A   127    			LD		A, C			; Check for
+0000D1 B8                  A   128    			CP		B
+0000D2 38 D8               A   129    			JR		C, _parse_params_1	; And l
+0000D4 C9                  A   130    			RET
                            A   131    
                            A   132    ; Get the next token
                            A   133    ; Parameters:
@@ -234,17 +234,17 @@ PC     Object              I  Line    Source
                            A   136    ; - HL: Address of first character after token
                            A   137    ; -  C: Length of token (in characters)
                            A   138    ;
-0000D4 0E00                A   139    _get_token:		LD		C, 0			; Initi
-0000D6 5B7E                A   140    $$:			LD.LIL		A, (HL)			; Get t
-0000D8 B7                  A   141    			OR		A			; Exit if 0 (en
-0000D9 C8                  A   142    			RET 		Z
-0000DA FE0D                A   143    			CP		13			; Exit if CR (e
-0000DC C8                  A   144    			RET		Z
-0000DD FE20                A   145    			CP		' '			; Exit if space
-0000DF C8                  A   146    			RET		Z
-0000E0 5B23                A   147    			INC.LIL		HL			; Advance t
-0000E2 0C                  A   148    			INC 		C			; Increment
-0000E3 18 F1               A   149    			JR		$B
+0000D5 0E00                A   139    _get_token:		LD		C, 0			; Initi
+0000D7 5B7E                A   140    $$:			LD.LIL		A, (HL)			; Get t
+0000D9 B7                  A   141    			OR		A			; Exit if 0 (en
+0000DA C8                  A   142    			RET 		Z
+0000DB FE0D                A   143    			CP		13			; Exit if CR (e
+0000DD C8                  A   144    			RET		Z
+0000DE FE20                A   145    			CP		' '			; Exit if space
+0000E0 C8                  A   146    			RET		Z
+0000E1 5B23                A   147    			INC.LIL		HL			; Advance t
+0000E3 0C                  A   148    			INC 		C			; Increment
+0000E4 18 F1               A   149    			JR		$B
                            A   150    	
                            A   151    ; Skip spaces in the parameter string
                            A   152    ; Parameters:
@@ -253,11 +253,11 @@ PC     Object              I  Line    Source
                            A   155    ; - HL: Address of next none-space character
                            A   156    ;    F: Z if at end of string, otherwise NZ if 
                            A   157    ;
-0000E5 5B7E                A   158    _skip_spaces:		LD.LIL		A, (HL)			
-0000E7 FE20                A   159    			CP		' '			; Exit if not s
-0000E9 C0                  A   160    			RET		NZ
-0000EA 5B23                A   161    			INC.LIL		HL			; Advance t
-0000EC 18 F7               A   162    			JR		_skip_spaces		; Incre
+0000E6 5B7E                A   158    _skip_spaces:		LD.LIL		A, (HL)			
+0000E8 FE20                A   159    			CP		' '			; Exit if not s
+0000EA C0                  A   160    			RET		NZ
+0000EB 5B23                A   161    			INC.LIL		HL			; Advance t
+0000ED 18 F7               A   162    			JR		_skip_spaces		; Incre
                            A   163    			
                            A   164    ; Set the MSB of BC (U) to A
                            A   165    ; Parameters:
@@ -266,14 +266,14 @@ PC     Object              I  Line    Source
                            A   168    ; Returns:
                            A   169    ; - BCU
                            A   170    ;
-0000EE 5BE5                A   171    _set_abc24:		PUSH.LIL	HL			; Prese
-0000F0 5BC5                A   172    			PUSH.LIL	BC			; Stick BC 
-0000F2 5B210200 00         A   173    			LD.LIL		HL, 2			; HL: S
-0000F7 5B39                A   174    			ADD.LIL		HL, SP
-0000F9 5B77                A   175    			LD.LIL		(HL), A			; Store
-0000FB 5BC1                A   176    			POP.LIL		BC			; Fetch amm
-0000FD 5BE1                A   177    			POP.LIL		HL			; Restore H
-0000FF C9                  A   178    			RET
+0000EF 5BE5                A   171    _set_abc24:		PUSH.LIL	HL			; Prese
+0000F1 5BC5                A   172    			PUSH.LIL	BC			; Stick BC 
+0000F3 5B210200 00         A   173    			LD.LIL		HL, 2			; HL: S
+0000F8 5B39                A   174    			ADD.LIL		HL, SP
+0000FA 5B77                A   175    			LD.LIL		(HL), A			; Store
+0000FC 5BC1                A   176    			POP.LIL		BC			; Fetch amm
+0000FE 5BE1                A   177    			POP.LIL		HL			; Restore H
+000100 C9                  A   178    			RET
                            A   179    
                            A   180    ; Set the MSB of BC (U) to A
                            A   181    ; Parameters:
@@ -282,23 +282,23 @@ PC     Object              I  Line    Source
                            A   184    ; Returns:
                            A   185    ; - IXU
                            A   186    ;
-000100 5BDDE5              A   187    _set_aix24:		PUSH.LIL	IX			; Stick
-000103 5BDD2102 0000       A   188    			LD.LIL		IX, 2			; IX: S
-000109 5BDD39              A   189    			ADD.LIL		IX, SP
-00010C 5BDD7700            A   190    			LD.LIL		(IX), A			; Store
-000110 5BDDE1              A   191    			POP.LIL		IX			; Fetch amm
-000113 C9                  A   192    			RET
+000101 5BDDE5              A   187    _set_aix24:		PUSH.LIL	IX			; Stick
+000104 5BDD2102 0000       A   188    			LD.LIL		IX, 2			; IX: S
+00010A 5BDD39              A   189    			ADD.LIL		IX, SP
+00010D 5BDD7700            A   190    			LD.LIL		(IX), A			; Store
+000111 5BDDE1              A   191    			POP.LIL		IX			; Fetch amm
+000114 C9                  A   192    			RET
                            A   193    			
                            A   194    ; Storage for the argv array pointers
                            A   195    ;
-000114 000000 000000       A   196    argv_ptrs:		BLKP	argv_ptrs_max, 0		
-00011A 000000 000000 
-000120 000000 000000 
-000126 000000 000000 
-00012C 000000 000000 
-000132 000000 000000 
-000138 000000 000000 
-00013E 000000 000000 
+000115 000000 000000       A   196    argv_ptrs:		BLKP	argv_ptrs_max, 0		
+00011B 000000 000000 
+000121 000000 000000 
+000127 000000 000000 
+00012D 000000 000000 
+000133 000000 000000 
+000139 000000 000000 
+00013F 000000 000000 
                            A   197    			
                            A   198    			END
 

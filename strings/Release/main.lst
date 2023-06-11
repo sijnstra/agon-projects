@@ -1,4 +1,4 @@
-Zilog eZ80 Macro Assembler Version 4.3 (19073001) RELISTED23-May-23     23:10:10     page:   1
+Zilog eZ80 Macro Assembler Version 4.3 (19073001) RELISTED11-Jun-23     17:34:52     page:   1
 
 
 PC     Object              I  Line    Source 
@@ -12,11 +12,15 @@ PC     Object              I  Line    Source
                            A     8    ; labels are case sensitive
                            A     9    ; code is a reserved word and can't be used as 
                            A    10    ; numeric evaluations are done differently - ch
-                           A    11    ;
-                           A    12    
-                           A    13    
-                           A    14    			.ASSUME	ADL = 0				
-                           A    15    
+                           A    11    ; reserved word INCLUDE needs to be in upper ca
+                           A    12    ; assembly source MUST be .asm, can't use e.g. 
+                           A    13    ; supports defb as a synonym for db, but NOT de
+                           A    14    ; labels can't start with @
+                           A    15    ;
+                           A    16    
+                           A    17    
+                           A    18    			.ASSUME	ADL = 0				
+                           A    19    
                            B     0    			INCLUDE	"equs.inc"
                            B     1    ;
                            B     2    ; Title:	Memory Dump - Equs
@@ -337,262 +341,283 @@ PC     Object              I  Line    Source
                            B   223    			LD	A, function
                            B   224    			RST.LIS	08h
                            B   225    			ENDMACRO 	
-                           A    18    
-                           A    19    			SEGMENT CODE
-                           A    20    	
-                           A    21    			XDEF	_main
+                           B   226    ;
                            A    22    
-                           A    23    			
-                           A    24    ; Error: Invalid parameter
-                           A    25    ;
-000144 211300              A    26    _err_invalid_param:	LD		HL, 19			; T
-000147 C9                  A    27    			RET
-                           A    28    
-                           A    29    
-                           A    30    ; ASCII
-                           A    31    ;
-       00000003            A    32    CtrlC:	equ	03h
-                           A    33    CR:	equ	0Dh
-                           A    34    LF:	equ	0Ah
-       0000001A            A    35    CtrlZ:	equ	1Ah
-                           A    36    ;
-                           A    37    
-000148                     A    38    _main:
-000148 79                  A    39    	ld	a,c	;AGON - number of parameters
-000149 3D                  A    40    	dec	a
-00014A CA 3B 02            A    41    	jp	z,okusage
-00014D FE03                A    42    	cp	3	;too many parameters
-00014F D2 41 02            A    43    	jp	nc,badusage
-                           A    44    
-000152 5BDD2703            A    45    	LD.LIL		HL,(IX+3)		; HLU: pointer 
-000156 5B7E                A    46    	LD.LIL	a,(HL)				;24 bit
-000158 FE2D                A    47    	cp	'-'
-00015A 20 20               A    48    	jr	nz,openit
-00015C 5B23                A    49    	INC.LIL	HL
-00015E 5B7E                A    50    	LD.LIL	a,(HL)				;24 bit
-000160 FE6E                A    51    	cp	'n'
-000162 C2 41 02            A    52    	jp	nz,badusage	
-000165 5B23                A    53    	INC.LIL	HL
-000167 5B7E                A    54    	LD.LIL	a,(HL)				;24 bit
-000169 FE31                A    55    	cp	'1'
-00016B DA 41 02            A    56    	jp	c,badusage
-00016E FE3A                A    57    	cp	'9'+1
-000170 D2 41 02            A    58    	jp	nc,badusage
-000173 D630                A    59    	sub	'0'
-000175 32 48 03            A    60    	ld	(stringlength),a
-000178 5BDD2706            A    61    	LD.LIL		HL,(IX+6)		; HLU: pointer 
-00017C                     A    62    openit:
-00017C 0E01                A    63    	ld	c,fa_read	;open read-only
-00017E 5BDDE5              A    64    	push.lil	ix
-                           A    65    	MOSCALL	mos_fopen
-000185 5BDDE1              A    66    	pop.lil		ix
-000188 B7                  A    67    	or	a
-000189 20 0E               A    68    	jr	nz,open_ok
-                           A    69    ;	call	inline_print
-                           A    70    ;	db	"File not found.",CR,LF,0
-                           A    71    ;	jr	exit
-00018B 210400              A    72    	ld	hl,4	;file not found/could not find 
-00018E C9                  A    73    	ret			;exit
-                           A    74    ;
-                           A    75    ;
-                           A    76    ; Close and exit routines
-                           A    77    ;
-                           A    78    
-00018F                     A    79    close:
-                           A    80    ;C: Filehandle, or 0 to close all open files
-                           A    81    ;returns number of still open files - how about
-                           A    82    
-00018F 0E00                A    83    	ld	c,0
-                           A    84    	MOSCALL	mos_fclose	
-                           A    85    
-000195                     A    86    exit:
-000195 210000              A    87    	ld	hl,0	;for Agon - successful exit
-000198 C9                  A    88    	ret
-                           A    89    ;
-                           A    90    ;
-000199                     A    91    open_ok:
-                           A    92    
-000199 32 49 03            A    93    	ld	(in_handle),a	;store the file handle 
-                           A    94    	MOSCALL	mos_sysvars	;get the sysvars locati
-0001A0 DD7E19              A    95    	ld	a,(IX+sysvar_vkeycount)	;fetch keycount
-0001A3 32 55 03            A    96    	ld	(keycount),a	;store to compare again
-0001A6                     A    97    stringlp:
-0001A6 CD 0C 02            A    98    	call	getbyte
-0001A9 CD F7 01            A    99    	call	unprintable
-0001AC 28 39               A   100    	jr		z,noprint
-                           A   101    ;store character and check next is also printab
-0001AE 11 4A 03            A   102    	ld		de,buffer
-0001B1 12                  A   103    	ld		(de),a
-0001B2 0601                A   104    	ld		b,1			;lets see if we can kee
-0001B4                     A   105    innerlp:
-0001B4 3A 48 03            A   106    	ld		a,(stringlength)
-0001B7 B8                  A   107    	cp		b
-0001B8 28 14               A   108    	jr		z,printbuff	
-                           A   109    	MOSCALL mos_feof	;check for end of file
-0001BE B7                  A   110    	or		a
-0001BF 20 2D               A   111    	jr		nz,donefile
-0001C1 CD 0C 02            A   112    	call	getbyte		;fetch next byte
-0001C4 CD F7 01            A   113    	call	unprintable
-0001C7 28 1E               A   114    	jr		z,noprint	;if unprintable, don't 
-0001C9 13                  A   115    	inc		de
-0001CA 12                  A   116    	ld		(de),a
-0001CB 04                  A   117    	inc		b
-0001CC 18 E6               A   118    	jr		innerlp
-                           A   119    
-                           A   120    
-0001CE                     A   121    printbuff:
-                           A   122    ;	push	bc		;preserve length
-0001CE 11 4A 03            A   123    	ld		de,buffer
-0001D1                     A   124    $$:
-0001D1 1A                  A   125    	ld		a,(de)	
-0001D2 D7                  A   126    	rst		10h
-0001D3 13                  A   127    	inc		de
-0001D4 10 FB               A   128    	djnz	$b
-                           A   129    ;	pop		bc
-                           A   130    ;now keep printing until unprintable again
-0001D6                     A   131    allgood_lp
-0001D6 CD 0C 02            A   132    	call	getbyte
-0001D9 CD F7 01            A   133    	call	unprintable
-0001DC 28 03               A   134    	jr		z,endstring
-0001DE D7                  A   135    	rst		10h
-0001DF 18 F5               A   136    	jr		allgood_lp	
-0001E1                     A   137    endstring:
-0001E1 CD 00 02            A   138    	call	inline_print
-0001E4 0D0A00              A   139    	db		CR,LF,0		;newline at end - TEST
-0001E7                     A   140    noprint:
-                           A   141    	MOSCALL mos_feof	;check for end of file
-0001EB B7                  A   142    	or		a
-0001EC 28 B8               A   143    	jr		z,stringlp
-0001EE                     A   144    donefile:
-0001EE CD 00 02            A   145    	call	inline_print
-0001F1 0D0A00              A   146    	db		CR,LF,0
-0001F4 C3 8F 01            A   147    	jp		close
-                           A   148    
-                           A   149    
-                           A   150    ; Entry:
-                           A   151    ; A is a character to test
-                           A   152    ; Exit:
-                           A   153    ; Z flag is unprintable
-0001F7                     A   154    unprintable:
-0001F7 FE20                A   155    	cp	' '
-0001F9 38 03               A   156    	jr	c,$f
-0001FB FE7F                A   157    	cp	127
-0001FD D8                  A   158    	ret	c	;always nz
-0001FE AF                  A   159    $$:	xor	a	;sets 0 flag
-0001FF C9                  A   160    	ret
-                           A   161    ;
-                           A   162    ; Prints string directly after the call
-                           A   163    ;
-000200 E1                  A   164    inline_print:	pop	hl
-000201 CD 07 02            A   165    	call	print_string
-000204 E9                  A   166    	jp	(hl)
-                           A   167    ;
-                           A   168    ; more efficient print string for strings > 1 c
-000205                     A   169    $$:
-000205 D7                  A   170    	rst	10h	;Agon uses this to print the charac
-000206 23                  A   171    	inc	hl
-000207 7E                  A   172    print_string:	ld	a,(hl)
-000208 B7                  A   173    	or	a
-000209 20 FA               A   174    	jr	nz,$b
-00020B C9                  A   175    	ret
-                           A   176    ;
-                           A   177    ;
-00020C                     A   178    getbyte:
-00020C CD 18 02            A   179    	call	ck_ctrlC
-00020F 3A 49 03            A   180    	ld	a,(in_handle)
-000212 4F                  A   181    	ld	c,a
-                           A   182    	MOSCALL mos_fgetc	;carry flag on last byt
-000217 C9                  A   183    	ret
-                           A   184    
-                           A   185    ; Check for ctrl-C. If so, clean stack and exit
-                           A   186    ;
-000218                     A   187    ck_ctrlC:
-000218 3E01                A   188    	ld	a,1		; modified below by self modify
-00021A 3D                  A   189    	dec	a
-00021B E60F                A   190    	and	15
-00021D 32 19 02            A   191    	ld	(ck_ctrlC+1),a	; update LD A instructi
-000220 C0                  A   192    	ret	nz		; check every 16 calls only
-                           A   193    	MOSCALL	mos_sysvars	;get the sysvars locati
-000225 5BDD7E19            A   194    	ld.lil	a,(IX+sysvar_vkeycount)	;check if a
-000229 21 55 03            A   195    	ld	hl,keycount
-00022C BE                  A   196    	cp	(hl)	;compare against keycount for c
-00022D C8                  A   197    	ret	z
-00022E 77                  A   198    	ld	(hl),a	;update keycount
-00022F 5BDD7E05            A   199    	ld.lil	a,(IX+sysvar_keyascii)	;fetch char
-000233 FE03                A   200    	cp	3	;is it ctr-C
-000235 C0                  A   201    	ret	nz
-000236 E1                  A   202    	pop	hl		;clean up stack
-000237 E1                  A   203    	pop	hl
-000238 C3 8F 01            A   204    	jp	close
-                           A   205    
-00023B CD 47 02            A   206    okusage:	call usage
-00023E C3 95 01            A   207    	jp	exit
-                           A   208    
-000241 CD 47 02            A   209    badusage:	call usage
-000244 C3 44 01            A   210    	jp	_err_invalid_param
-                           A   211    ;
-                           A   212    ; usage -- show syntax
-                           A   213    ; 
-000247 CD 00 02            A   214    usage:	call	inline_print
-00024A 0D0A7374 72696E67   A   215    	db	CR,LF,'strings utility for Agon by Shaw
-000252 73207574 696C6974 
-00025A 7920666F 72204167 
-000262 6F6E2062 79205368 
-00026A 61776E20 53696A6E 
-000272 73747261 2032332D 
-00027A 4D61792D 32303233 
-000282 0D0A0D0A 
-000286 55736167 653A0D0A   A   216    	db	'Usage:',CR,LF
-00028E 20202073 7472696E   A   217    	db	'   strings [-nX] <file>',CR,LF
-000296 6773205B 2D6E585D 
-00029E 203C6669 6C653E0D 
-0002A6 0A 
-0002A7 4F707469 6F6E616C   A   218    	db	'Optional parameter n specifies minimum
-0002AF 20706172 616D6574 
-0002B7 6572206E 20737065 
-0002BF 63696669 6573206D 
-0002C7 696E696D 756D2073 
-0002CF 7472696E 67206C65 
-0002D7 6E677468 20583D31 
-0002DF 2E2E390D 0A 
-0002E4 20446566 61756C74   A   219    	db  ' Default string length 4. Ctrl-C to ab
-0002EC 20737472 696E6720 
-0002F4 6C656E67 74682034 
-0002FC 2E204374 726C2D43 
-000304 20746F20 61626F72 
-00030C 742E0D0A 
-000310 53746F72 6520696E   A   220    	db 	'Store in /mos directory. Requires MOS 
-000318 202F6D6F 73206469 
-000320 72656374 6F72792E 
-000328 20526571 75697265 
-000330 73204D4F 5320312E 
-000338 3033206F 72206C61 
-000340 7465722E 0D0A00 
-000347 C9                  A   221    	ret
-                           A   222    
-                           A   223    ;
-                           A   224    ; data storage . . .
-                           A   225    ;	
-000348                     A   226    stringlength:
-000348 04                  A   227    	db	4	;default of 4 characters
-                           A   228    ; uninitialized storage/BSS but can't use that 
-                           A   229    ;
-                           A   230    ; RAM
-                           A   231    ; 
-                           A   232    			DEFINE	LORAM, SPACE = ROM
-                           A   233    ;			ORDER	__VECTORS, CODE, LORAM
-                           A   234    			SEGMENT LORAM
-                           A   235    		
-                           A   236    ;			SEGMENT	BSS
-                           A   237    ;			SEGMENT CODE
-                           A   238    
-000349                     A   239    in_handle:	DS	1	;Only needs 1 byte handle
-00034A                     A   240    buffer:		DS	10	;Space to buffer incoming s
-000354                     A   241    curbyte:	DS	1	;current byte in the buffer
-000355                     A   242    keycount:	DS	1	;current key count
-                           A   243    	end
+                           A    23    			SEGMENT CODE
+                           A    24    	
+                           A    25    			XDEF	_main
+                           A    26    
+                           A    27    			
+                           A    28    ; Error: Invalid parameter
+                           A    29    ;
+000145 211300              A    30    _err_invalid_param:	LD		HL, 19			; T
+000148 C9                  A    31    			RET
+                           A    32    
+                           A    33    
+                           A    34    ; ASCII
+                           A    35    ;
+       00000003            A    36    CtrlC:	equ	03h
+                           A    37    CR:	equ	0Dh
+                           A    38    LF:	equ	0Ah
+       0000001A            A    39    CtrlZ:	equ	1Ah
+                           A    40    ;
+                           A    41    
+000149                     A    42    _main:
+000149 79                  A    43    	ld	a,c	;AGON - number of parameters
+00014A 3D                  A    44    	dec	a
+00014B CA 59 02            A    45    	jp	z,okusage
+00014E FE03                A    46    	cp	3	;too many parameters
+000150 D2 5F 02            A    47    	jp	nc,badusage
+                           A    48    
+000153 5BDD2703            A    49    	LD.LIL		HL,(IX+3)		; HLU: pointer 
+000157 5B7E                A    50    	LD.LIL	a,(HL)				;24 bit
+000159 FE2D                A    51    	cp	'-'
+00015B 20 3D               A    52    	jr	nz,openit
+00015D 5B23                A    53    	INC.LIL	HL
+00015F 5B7E                A    54    	LD.LIL	a,(HL)				;24 bit
+000161 FE6E                A    55    	cp	'n'
+000163 C2 5F 02            A    56    	jp	nz,badusage	
+000166 5B23                A    57    	INC.LIL	HL
+000168 5B7E                A    58    	LD.LIL	a,(HL)				;24 bit
+00016A FE31                A    59    	cp	'1'
+00016C DA 5F 02            A    60    	jp	c,badusage
+00016F FE3A                A    61    	cp	'9'+1
+000171 D2 5F 02            A    62    	jp	nc,badusage
+000174 D630                A    63    	sub	'0'
+000176 5F                  A    64    	ld	e,a
+000177 32 8A 03            A    65    	ld	(stringlength),a
+00017A 5B23                A    66    	INC.LIL	HL
+00017C 5B7E                A    67    	LD.LIL	a,(HL)				;24 bit
+00017E FE21                A    68    	cp	' '+1
+000180 38 14               A    69    	jr	c,lengthdone
+000182 FE30                A    70    	cp	'0'
+000184 DA 5F 02            A    71    	jp	c,badusage
+000187 FE3A                A    72    	cp	'9'+1
+000189 D2 5F 02            A    73    	jp	nc,badusage
+00018C D630                A    74    	sub	'0'
+00018E 160A                A    75    	ld	d,10
+000190 ED5C                A    76    	mlt	de
+000192 83                  A    77    	add	a,e
+000193 32 8A 03            A    78    	ld	(stringlength),a
+000196                     A    79    lengthdone:
+                           A    80    
+000196 5BDD2706            A    81    	LD.LIL		HL,(IX+6)		; HLU: pointer 
+00019A                     A    82    openit:
+00019A 0E01                A    83    	ld	c,fa_read	;open read-only
+00019C 5BDDE5              A    84    	push.lil	ix
+                           A    85    	MOSCALL	mos_fopen
+0001A3 5BDDE1              A    86    	pop.lil		ix
+0001A6 B7                  A    87    	or	a
+0001A7 20 0E               A    88    	jr	nz,open_ok
+                           A    89    ;	call	inline_print
+                           A    90    ;	db	"File not found.",CR,LF,0
+                           A    91    ;	jr	exit
+0001A9 210400              A    92    	ld	hl,4	;file not found/could not find 
+0001AC C9                  A    93    	ret			;exit
+                           A    94    ;
+                           A    95    ;
+                           A    96    ; Close and exit routines
+                           A    97    ;
+                           A    98    
+0001AD                     A    99    close:
+                           A   100    ;C: Filehandle, or 0 to close all open files
+                           A   101    ;returns number of still open files - how about
+                           A   102    
+0001AD 0E00                A   103    	ld	c,0
+                           A   104    	MOSCALL	mos_fclose	
+                           A   105    
+0001B3                     A   106    exit:
+0001B3 210000              A   107    	ld	hl,0	;for Agon - successful exit
+0001B6 C9                  A   108    	ret
+                           A   109    ;
+                           A   110    ;
+0001B7                     A   111    open_ok:
+                           A   112    
+0001B7 32 8B 03            A   113    	ld	(in_handle),a	;store the file handle 
+                           A   114    	MOSCALL	mos_sysvars	;get the sysvars locati
+0001BE DD7E19              A   115    	ld	a,(IX+sysvar_vkeycount)	;fetch keycount
+0001C1 32 F1 03            A   116    	ld	(keycount),a	;store to compare again
+0001C4                     A   117    stringlp:
+0001C4 CD 2A 02            A   118    	call	getbyte
+0001C7 CD 15 02            A   119    	call	unprintable
+0001CA 28 39               A   120    	jr		z,noprint
+                           A   121    ;store character and check next is also printab
+0001CC 11 8C 03            A   122    	ld		de,buffer
+0001CF 12                  A   123    	ld		(de),a
+0001D0 0601                A   124    	ld		b,1			;lets see if we can kee
+0001D2                     A   125    innerlp:
+0001D2 3A 8A 03            A   126    	ld		a,(stringlength)
+0001D5 B8                  A   127    	cp		b
+0001D6 28 14               A   128    	jr		z,printbuff	
+                           A   129    	MOSCALL mos_feof	;check for end of file
+0001DC B7                  A   130    	or		a
+0001DD 20 2D               A   131    	jr		nz,donefile
+0001DF CD 2A 02            A   132    	call	getbyte		;fetch next byte
+0001E2 CD 15 02            A   133    	call	unprintable
+0001E5 28 1E               A   134    	jr		z,noprint	;if unprintable, don't 
+0001E7 13                  A   135    	inc		de
+0001E8 12                  A   136    	ld		(de),a
+0001E9 04                  A   137    	inc		b
+0001EA 18 E6               A   138    	jr		innerlp
+                           A   139    
+                           A   140    
+0001EC                     A   141    printbuff:
+                           A   142    ;	push	bc		;preserve length
+0001EC 11 8C 03            A   143    	ld		de,buffer
+0001EF                     A   144    $$:
+0001EF 1A                  A   145    	ld		a,(de)	
+0001F0 D7                  A   146    	rst		10h
+0001F1 13                  A   147    	inc		de
+0001F2 10 FB               A   148    	djnz	$b
+                           A   149    ;	pop		bc
+                           A   150    ;now keep printing until unprintable again
+0001F4                     A   151    allgood_lp
+0001F4 CD 2A 02            A   152    	call	getbyte
+0001F7 CD 15 02            A   153    	call	unprintable
+0001FA 28 03               A   154    	jr		z,endstring
+0001FC D7                  A   155    	rst		10h
+0001FD 18 F5               A   156    	jr		allgood_lp	
+0001FF                     A   157    endstring:
+0001FF CD 1E 02            A   158    	call	inline_print
+000202 0D0A00              A   159    	db		CR,LF,0		;newline at end - TEST
+000205                     A   160    noprint:
+                           A   161    	MOSCALL mos_feof	;check for end of file
+000209 B7                  A   162    	or		a
+00020A 28 B8               A   163    	jr		z,stringlp
+00020C                     A   164    donefile:
+00020C CD 1E 02            A   165    	call	inline_print
+00020F 0D0A00              A   166    	db		CR,LF,0
+000212 C3 AD 01            A   167    	jp		close
+                           A   168    
+                           A   169    
+                           A   170    ; Entry:
+                           A   171    ; A is a character to test
+                           A   172    ; Exit:
+                           A   173    ; Z flag is unprintable
+000215                     A   174    unprintable:
+000215 FE20                A   175    	cp	' '
+000217 38 03               A   176    	jr	c,$f
+000219 FE7F                A   177    	cp	127
+00021B D8                  A   178    	ret	c	;always nz
+00021C AF                  A   179    $$:	xor	a	;sets 0 flag
+00021D C9                  A   180    	ret
+                           A   181    ;
+                           A   182    ; Prints string directly after the call
+                           A   183    ;
+00021E E1                  A   184    inline_print:	pop	hl
+00021F CD 25 02            A   185    	call	print_string
+000222 E9                  A   186    	jp	(hl)
+                           A   187    ;
+                           A   188    ; more efficient print string for strings > 1 c
+000223                     A   189    $$:
+000223 D7                  A   190    	rst	10h	;Agon uses this to print the charac
+000224 23                  A   191    	inc	hl
+000225 7E                  A   192    print_string:	ld	a,(hl)
+000226 B7                  A   193    	or	a
+000227 20 FA               A   194    	jr	nz,$b
+000229 C9                  A   195    	ret
+                           A   196    ;
+                           A   197    ;
+00022A                     A   198    getbyte:
+00022A CD 36 02            A   199    	call	ck_ctrlC
+00022D 3A 8B 03            A   200    	ld	a,(in_handle)
+000230 4F                  A   201    	ld	c,a
+                           A   202    	MOSCALL mos_fgetc	;carry flag on last byt
+000235 C9                  A   203    	ret
+                           A   204    
+                           A   205    ; Check for ctrl-C. If so, clean stack and exit
+                           A   206    ;
+000236                     A   207    ck_ctrlC:
+000236 3E01                A   208    	ld	a,1		; modified below by self modify
+000238 3D                  A   209    	dec	a
+000239 E60F                A   210    	and	15
+00023B 32 37 02            A   211    	ld	(ck_ctrlC+1),a	; update LD A instructi
+00023E C0                  A   212    	ret	nz		; check every 16 calls only
+                           A   213    	MOSCALL	mos_sysvars	;get the sysvars locati
+000243 5BDD7E19            A   214    	ld.lil	a,(IX+sysvar_vkeycount)	;check if a
+000247 21 F1 03            A   215    	ld	hl,keycount
+00024A BE                  A   216    	cp	(hl)	;compare against keycount for c
+00024B C8                  A   217    	ret	z
+00024C 77                  A   218    	ld	(hl),a	;update keycount
+00024D 5BDD7E05            A   219    	ld.lil	a,(IX+sysvar_keyascii)	;fetch char
+000251 FE03                A   220    	cp	3	;is it ctr-C
+000253 C0                  A   221    	ret	nz
+000254 E1                  A   222    	pop	hl		;clean up stack
+000255 E1                  A   223    	pop	hl
+000256 C3 AD 01            A   224    	jp	close
+                           A   225    
+000259 CD 65 02            A   226    okusage:	call usage
+00025C C3 B3 01            A   227    	jp	exit
+                           A   228    
+00025F CD 65 02            A   229    badusage:	call usage
+000262 C3 45 01            A   230    	jp	_err_invalid_param
+                           A   231    ;
+                           A   232    ; usage -- show syntax
+                           A   233    ; 
+000265 CD 1E 02            A   234    usage:	call	inline_print
+000268 0D0A7374 72696E67   A   235    	db	CR,LF,'strings utility for Agon by Shaw
+000270 73207574 696C6974 
+000278 7920666F 72204167 
+000280 6F6E2062 79205368 
+000288 61776E20 53696A6E 
+000290 73747261 2031312D 
+000298 4A756E2D 32303233 
+0002A0 0D0A0D0A 
+0002A4 55736167 653A0D0A   A   236    	db	'Usage:',CR,LF
+0002AC 20202073 7472696E   A   237    	db	'   strings [-nX] <file>',CR,LF,CR,LF
+0002B4 6773205B 2D6E585D 
+0002BC 203C6669 6C653E0D 
+0002C4 0A0D0A 
+0002C7 4F707469 6F6E616C   A   238    	db	'Optional parameter n for minimum strin
+0002CF 20706172 616D6574 
+0002D7 6572206E 20666F72 
+0002DF 206D696E 696D756D 
+0002E7 20737472 696E6720 
+0002EF 6C656E67 74682058 
+0002F7 203D2031 20757020 
+0002FF 746F2039 390D0A 
+000306 20446566 61756C74   A   239    	db  ' Default string length 4 (equivalent t
+00030E 20737472 696E6720 
+000316 6C656E67 74682034 
+00031E 20286571 75697661 
+000326 6C656E74 20746F20 
+00032E 2D6E3429 2E204374 
+000336 726C2D43 20746F20 
+00033E 61626F72 742E0D0A 
+000346 53746F72 65207374   A   240    	db 	'Store strings.bin in /mos directory. M
+00034E 72696E67 732E6269 
+000356 6E20696E 202F6D6F 
+00035E 73206469 72656374 
+000366 6F72792E 204D696E 
+00036E 696D756D 204D4F53 
+000376 20766572 73696F6E 
+00037E 20312E30 332E0D0A 
+000386 0D0A00 
+000389 C9                  A   241    	ret
+                           A   242    
+                           A   243    ;
+                           A   244    ; data storage . . .
+                           A   245    ;	
+00038A                     A   246    stringlength:
+00038A 04                  A   247    	db	4	;default of 4 characters
+                           A   248    ; uninitialized storage/BSS but can't use that 
+                           A   249    ;
+                           A   250    ; RAM
+                           A   251    ; 
+                           A   252    			DEFINE	LORAM, SPACE = ROM
+                           A   253    ;			ORDER	__VECTORS, CODE, LORAM
+                           A   254    			SEGMENT LORAM
+                           A   255    		
+                           A   256    ;			SEGMENT	BSS
+                           A   257    ;			SEGMENT CODE
+                           A   258    
+00038B                     A   259    in_handle:	DS	1	;Only needs 1 byte handle
+00038C                     A   260    buffer:		DS	100	;Space to buffer incoming s
+0003F0                     A   261    curbyte:	DS	1	;current byte in the buffer
+0003F1                     A   262    keycount:	DS	1	;current key count
+                           A   263    	end
 
 
 Errors: 0
 Warnings: 0
-Lines Assembled: 583
+Lines Assembled: 604

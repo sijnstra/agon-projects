@@ -4,7 +4,7 @@ Copyright (C) 1999-2008 Zilog, Inc. All Rights Reserved
 
 LINK MAP:
 
-DATE:      Tue May 23 23:10:10 2023
+DATE:      Sun Jun 11 17:34:51 2023
 PROCESSOR: assembler
 FILES:     .\init.obj             .\main.obj             
 
@@ -72,10 +72,10 @@ SPACE ALLOCATION:
 
 Space                     Base         Top      Size      Used    Unused
 ------------------ ----------- ----------- --------- --------- ---------
-RAM                   D:040000    D:040355    80000H      356H    7FCAAH
-                                          (   524288       854    523434)
-ROM                   C:000000    C:000355    20000H      356H    1FCAAH
-                                          (   131072       854    130218)
+RAM                   D:040000    D:0403F1    80000H      3F2H    7FC0EH
+                                          (   524288      1010    523278)
+ROM                   C:000000    C:0003F1    20000H      3F2H    1FC0EH
+                                          (   131072      1010    130062)
 
 
 SEGMENTS WITHIN SPACE:
@@ -83,33 +83,33 @@ SEGMENTS WITHIN SPACE:
 
 RAM                               Type        Base         Top      Size
 ------------------ ------------------- ----------- ----------- ---------
-__VECTORS          * segment copy *       D:040000    D:040143      144h
-CODE               * segment copy *       D:040144    D:040348      205h
-LORAM              * segment copy *       D:040349    D:040355        dh
+__VECTORS          * segment copy *       D:040000    D:040144      145h
+CODE               * segment copy *       D:040145    D:04038A      246h
+LORAM              * segment copy *       D:04038B    D:0403F1       67h
 
 
 ROM                               Type        Base         Top      Size
 ------------------ ------------------- ----------- ----------- ---------
-__VECTORS          normal data            C:000000    C:000143      144h
-CODE               normal data            C:000144    C:000348      205h
-LORAM              normal data            C:000349    C:000355        dh
+__VECTORS          normal data            C:000000    C:000144      145h
+CODE               normal data            C:000145    C:00038A      246h
+LORAM              normal data            C:00038B    C:0003F1       67h
 
 SEGMENTS WITHIN MODULES:
 ========================
 
-Module: D:\agon\agon-projects-main\ASM\strings\init.asm (File: init.obj) Version: 1:0 05/23/2023 23:10:10
+Module: D:\agon\agon-projects-main\ASM\strings\init.asm (File: init.obj) Version: 1:0 06/11/2023 17:34:51
 
     Name                                           Base         Top      Size
     --------------------------------------- ----------- ----------- ---------
-    Segment: __VECTORS                         C:000000    C:000143      144h
+    Segment: __VECTORS                         C:000000    C:000144      145h
 
 
-Module: D:\agon\agon-projects-main\ASM\strings\main.asm (File: main.obj) Version: 1:0 05/23/2023 23:10:10
+Module: D:\agon\agon-projects-main\ASM\strings\main.asm (File: main.obj) Version: 1:0 06/11/2023 17:34:51
 
     Name                                           Base         Top      Size
     --------------------------------------- ----------- ----------- ---------
-    Segment: CODE                              C:000144    C:000348      205h
-    Segment: LORAM                             C:000349    C:000355        dh
+    Segment: CODE                              C:000145    C:00038A      246h
+    Segment: LORAM                             C:00038B    C:0003F1       67h
 
 EXTERNAL DEFINITIONS:
 =====================
@@ -137,7 +137,7 @@ __FLASH_ADDR_U_INIT_PARAM           00000000 (User Defined)
 __FLASH_CTL_INIT_PARAM              00000028 (User Defined)
 __RAM_ADDR_U_INIT_PARAM             000000FF (User Defined)
 __RAM_CTL_INIT_PARAM                00000080 (User Defined)
-_main                               C:000148 main            CODE                            
+_main                               C:000149 main            CODE                            
 _SYS_CLK_FREQ                       01194000 (User Defined)
 
 23 external symbol(s).
@@ -173,8 +173,8 @@ _SYS_CLK_FREQ                     Defined     LINKER
 
 OUTPUT CHECKSUM
 ===============
-strings.hex          011C00
-strings.lod          011C00
+strings.hex          013522
+strings.lod          013522
 
 
 
