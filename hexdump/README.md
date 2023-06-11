@@ -1,8 +1,6 @@
 # strings
 
-Usage: `strings [-nX] <file>`
+Usage: `hexdump <file>`
 
-A simple `mos` utility to extract strings from any file.
+A simple `mos` utility to dump the content of any file, with columns showing file location, hex contents and printable characters.
 
-The option -nX is used to specify the minimum string length. If not specified, the minimum string length is 4.
-Supports values of X from 1 to 99.
