@@ -49,7 +49,7 @@ RST_38:			EI
 			DB	00h				; MOS header version 0
 			DB	00h				; Flag for run mode (0: Z80, 1: ADL)
 
-_exec_name:		DB	"GUNZIP.BIN", 0		; The executable name, only used in argv
+_exec_name:		DB	"STRINGS.BIN", 0		; The executable name, only used in argv
 
 ;
 ; And the code follows on immediately after the header

@@ -8,6 +8,10 @@
 ; labels are case sensitive
 ; code is a reserved word and can't be used as a label
 ; numeric evaluations are done differently - check results carefully
+; reserved word INCLUDE needs to be in upper case, and file needs to have inverted commas
+; assembly source MUST be .asm, can't use e.g. .zsm
+; supports defb as a synonym for db, but NOT defw. Must use dw. defs also missing - use ds.
+; labels can't start with @
 ;
 
 
@@ -57,7 +61,23 @@ _main:
 	cp	'9'+1
 	jp	nc,badusage
 	sub	'0'
+	ld	e,a
 	ld	(stringlength),a
+	INC.LIL	HL
+	LD.LIL	a,(HL)				;24 bit
+	cp	' '+1
+	jr	c,lengthdone
+	cp	'0'
+	jp	c,badusage
+	cp	'9'+1
+	jp	nc,badusage
+	sub	'0'
+	ld	d,10
+	mlt	de
+	add	a,e
+	ld	(stringlength),a
+lengthdone:
+
 	LD.LIL		HL,(IX+6)		; HLU: pointer to second argument
 openit:
 	ld	c,fa_read	;open read-only
@@ -212,12 +232,12 @@ badusage:	call usage
 ; usage -- show syntax
 ; 
 usage:	call	inline_print
-	db	CR,LF,'strings utility for Agon by Shawn Sijnstra 23-May-2023',CR,LF,CR,LF
+	db	CR,LF,'strings utility for Agon by Shawn Sijnstra 11-Jun-2023',CR,LF,CR,LF
 	db	'Usage:',CR,LF
-	db	'   strings [-nX] <file>',CR,LF
-	db	'Optional parameter n specifies minimum string length X=1..9',CR,LF
-	db  ' Default string length 4. Ctrl-C to abort.',CR,LF
-	db 	'Store in /mos directory. Requires MOS 1.03 or later.',CR,LF,0
+	db	'   strings [-nX] <file>',CR,LF,CR,LF
+	db	'Optional parameter n for minimum string length X = 1 up to 99',CR,LF
+	db  ' Default string length 4 (equivalent to -n4). Ctrl-C to abort.',CR,LF
+	db 	'Store strings.bin in /mos directory. Minimum MOS version 1.03.',CR,LF,CR,LF,0
 	ret
 
 ;
@@ -237,7 +257,7 @@ stringlength:
 ;			SEGMENT CODE
 
 in_handle:	DS	1	;Only needs 1 byte handle
-buffer:		DS	10	;Space to buffer incoming strings
+buffer:		DS	100	;Space to buffer incoming strings
 curbyte:	DS	1	;current byte in the buffer
 keycount:	DS	1	;current key count
 	end
