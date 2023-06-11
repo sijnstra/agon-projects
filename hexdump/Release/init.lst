@@ -1,0 +1,308 @@
+Zilog eZ80 Macro Assembler Version 4.3 (19073001) RELISTED11-Jun-23     21:44:53     page:   1
+
+
+PC     Object              I  Line    Source 
+                           A     1    ;
+                           A     2    ; Title:	Memory Dump - Initialisation Code
+                           A     3    ; Author:	Dean Belfield
+                           A     4    ; Created:	15/11/2022
+                           A     5    ; Last Updated:	23/12/2022
+                           A     6    ;
+                           A     7    ; Modinfo:
+                           A     8    ; 23/12/2022:	Added parameter parsing code
+                           A     9    
+                           A    10    			SEGMENT __VECTORS
+                           A    11    
+                           A    12    			XREF	_main
+                           A    13    		
+                           A    14    			.ASSUME	ADL = 0
+                           A    15    				
+                           B     0    			INCLUDE	"equs.inc"
+                           B     1    ;
+                           B     2    ; Title:	Memory Dump - Equs
+                           B     3    ; Author:	Dean Belfield
+                           B     4    ; Created:	15/11/2022
+                           B     5    ; Last Updated:	15/11/2022
+                           B     6    ;
+                           B     7    ; Modinfo:
+                           B     8    				
+       0000FF00            B     9    RAM_Top:		EQU		0FF00h
+       00000000            B    10    Stack_Top:		EQU		00000h	; Stack at top
+                           B    11    	
+                           B    12    ; For GPIO
+                           B    13    ; PA not available on eZ80L92
+                           B    14    ;
+       00000096            B    15    PA_DR:			EQU		96h
+       00000097            B    16    PA_DDR:			EQU		97h
+       00000098            B    17    PA_ALT1:		EQU		98h
+       00000099            B    18    PA_ALT2:		EQU		99h
+       0000009A            B    19    PB_DR:          	EQU		9Ah
+       0000009B            B    20    PB_DDR:        	 	EQU		9Bh
+       0000009C            B    21    PB_ALT1:        	EQU		9Ch
+       0000009D            B    22    PB_ALT2:        	EQU		9Dh
+       0000009E            B    23    PC_DR:          	EQU		9Eh
+       0000009F            B    24    PC_DDR:         	EQU		9Fh
+       000000A0            B    25    PC_ALT1:        	EQU		A0h
+       000000A1            B    26    PC_ALT2:        	EQU		A1h
+       000000A2            B    27    PD_DR:          	EQU		A2h
+       000000A3            B    28    PD_DDR:			EQU		A3h
+       000000A4            B    29    PD_ALT1:		EQU		A4h
+       000000A5            B    30    PD_ALT2:		EQU		A5h
+                           B    31    	
+       00000000            B    32    GPIOMODE_OUT:		EQU		0	; Output
+       00000001            B    33    GPIOMODE_IN:		EQU		1	; Input
+       00000002            B    34    GPIOMODE_DIO:		EQU		2	; Open Drain IO
+       00000003            B    35    GPIOMODE_SIO:		EQU		3	; Open Source I
+       00000004            B    36    GPIOMODE_INTD:		EQU		4	; Interrupt, Du
+       00000005            B    37    GPIOMODE_ALTF:		EQU		5;	; Alt Function
+       00000006            B    38    GPIOMODE_INTAL:		EQU		6	; Interrupt, Ac
+       00000007            B    39    GPIOMODE_INTAH:		EQU		7	; Interrupt, Ac
+       00000008            B    40    GPIOMODE_INTFE:		EQU		8	; Interrupt, Fa
+       00000009            B    41    GPIOMODE_INTRE:		EQU		9	; Interrupt, Ri
+                           B    42    	
+                           B    43    ; For serial.asm
+                           B    44    ; 
+       016E3600            B    45    BASE_CLOCK		EQU	24000000	; It's actually
+                           B    46    
+       00000003            B    47    BAUD_500000		EQU	BASE_CLOCK / (16 * 500000)
+       00000006            B    48    BAUD_250000		EQU	BASE_CLOCK / (16 * 250000)
+       0000000C            B    49    BAUD_125000		EQU	BASE_CLOCK / (16 * 125000)
+       0000004E            B    50    BAUD_19200		EQU	BASE_CLOCK / (16 * 19200)	
+                           B    51    
+                           B    52    ; For interrupts.asm
+                           B    53    ;
+                           B    54    
+                           B    55    ;UARTs
+                           B    56    ;
+       00000018            B    57    UART0_IVECT		EQU		18h
+       0000001A            B    58    UART1_IVECT		EQU		1Ah
+                           B    59    
+                           B    60    ;Ports
+                           B    61    ;
+       00000030            B    62    PB0_IVECT   		EQU   	30h	; AGON ITRP Int
+       00000032            B    63    PB1_IVECT  	  	EQU  	32h	; AGON VBLANK Inter
+       00000034            B    64    PB2_IVECT  	  	EQU   	34h
+       00000036            B    65    PB3_IVECT  	  	EQU   	36h
+       00000038            B    66    PB4_IVECT    		EQU   	38h
+       0000003A            B    67    PB5_IVECT    		EQU   	3Ah
+       0000003C            B    68    PB6_IVECT    		EQU   	3Ch
+       0000003E            B    69    PB7_IVECT    		EQU   	3Eh
+                           B    70                           
+       00000040            B    71    PC0_IVECT    		EQU   	40h
+       00000042            B    72    PC1_IVECT    		EQU   	42h
+       00000044            B    73    PC2_IVECT    		EQU   	44h
+       00000046            B    74    PC3_IVECT    		EQU   	46h
+       00000048            B    75    PC4_IVECT    		EQU   	48h
+       0000004A            B    76    PC5_IVECT    		EQU   	4Ah
+       0000004C            B    77    PC6_IVECT    		EQU   	4Ch
+       0000004E            B    78    PC7_IVECT    		EQU   	4Eh
+                           B    79                           
+       00000050            B    80    PD0_IVECT    		EQU   	50h
+       00000052            B    81    PD1_IVECT    		EQU   	52h
+       00000054            B    82    PD2_IVECT    		EQU   	54h
+       00000056            B    83    PD3_IVECT    		EQU   	56h
+       00000058            B    84    PD4_IVECT    		EQU   	58h
+       0000005A            B    85    PD5_IVECT    		EQU   	5Ah
+       0000005C            B    86    PD6_IVECT    		EQU   	5Ch
+       0000005E            B    87    PD7_IVECT    		EQU   	5Eh
+                           B    88    
+                           B    89    ; Originally in main.asm
+                           B    90    ;
+       0000000D            B    91    CR:			EQU     0DH
+       0000000A            B    92    LF:			EQU     0AH
+       0000001B            B    93    ESC:			EQU     1BH
+                           A    17    			
+       00000010            A    18    argv_ptrs_max:		EQU	16			; Maximum n
+                           A    19    			
+                           A    20    ;
+                           A    21    ; Start in mixed mode. Assumes MBASE is set to 
+                           A    22    ;
+000000 C3 51 00            A    23    			JP		_start		; Jump to start
+000003                     A    24    			DS		5
+                           A    25    
+000008 49CF                A    26    RST_08:			RST.LIS		08h		; API call
+00000A C9                  A    27    			RET
+00000B                     A    28    			DS 		5
+                           A    29    			
+000010 49D7                A    30    RST_10:			RST.LIS 	10h		; Output
+000012 C9                  A    31    			RET
+000013                     A    32    			DS		5
+                           A    33    			
+000018                     A    34    RST_18:			DS		8
+000020                     A    35    RST_20:			DS		8
+000028                     A    36    RST_28:			DS		8
+000030                     A    37    RST_30:			DS		8	
+                           A    38    ;	
+                           A    39    ; The NMI interrupt vector (not currently used 
+                           A    40    ;
+000038 FB                  A    41    RST_38:			EI
+000039 ED4D                A    42    			RETI
+                           A    43    ;
+                           A    44    ; The header stuff is from byte 64 onwards
+                           A    45    ;
+                           A    46    			ALIGN	64
+                           A    47    			
+000040 4D4F53              A    48    			DB	"MOS"				; Flag for 
+000043 00                  A    49    			DB	00h				; MOS header ve
+000044 00                  A    50    			DB	00h				; Flag for run 
+                           A    51    
+000045 48455844 554D502E   A    52    _exec_name:		DB	"HEXDUMP.BIN", 0		; T
+00004D 42494E00 
+                           A    53    
+                           A    54    ;
+                           A    55    ; And the code follows on immediately after the
+                           A    56    ;
+000051 5BFDE5              A    57    _start:			PUSH.LIL	IY			; Prese
+                           A    58    
+000054 FD210000            A    59    			LD		IY, 0			; Preserve 
+000058 FD39                A    60    			ADD		IY, SP
+00005A 5BFDE5              A    61    			PUSH.LIL	IY
+00005D 310080              A    62    			LD		SP, 8000h		; And set t
+                           A    63    	
+000060 F5                  A    64    			PUSH		AF			; Preserve 
+000061 5BC5                A    65    			PUSH.LIL	BC
+000063 5BD5                A    66    			PUSH.LIL	DE
+000065 5BDDE5              A    67    			PUSH.LIL	IX
+                           A    68    
+000068 ED6E                A    69    			LD		A, MB			; Segment b
+00006A DD21 15 01          A    70    			LD		IX, argv_ptrs		; The a
+00006E CD 01 01            A    71    			CALL		_set_aix24		; Conve
+000071 5BDDE5              A    72    			PUSH.LIL	IX
+000074 CD 91 00            A    73    			CALL		_parse_params		; P
+000077 5BDDE1              A    74    			POP.LIL		IX			; IX: argv
+00007A 0600                A    75    			LD		B, 0			;  C: argc
+00007C CD 49 01            A    76    			CALL		_main			; Start
+                           A    77    
+00007F 5BDDE1              A    78    			POP.LIL		IX			; Restore t
+000082 5BD1                A    79    			POP.LIL		DE
+000084 5BC1                A    80    			POP.LIL		BC
+000086 F1                  A    81    			POP		AF
+                           A    82    
+000087 5BFDE1              A    83    			POP.LIL		IY			; Get the p
+00008A FDF9                A    84    			LD		SP, IY			; Restore t
+                           A    85    			
+00008C 5BFDE1              A    86    			POP.LIL		IY			; Restore I
+00008F 49C9                A    87    			RET.L					; Return to
+                           A    88    			
+                           A    89    ; Parse the parameter string into a C array
+                           A    90    ; Parameters
+                           A    91    ; -   A: Segment base
+                           A    92    ; - HLU: Address of parameter string
+                           A    93    ; - IXU: Address for array pointer storage
+                           A    94    ; Returns:
+                           A    95    ; -   C: Number of parameters parsed
+                           A    96    ;
+000091 01 45 00            A    97    _parse_params:		LD		BC, _exec_name		
+000094 CD EF 00            A    98    			CALL		_set_abc24		; Conve
+000097 5BDD0F00            A    99    			LD.LIL		(IX+0), BC		; ARGV[
+00009B 5BDD23              A   100    			INC.LIL		IX
+00009E 5BDD23              A   101    			INC.LIL		IX
+0000A1 5BDD23              A   102    			INC.LIL		IX
+0000A4 CD E6 00            A   103    			CALL		_skip_spaces		; S
+                           A   104    ;
+0000A7 010100              A   105    			LD		BC, 1			; C: ARGC =
+0000AA 060F                A   106    			LD		B, argv_ptrs_max - 1	; B
+                           A   107    ;
+0000AC C5                  A   108    _parse_params_1:	PUSH		BC			; S
+0000AD 5BE5                A   109    			PUSH.LIL	HL			; Stack sta
+0000AF CD D5 00            A   110    			CALL		_get_token		; Get t
+0000B2 79                  A   111    			LD		A, C			; A: Length
+0000B3 5BD1                A   112    			POP.LIL		DE			; Start add
+0000B5 C1                  A   113    			POP		BC			; ARGC
+0000B6 B7                  A   114    			OR		A			; Check for A=0
+0000B7 C8                  A   115    			RET		Z
+                           A   116    ;
+0000B8 5BDD1F00            A   117    			LD.LIL		(IX+0), DE		; Store
+0000BC 5BE5                A   118    			PUSH.LIL	HL			; DE=HL
+0000BE 5BD1                A   119    			POP.LIL		DE
+0000C0 CD E6 00            A   120    			CALL		_skip_spaces		; A
+0000C3 AF                  A   121    			XOR		A
+0000C4 5B12                A   122    			LD.LIL		(DE), A			; Zero-
+0000C6 5BDD23              A   123    			INC.LIL		IX
+0000C9 5BDD23              A   124    			INC.LIL		IX
+0000CC 5BDD23              A   125    			INC.LIL		IX			; Advance t
+0000CF 0C                  A   126    			INC		C			; Increment ARG
+0000D0 79                  A   127    			LD		A, C			; Check for
+0000D1 B8                  A   128    			CP		B
+0000D2 38 D8               A   129    			JR		C, _parse_params_1	; And l
+0000D4 C9                  A   130    			RET
+                           A   131    
+                           A   132    ; Get the next token
+                           A   133    ; Parameters:
+                           A   134    ; - HL: Address of parameter string
+                           A   135    ; Returns:
+                           A   136    ; - HL: Address of first character after token
+                           A   137    ; -  C: Length of token (in characters)
+                           A   138    ;
+0000D5 0E00                A   139    _get_token:		LD		C, 0			; Initi
+0000D7 5B7E                A   140    $$:			LD.LIL		A, (HL)			; Get t
+0000D9 B7                  A   141    			OR		A			; Exit if 0 (en
+0000DA C8                  A   142    			RET 		Z
+0000DB FE0D                A   143    			CP		13			; Exit if CR (e
+0000DD C8                  A   144    			RET		Z
+0000DE FE20                A   145    			CP		' '			; Exit if space
+0000E0 C8                  A   146    			RET		Z
+0000E1 5B23                A   147    			INC.LIL		HL			; Advance t
+0000E3 0C                  A   148    			INC 		C			; Increment
+0000E4 18 F1               A   149    			JR		$B
+                           A   150    	
+                           A   151    ; Skip spaces in the parameter string
+                           A   152    ; Parameters:
+                           A   153    ; - HL: Address of parameter string
+                           A   154    ; Returns:
+                           A   155    ; - HL: Address of next none-space character
+                           A   156    ;    F: Z if at end of string, otherwise NZ if 
+                           A   157    ;
+0000E6 5B7E                A   158    _skip_spaces:		LD.LIL		A, (HL)			
+0000E8 FE20                A   159    			CP		' '			; Exit if not s
+0000EA C0                  A   160    			RET		NZ
+0000EB 5B23                A   161    			INC.LIL		HL			; Advance t
+0000ED 18 F7               A   162    			JR		_skip_spaces		; Incre
+                           A   163    			
+                           A   164    ; Set the MSB of BC (U) to A
+                           A   165    ; Parameters:
+                           A   166    ; - BC: 16-bit address
+                           A   167    ; -  A: Value to stick in U of BC
+                           A   168    ; Returns:
+                           A   169    ; - BCU
+                           A   170    ;
+0000EF 5BE5                A   171    _set_abc24:		PUSH.LIL	HL			; Prese
+0000F1 5BC5                A   172    			PUSH.LIL	BC			; Stick BC 
+0000F3 5B210200 00         A   173    			LD.LIL		HL, 2			; HL: S
+0000F8 5B39                A   174    			ADD.LIL		HL, SP
+0000FA 5B77                A   175    			LD.LIL		(HL), A			; Store
+0000FC 5BC1                A   176    			POP.LIL		BC			; Fetch amm
+0000FE 5BE1                A   177    			POP.LIL		HL			; Restore H
+000100 C9                  A   178    			RET
+                           A   179    
+                           A   180    ; Set the MSB of BC (U) to A
+                           A   181    ; Parameters:
+                           A   182    ; - IX: 16-bit address
+                           A   183    ; -  A: Value to stick in U of BC
+                           A   184    ; Returns:
+                           A   185    ; - IXU
+                           A   186    ;
+000101 5BDDE5              A   187    _set_aix24:		PUSH.LIL	IX			; Stick
+000104 5BDD2102 0000       A   188    			LD.LIL		IX, 2			; IX: S
+00010A 5BDD39              A   189    			ADD.LIL		IX, SP
+00010D 5BDD7700            A   190    			LD.LIL		(IX), A			; Store
+000111 5BDDE1              A   191    			POP.LIL		IX			; Fetch amm
+000114 C9                  A   192    			RET
+                           A   193    			
+                           A   194    ; Storage for the argv array pointers
+                           A   195    ;
+000115 000000 000000       A   196    argv_ptrs:		BLKP	argv_ptrs_max, 0		
+00011B 000000 000000 
+000121 000000 000000 
+000127 000000 000000 
+00012D 000000 000000 
+000133 000000 000000 
+000139 000000 000000 
+00013F 000000 000000 
+                           A   197    			
+                           A   198    			END
+
+
+Errors: 0
+Warnings: 0
+Lines Assembled: 292
