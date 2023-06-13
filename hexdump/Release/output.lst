@@ -1,4 +1,4 @@
-Zilog eZ80 Macro Assembler Version 4.3 (19073001) RELISTED11-Jun-23     21:44:53     page:   1
+Zilog eZ80 Macro Assembler Version 4.3 (19073001) RELISTED13-Jun-23     11:11:10     page:   1
 
 
 PC     Object              I  Line    Source 
@@ -117,38 +117,38 @@ PC     Object              I  Line    Source
                            A    20    ; Print a 24-bit HEX number
                            A    21    ; HLU: Number to print
                            A    22    ;
-000329 5BE5                A    23    Print_Hex24:		PUSH.LIL	HL
-00032B 5B210200 00         A    24    			LD.LIL		HL, 2
-000330 5B39                A    25    			ADD.LIL		HL, SP
-000332 5B7E                A    26    			LD.LIL		A, (HL)
-000334 5BE1                A    27    			POP.LIL		HL
+00050A 5BE5                A    23    Print_Hex24:		PUSH.LIL	HL
+00050C 5B210200 00         A    24    			LD.LIL		HL, 2
+000511 5B39                A    25    			ADD.LIL		HL, SP
+000513 5B7E                A    26    			LD.LIL		A, (HL)
+000515 5BE1                A    27    			POP.LIL		HL
                            A    28    
-000336 CD 3E 03            A    29    			CALL		Print_Hex8			
+000517 CD 1F 05            A    29    			CALL		Print_Hex8			
                            A    30    			
                            A    31    ; Print a 16-bit HEX number
                            A    32    ; HL: Number to print
                            A    33    ;
-000339 7C                  A    34    Print_Hex16:		LD	A,H
-00033A CD 3E 03            A    35    			CALL	Print_Hex8
-00033D 7D                  A    36    			LD	A,L
+00051A 7C                  A    34    Print_Hex16:		LD	A,H
+00051B CD 1F 05            A    35    			CALL	Print_Hex8
+00051E 7D                  A    36    			LD	A,L
                            A    37    
                            A    38    ; Print an 8-bit HEX number
                            A    39    ; A: Number to print
                            A    40    ;
-00033E 4F                  A    41    Print_Hex8:		LD	C,A
-00033F 1F                  A    42    			RRA 
-000340 1F                  A    43    			RRA 
-000341 1F                  A    44    			RRA 
-000342 1F                  A    45    			RRA 
-000343 CD 47 03            A    46    			CALL	$F 
-000346 79                  A    47    			LD	A,C 
-000347 E60F                A    48    $$:			AND	0Fh
-000349 C690                A    49    			ADD	A,90h
-00034B 27                  A    50    			DAA
-00034C CE40                A    51    			ADC	A,40h
-00034E 27                  A    52    			DAA
-00034F D7                  A    53    			RST	10h
-000350 C9                  A    54    			RET
+00051F 4F                  A    41    Print_Hex8:		LD	C,A
+000520 1F                  A    42    			RRA 
+000521 1F                  A    43    			RRA 
+000522 1F                  A    44    			RRA 
+000523 1F                  A    45    			RRA 
+000524 CD 28 05            A    46    			CALL	$F 
+000527 79                  A    47    			LD	A,C 
+000528 E60F                A    48    $$:			AND	0Fh
+00052A C690                A    49    			ADD	A,90h
+00052C 27                  A    50    			DAA
+00052D CE40                A    51    			ADC	A,40h
+00052F 27                  A    52    			DAA
+000530 D7                  A    53    			RST	10h
+000531 C9                  A    54    			RET
 
 
 Errors: 0

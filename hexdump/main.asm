@@ -16,6 +16,7 @@
 ; DESIGN OF WIDTH:
 ; 6 chars for current byte
 ; dddddd: XXXXXXXX XXXXXXXX XXXXXXXX XXXXXXXX |................|
+; dddddd:XXXXXXXX XXXXXXXX XXXXXXXX XXXXXXXX|.... .... .... ....|
 
 
 			.ASSUME	ADL = 0				
@@ -53,7 +54,17 @@ _main:
 	jp	nc,badusage
 
 	LD.LIL		HL,(IX+3)		; HLU: pointer to first argument
-	ld	c,fa_read	;open read-only
+	ld.LIL	a,(HL)
+	cp	'-'
+	jr	nz,openit
+	INC.LIL	HL
+	LD.LIL	a,(HL)				;24 bit
+	cp	'i'
+	jp	nz,badusage
+	jp	interactive
+
+openit:
+	ld	c,fa_read	;open read-only for straight through hex dump to the end
 	MOSCALL	mos_fopen
 	or	a
 	jr	nz,open_ok
@@ -84,6 +95,7 @@ open_ok:
 	ld	(keycount),a	;store to compare against
 	ld.lil	hl,0-16
 	ld.lil	(counter+BASE),hl
+
 printlp:
 
 
@@ -180,32 +192,15 @@ asciiend:
 
 
 
-
-printbuff:
-;	push	bc		;preserve length
-	ld		de,buffer
-$$:
-	ld		a,(de)	
-	rst		10h
-	inc		de
-	djnz	$b
-;	pop		bc
-;now keep printing until unprintable again
-allgood_lp
-	call	getbyte
-	call	unprintable
-	jr		z,endstring
-	rst		10h
-	jr		allgood_lp	
-endstring:
-	call	inline_print
-	db		CR,LF,0		;newline at end - TEST
-
 donefile:
 	call	inline_print
 	db		CR,LF,0
 	jp		close
 
+hit_EOF:
+	call	inline_print
+	db		'Past end of file',CR,LF,0
+	ret
 
 ; Entry:
 ; A is a character to test
@@ -235,12 +230,14 @@ print_string:	ld	a,(hl)
 	ret
 ;
 ;
-getbyte:
-	call	ck_ctrlC
-	ld	a,(in_handle)
-	ld	c,a
-	MOSCALL mos_fgetc	;carry flag on last byte not yet implemented.
+$$:
+	rst	10h	;Agon uses this to print the character in A. Preserves HL.
+	inc	hl
+print_HL:	ld	a,(hl)
+	cp	32
+	jr	nc,$b
 	ret
+
 
 ; Check for ctrl-C. If so, clean stack and exit.
 ;
@@ -274,9 +271,213 @@ badusage:	call usage
 usage:	call	inline_print
 	db	CR,LF,'hexdump utility for Agon by Shawn Sijnstra 11-Jun-2023',CR,LF,CR,LF
 	db	'Usage:',CR,LF
-	db	'   hexdump <file>',CR,LF,CR,LF
+	db	'   hexdump [-i] <file>',CR,LF,CR,LF
+	db	'	optional paramter i uses hexdump in interactive mode.',CR,LF
 	db 	'Store hexdump.bin in /mos directory. Minimum MOS version 1.03.',CR,LF,CR,LF,0
 	ret
+
+;
+;
+;
+;
+;
+;
+interactive:
+	LD.LIL		HL,(IX+6)		; HLU: pointer to first argument
+	ld	c,fa_read	;open read-only for straight through hex dump to the end
+	MOSCALL	mos_fopen
+	or	a
+	jr	nz,iopen_ok
+	ld	hl,4	;file not found/could not find file - error opening file [not necessarily correct error though]
+	ret			;exit	
+iopen_ok:
+	ld		(in_handle),a
+	ld.lil	hl,0
+	ld.lil	(counter+BASE),hl
+main_loop:
+	call	inline_print
+	db		12,17,10,'hexdump utility - interactive mode',17,15,CR,LF
+	db		'Filename:',0
+	LD.LIL		HL,(IX+6)
+	call	print_HL
+	call	inline_print
+	db		CR,LF,CR,LF,'Usage instructions:',CR,LF,'p - previous',CR,LF,'n - next',CR,LF,'q - quit',CR,LF,CR,LF,0
+	call	sectorlp
+key_valid:
+	MOSCALL	mos_getkey
+	cp		'n'
+	jp		z,next_sector
+	cp		'p'
+	jp		z,prev_sector
+	cp		'q'
+	jr		nz,key_valid
+	jp		exit
+
+
+
+sectorlp:
+	ld.lil	hl,0
+;	ld.lil	(counter+BASE),hl
+	ld.lil	(rows+BASE),hl
+	ld.lil	hl,buffer+BASE
+	ld.lil	de,256
+	ld	a,(in_handle)
+	ld	c,a
+	MOSCALL	mos_fread
+	ld		a,e
+	or		d
+	jp		z,hit_EOF		;zero length (DE=0) means past end of file
+	ld		b,e	;b will track length for next loop
+	ld		c,0	;c will track current value in sector - but we need to do this twice in parallel
+
+seclp2:
+;	push	bc
+		
+
+iprintlp:
+
+	ld.lil	hl,(counter+BASE)
+	ld.lil	de,(rows+BASE)
+	add.lil	hl,de
+;	ld.lil	de,16
+;	add.lil	hl,de
+;	ld.lil	(counter+BASE),hl
+	push	bc
+	call	Print_Hex24
+	pop		bc
+	push	bc
+ihexloop:
+	ld		a,':'
+	push	bc
+	rst		10h
+	pop		bc
+	ld		hl,buffer
+	add		hl,de
+;	ld		c,0
+ihexlp1:
+	ld		a,c
+	and		3
+	jr		nz,$f
+	ld		a,' '
+;	push	hl
+	push	bc
+	rst		10h
+	pop		bc
+;	pop		hl
+$$:
+
+	ld		a,b
+	or		a
+	jr		z,ihexlp2
+;	ld		a,b
+	cp		c
+	jr		nc,ihexlp2
+	ld		a,' '
+	push	bc
+	rst		10h
+	rst		10h
+	pop		bc
+	jr		ihexlp3
+ihexlp2:
+	ld		a,(hl)
+
+	push	hl
+	push	bc
+	call	Print_Hex8
+	pop		bc
+	pop		hl
+	inc		hl
+ihexlp3:
+	inc		c
+	ld		a,c
+	and		15
+	jp		z,ihexend
+
+;	ld		a,c
+;	and		3
+;	jr		nz,$f
+;	ld		a,' '
+;	push	bc
+;	rst		10h
+;	pop		bc
+;$$:
+	jr		ihexlp1
+
+ihexend:
+	ld		a,' '
+	rst		10h
+	pop		bc		;recover c register.
+iasciiloop:
+	ld		a,'|'
+	push	bc
+	rst		10h
+	pop		bc
+	ld		hl,buffer
+	add		hl,de
+;	ld		c,0
+iasciilp1:
+	ld		a,b
+	or		a
+	jr		z,iasciilp2
+;	ld		a,b
+	cp		c
+	jr		nc,iasciilp2
+	ld		a,' '
+	jr		iasciilp3
+iasciilp2:
+	ld		a,(hl)
+	call	unprintable
+iasciilp3:
+	push	hl
+	push	bc
+	rst		10h
+	pop		bc
+	pop		hl
+	inc		hl
+	inc		c
+	ld		a,c
+	and		15
+;	jp		z,iasciiend
+;	cp		b
+;	jr		c,iasciilp1
+;	ld		a,' '
+;	jr		iasciilp2
+	jr		nz,iasciilp1
+
+iasciiend:
+	call	inline_print
+	db		'|',CR,LF,0
+	ld.lil	hl,(rows+BASE)
+	ld.lil	de,16
+	add.lil	hl,de
+	ld.lil	(rows+BASE),hl
+	ld		a,l
+	or		a
+	jp		nz,iprintlp
+	ret
+
+next_sector:
+	ld.lil	hl,(counter+BASE)
+	ld.lil	de,256
+	add.lil	hl,de
+seekit:
+	ld.lil	(counter+BASE),hl
+	ld		a,(in_handle)
+	ld		c,a
+	MOSCALL	mos_flseek
+	jp		main_loop
+
+
+prev_sector:
+	ld.lil	hl,(counter+BASE)
+	ld.lil	de,256
+	or		a
+	sbc.lil	hl,de
+	jr		nc,seekit
+	ld.lil	hl,0
+	jr		seekit
+
+
 
 ;
 ; data storage . . .
@@ -295,8 +496,10 @@ stringlength:
 ;			SEGMENT CODE
 
 in_handle:	DS	1	;Only needs 1 byte handle
-counter:	DS	4
-buffer:		DS	100	;Space to buffer incoming strings
+counter:	DS	4	; current address counter for continuous
+rows:		DS	4
+upcount:	DS	2	;upper 2 bytes for file location
+buffer:		DS	512	;Space to buffer incoming strings
 curbyte:	DS	1	;current byte in the buffer
 keycount:	DS	1	;current key count
 	end
