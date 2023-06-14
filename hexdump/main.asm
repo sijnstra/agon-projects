@@ -301,7 +301,13 @@ main_loop:
 	LD.LIL		HL,(IX+6)
 	call	print_HL
 	call	inline_print
-	db		CR,LF,CR,LF,'Usage instructions:',CR,LF,'p - previous',CR,LF,'n - next',CR,LF,'q - quit',CR,LF,CR,LF,0
+	db		CR,LF,CR,LF,'Usage instructions:',CR,LF
+	db		'p - previous 100h bytes  - - previous byte',CR,LF
+	db		'n - next 100h bytes      + - next byte',CR,LF
+	db		'q - quit',CR,LF,CR,LF,0
+	ld.lil	hl,0	
+	call	sectorlp
+	ld.lil	hl,256
 	call	sectorlp
 key_valid:
 	MOSCALL	mos_getkey
@@ -309,6 +315,10 @@ key_valid:
 	jp		z,next_sector
 	cp		'p'
 	jp		z,prev_sector
+	cp		'+'
+	jp		z,next_byte
+	cp		'-'
+	jp		z,prev_byte
 	cp		'q'
 	jr		nz,key_valid
 	jp		exit
@@ -316,7 +326,7 @@ key_valid:
 
 
 sectorlp:
-	ld.lil	hl,0
+
 ;	ld.lil	(counter+BASE),hl
 	ld.lil	(rows+BASE),hl
 	ld.lil	hl,buffer+BASE
@@ -346,6 +356,7 @@ iprintlp:
 	call	Print_Hex24
 	pop		bc
 	push	bc
+	ld		d,0		;ignore 2nd 100h block offset
 ihexloop:
 	ld		a,':'
 	push	bc
@@ -371,7 +382,9 @@ $$:
 	jr		z,ihexlp2
 ;	ld		a,b
 	cp		c
+	jr		z,$F
 	jr		nc,ihexlp2
+$$:
 	ld		a,' '
 	push	bc
 	rst		10h
@@ -421,7 +434,9 @@ iasciilp1:
 	jr		z,iasciilp2
 ;	ld		a,b
 	cp		c
+	jr		z,$F
 	jr		nc,iasciilp2
+$$:
 	ld		a,' '
 	jr		iasciilp3
 iasciilp2:
@@ -456,6 +471,11 @@ iasciiend:
 	jp		nz,iprintlp
 	ret
 
+next_byte:
+	ld.lil	hl,(counter+BASE)
+	inc.lil	hl
+	ld		e,0
+	jr		seekit
 next_sector:
 	ld.lil	hl,(counter+BASE)
 	ld.lil	de,256
@@ -467,7 +487,6 @@ seekit:
 	MOSCALL	mos_flseek
 	jp		main_loop
 
-
 prev_sector:
 	ld.lil	hl,(counter+BASE)
 	ld.lil	de,256
@@ -477,7 +496,15 @@ prev_sector:
 	ld.lil	hl,0
 	jr		seekit
 
-
+prev_byte:
+	ld.lil	hl,(counter+BASE)
+	ld.lil	de,1
+	or		a
+	sbc.lil	hl,de
+	ld		e,0
+	jr		nc,seekit
+	ld.lil	hl,0
+	jr		seekit
 
 ;
 ; data storage . . .
