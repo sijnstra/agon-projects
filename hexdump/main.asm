@@ -269,7 +269,7 @@ badusage:	call usage
 ; usage -- show syntax
 ; 
 usage:	call	inline_print
-	db	CR,LF,'hexdump utility for Agon by Shawn Sijnstra 11-Jun-2023',CR,LF,CR,LF
+	db	CR,LF,'hexdump utility for Agon by Shawn Sijnstra 15-Jun-2023',CR,LF,CR,LF
 	db	'Usage:',CR,LF
 	db	'   hexdump [-i] <file>',CR,LF,CR,LF
 	db	'	optional paramter i uses hexdump in interactive mode.',CR,LF
@@ -304,12 +304,19 @@ main_loop:
 	db		CR,LF,CR,LF,'Usage instructions:',CR,LF
 	db		'p - previous 100h bytes  - - previous byte',CR,LF
 	db		'n - next 100h bytes      + - next byte',CR,LF
-	db		'q - quit',CR,LF,CR,LF,0
+	db		'g - go to hex location',CR,LF
+	db		'q - quit',CR,LF,CR,LF,CR,LF,0
 	ld.lil	hl,0	
 	call	sectorlp
 	ld.lil	hl,256
 	call	sectorlp
-key_valid:
+key_invalid:
+	ld		a,31
+	rst		10h
+	ld		a,0
+	rst		10h
+	ld		a,43
+	rst		10h
 	MOSCALL	mos_getkey
 	cp		'n'
 	jp		z,next_sector
@@ -319,8 +326,10 @@ key_valid:
 	jp		z,next_byte
 	cp		'-'
 	jp		z,prev_byte
+	cp		'g'
+	jp		z,goto
 	cp		'q'
-	jr		nz,key_valid
+	jr		nz,key_invalid
 	jp		exit
 
 
@@ -329,7 +338,8 @@ sectorlp:
 
 ;	ld.lil	(counter+BASE),hl
 	ld.lil	(rows+BASE),hl
-	ld.lil	hl,buffer+BASE
+	ld.lil	de,buffer+BASE
+	add.lil	hl,de
 	ld.lil	de,256
 	ld	a,(in_handle)
 	ld	c,a
@@ -356,7 +366,7 @@ iprintlp:
 	call	Print_Hex24
 	pop		bc
 	push	bc
-	ld		d,0		;ignore 2nd 100h block offset
+;	ld		d,0		;ignore 2nd 100h block offset - hopefully fixed
 ihexloop:
 	ld		a,':'
 	push	bc
@@ -506,6 +516,64 @@ prev_byte:
 	ld.lil	hl,0
 	jr		seekit
 
+;goto routine
+goto:
+;position cursor + prompt
+	call	inline_print
+	db		31,1,9,'Go to [hex]?',0
+;0x09: mos_editline - Invoke the line editor
+;HL(U): Address of the buffer
+;BC(U): Buffer length
+;E: 0 to not clear buffer, 1 to clear
+;Returns:
+;A: Key that was used to exit the input loop (CR=13, ESC=27)
+	ld		hl,input_buf
+	ld		bc,7
+	ld		e,1
+	MOSCALL	mos_editline
+	cp		27
+	jr		z,goto_abort
+	ld		de,input_buf
+	ld.lil	hl,0
+	ld		b,6		;max char count
+goto_loop:
+	ld		a,(de)
+	or		a
+	jp		z,seekit
+	sub		'0'	;30h
+	jr		c,goto_invalid
+	cp		9+1
+	jr		c,goto_nextchar
+	sub		10h
+	jr		c,goto_invalid
+	and		1fh
+	jr		z,goto_invalid
+	cp		7
+	jr		nc,goto_invalid
+	add		9
+	cp		16
+	jr		nc,goto_invalid	;fix it later
+
+goto_nextchar
+	add.lil	hl,hl
+	add.lil	hl,hl
+	add.lil	hl,hl
+	add.lil	hl,hl
+	or		l
+	ld	l,a
+	inc		de
+	djnz	goto_loop
+
+goto_invalid:
+	call	inline_print
+	db		31,1,9,17,128+8+1,'  Invalid  ',17,128,'       ',0
+	jp		key_invalid
+
+goto_abort:
+	call	inline_print
+	db		31,1,9,'                  ',0
+	jp		key_invalid
+
 ;
 ; data storage . . .
 ;	
@@ -525,8 +593,9 @@ stringlength:
 in_handle:	DS	1	;Only needs 1 byte handle
 counter:	DS	4	; current address counter for continuous
 rows:		DS	4
+input_buf:	DS	8	;up to 6 characters?
 upcount:	DS	2	;upper 2 bytes for file location
-buffer:		DS	512	;Space to buffer incoming strings
+buffer:		DS	512	;Space to buffer incoming file data
 curbyte:	DS	1	;current byte in the buffer
 keycount:	DS	1	;current key count
 	end

@@ -4,7 +4,7 @@ Copyright (C) 1999-2008 Zilog, Inc. All Rights Reserved
 
 LINK MAP:
 
-DATE:      Wed Jun 14 21:54:00 2023
+DATE:      Thu Jun 15 21:30:45 2023
 PROCESSOR: assembler
 FILES:     .\init.obj             .\main.obj             .\output.obj           
 
@@ -72,10 +72,10 @@ SPACE ALLOCATION:
 
 Space                     Base         Top      Size      Used    Unused
 ------------------ ----------- ----------- --------- --------- ---------
-RAM                   D:040000    D:0407B6    80000H      7B7H    7F849H
-                                          (   524288      1975    522313)
-ROM                   C:000000    C:0007B6    20000H      7B7H    1F849H
-                                          (   131072      1975    129097)
+RAM                   D:040000    D:04087B    80000H      87CH    7F784H
+                                          (   524288      2172    522116)
+ROM                   C:000000    C:00087B    20000H      87CH    1F784H
+                                          (   131072      2172    128900)
 
 
 SEGMENTS WITHIN SPACE:
@@ -84,39 +84,39 @@ SEGMENTS WITHIN SPACE:
 RAM                               Type        Base         Top      Size
 ------------------ ------------------- ----------- ----------- ---------
 __VECTORS          * segment copy *       D:040000    D:040144      145h
-CODE               * segment copy *       D:040145    D:0405A9      465h
-LORAM              * segment copy *       D:0405AA    D:0407B6      20dh
+CODE               * segment copy *       D:040145    D:040666      522h
+LORAM              * segment copy *       D:040667    D:04087B      215h
 
 
 ROM                               Type        Base         Top      Size
 ------------------ ------------------- ----------- ----------- ---------
 __VECTORS          normal data            C:000000    C:000144      145h
-CODE               normal data            C:000145    C:0005A9      465h
-LORAM              normal data            C:0005AA    C:0007B6      20dh
+CODE               normal data            C:000145    C:000666      522h
+LORAM              normal data            C:000667    C:00087B      215h
 
 SEGMENTS WITHIN MODULES:
 ========================
 
-Module: D:\agon\agon-projects-main\ASM\hexdump\init.asm (File: init.obj) Version: 1:0 06/14/2023 21:53:59
+Module: D:\agon\agon-projects-main\ASM\hexdump\init.asm (File: init.obj) Version: 1:0 06/15/2023 21:30:45
 
     Name                                           Base         Top      Size
     --------------------------------------- ----------- ----------- ---------
     Segment: __VECTORS                         C:000000    C:000144      145h
 
 
-Module: D:\agon\agon-projects-main\ASM\hexdump\main.asm (File: main.obj) Version: 1:0 06/14/2023 21:53:59
+Module: D:\agon\agon-projects-main\ASM\hexdump\main.asm (File: main.obj) Version: 1:0 06/15/2023 21:30:45
 
     Name                                           Base         Top      Size
     --------------------------------------- ----------- ----------- ---------
-    Segment: CODE                              C:000145    C:000581      43dh
-    Segment: LORAM                             C:0005AA    C:0007B6      20dh
+    Segment: CODE                              C:000145    C:00063E      4fah
+    Segment: LORAM                             C:000667    C:00087B      215h
 
 
-Module: D:\agon\agon-projects-main\ASM\hexdump\output.asm (File: output.obj) Version: 1:0 06/14/2023 21:54:00
+Module: D:\agon\agon-projects-main\ASM\hexdump\output.asm (File: output.obj) Version: 1:0 06/15/2023 21:30:45
 
     Name                                           Base         Top      Size
     --------------------------------------- ----------- ----------- ---------
-    Segment: CODE                              C:000582    C:0005A9       28h
+    Segment: CODE                              C:00063F    C:000666       28h
 
 EXTERNAL DEFINITIONS:
 =====================
@@ -146,9 +146,9 @@ __RAM_ADDR_U_INIT_PARAM             000000FF (User Defined)
 __RAM_CTL_INIT_PARAM                00000080 (User Defined)
 _main                               C:000149 main            CODE                            
 _SYS_CLK_FREQ                       01194000 (User Defined)
-Print_Hex16                         C:000592 output          CODE                            
-Print_Hex24                         C:000582 output          CODE                            
-Print_Hex8                          C:000597 output          CODE                            
+Print_Hex16                         C:00064F output          CODE                            
+Print_Hex24                         C:00063F output          CODE                            
+Print_Hex8                          C:000654 output          CODE                            
 
 26 external symbol(s).
 
@@ -188,8 +188,8 @@ Print_Hex8                        Defined     D:\agon\agon-projects-main\ASM\hex
 
 OUTPUT CHECKSUM
 ===============
-hexdump.hex          01F01B
-hexdump.lod          01F01B
+hexdump.hex          021BBC
+hexdump.lod          021BBC
 
 
 
