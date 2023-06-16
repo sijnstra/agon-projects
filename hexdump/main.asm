@@ -56,13 +56,13 @@ _main:
 	LD.LIL		HL,(IX+3)		; HLU: pointer to first argument
 	ld.LIL	a,(HL)
 	cp	'-'
-	jr	nz,openit
+	jp	nz,interactive
 	INC.LIL	HL
 	LD.LIL	a,(HL)				;24 bit
-	cp	'i'
+	cp	'c'
 	jp	nz,badusage
-	jp	interactive
-
+;	jp	interactive
+	LD.LIL		HL,(IX+6)		; HLU: pointer to first argument
 openit:
 	ld	c,fa_read	;open read-only for straight through hex dump to the end
 	MOSCALL	mos_fopen
@@ -188,6 +188,7 @@ asciilp2:
 asciiend:
 	call	inline_print
 	db		'|',CR,LF,0	
+	call	ck_ctrlC	;check at the end of the row for ctrl-C to exit
 	jp		printlp
 
 
@@ -242,11 +243,11 @@ print_HL:	ld	a,(hl)
 ; Check for ctrl-C. If so, clean stack and exit.
 ;
 ck_ctrlC:
-	ld	a,1		; modified below by self modifying code
-	dec	a
-	and	15
-	ld	(ck_ctrlC+1),a	; update LD A instruction above
-	ret	nz		; check every 16 calls only
+;	ld	a,1		; modified below by self modifying code
+;	dec	a
+;	and	7
+;	ld	(ck_ctrlC+1),a	; update LD A instruction above
+;	ret	nz		; check every 8 calls only
 	MOSCALL	mos_sysvars	;get the sysvars location - consider saving IX for speed
 	ld.lil	a,(IX+sysvar_vkeycount)	;check if any key has been pressed
 	ld	hl,keycount
@@ -254,10 +255,15 @@ ck_ctrlC:
 	ret	z
 	ld	(hl),a	;update keycount
 	ld.lil	a,(IX+sysvar_keyascii)	;fetch character in queue
+	cp	27	;accept an ESC as well
+	jr	z,$f
+	cp	'q'	;accept 'q' for consistency
+	jr	z,$f
 	cp	3	;is it ctr-C
 	ret	nz
+$$:
 	pop	hl		;clean up stack
-	pop	hl
+;	pop	hl
 	jp	close
 
 okusage:	call usage
@@ -269,21 +275,21 @@ badusage:	call usage
 ; usage -- show syntax
 ; 
 usage:	call	inline_print
-	db	CR,LF,'hexdump utility for Agon by Shawn Sijnstra 15-Jun-2023',CR,LF,CR,LF
+	db	CR,LF,'hexdump utility for Agon by Shawn Sijnstra (c) 17-Jun-2023',CR,LF,CR,LF
 	db	'Usage:',CR,LF
-	db	'   hexdump [-i] <file>',CR,LF,CR,LF
-	db	'	optional paramter i uses hexdump in interactive mode.',CR,LF
+	db	'   hexdump [-c] <file>',CR,LF,CR,LF
+	db	'	optional paramter c uses hexdump in continuous mode.',CR,LF
 	db 	'Store hexdump.bin in /mos directory. Minimum MOS version 1.03.',CR,LF,CR,LF,0
 	ret
 
 ;
 ;
 ;
-;
+; 8,11,10,21 = L,U,D,R
 ;
 ;
 interactive:
-	LD.LIL		HL,(IX+6)		; HLU: pointer to first argument
+;	LD.LIL		HL,(IX+6)		; HLU: pointer to first argument
 	ld	c,fa_read	;open read-only for straight through hex dump to the end
 	MOSCALL	mos_fopen
 	or	a
@@ -298,13 +304,13 @@ main_loop:
 	call	inline_print
 	db		12,17,10,'hexdump utility - interactive mode',17,15,CR,LF
 	db		'Filename:',0
-	LD.LIL		HL,(IX+6)
+	LD.LIL		HL,(IX+3)
 	call	print_HL
 	call	inline_print
 	db		CR,LF,CR,LF,'Usage instructions:',CR,LF
 	db		'p - previous 100h bytes  - - previous byte',CR,LF
 	db		'n - next 100h bytes      + - next byte',CR,LF
-	db		'g - go to hex location',CR,LF
+	db		'g - go to hex location   arrows - navigate',CR,LF
 	db		'q - quit',CR,LF,CR,LF,CR,LF,0
 	ld.lil	hl,0	
 	call	sectorlp
@@ -318,19 +324,39 @@ key_invalid:
 	ld		a,43
 	rst		10h
 	MOSCALL	mos_getkey
-	cp		'n'
-	jp		z,next_sector
-	cp		'p'
-	jp		z,prev_sector
-	cp		'+'
-	jp		z,next_byte
-	cp		'-'
-	jp		z,prev_byte
-	cp		'g'
-	jp		z,goto
-	cp		'q'
+	LD		HL,key_options
+	LD		BC,key_table-key_options
+	CPIR
 	jr		nz,key_invalid
-	jp		exit
+	ld		a,c
+	add		a,a
+	ld		bc,0
+	ld		c,a
+	ld		hl,key_table
+	add		hl,bc
+	ld		a,(hl)
+	inc		hl
+	ld		h,(hl)
+	ld		l,a
+	jp		(hl)
+
+key_options:
+	db		'np+-',8,11,10,21,'gq'
+key_table:
+	dw		exit,goto,next_byte,go_down,go_up,prev_byte,prev_byte,next_byte,prev_sector,next_sector
+;	cp		'n'
+;	jp		z,next_sector
+;	cp		'p'
+;	jp		z,prev_sector
+;	cp		'+'
+;	jp		z,next_byte
+;	cp		'-'
+;	jp		z,prev_byte
+;	cp		'g'
+;	jp		z,goto
+;	cp		'q'
+;	jr		nz,key_invalid
+;	jp		exit
 
 
 
@@ -404,11 +430,11 @@ $$:
 ihexlp2:
 	ld		a,(hl)
 
-	push	hl
+;	push	hl
 	push	bc
 	call	Print_Hex8
 	pop		bc
-	pop		hl
+;	pop		hl
 	inc		hl
 ihexlp3:
 	inc		c
@@ -481,9 +507,15 @@ iasciiend:
 	jp		nz,iprintlp
 	ret
 
+go_down:
+	ld.lil	hl,(counter+BASE)
+	ld.lil	de,16
+	add.lil	hl,de
+	jr		next_b2
 next_byte:
 	ld.lil	hl,(counter+BASE)
 	inc.lil	hl
+next_b2:
 	ld		e,0
 	jr		seekit
 next_sector:
@@ -509,12 +541,18 @@ prev_sector:
 prev_byte:
 	ld.lil	hl,(counter+BASE)
 	ld.lil	de,1
+prev_b2:
 	or		a
 	sbc.lil	hl,de
 	ld		e,0
 	jr		nc,seekit
 	ld.lil	hl,0
 	jr		seekit
+
+go_up:
+	ld.lil	hl,(counter+BASE)
+	ld.lil	de,16
+	jr		prev_b2
 
 ;goto routine
 goto:

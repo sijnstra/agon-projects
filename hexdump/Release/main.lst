@@ -1,4 +1,4 @@
-Zilog eZ80 Macro Assembler Version 4.3 (19073001) RELISTED15-Jun-23     21:30:45     page:   1
+Zilog eZ80 Macro Assembler Version 4.3 (19073001) RELISTED17-Jun-23     09:19:55     page:   1
 
 
 PC     Object              I  Line    Source 
@@ -372,611 +372,656 @@ PC     Object              I  Line    Source
 000149                     A    49    _main:
 000149 79                  A    50    	ld	a,c	;AGON - number of parameters
 00014A 3D                  A    51    	dec	a
-00014B CA 88 02            A    52    	jp	z,okusage
+00014B CA 8B 02            A    52    	jp	z,okusage
 00014E FE03                A    53    	cp	3	;too many parameters
-000150 D2 8E 02            A    54    	jp	nc,badusage
+000150 D2 91 02            A    54    	jp	nc,badusage
                            A    55    
 000153 5BDD2703            A    56    	LD.LIL		HL,(IX+3)		; HLU: pointer 
 000157 5B7E                A    57    	ld.LIL	a,(HL)
 000159 FE2D                A    58    	cp	'-'
-00015B 20 0C               A    59    	jr	nz,openit
-00015D 5B23                A    60    	INC.LIL	HL
-00015F 5B7E                A    61    	LD.LIL	a,(HL)				;24 bit
-000161 FE69                A    62    	cp	'i'
-000163 C2 8E 02            A    63    	jp	nz,badusage
-000166 C3 71 03            A    64    	jp	interactive
-                           A    65    
-000169                     A    66    openit:
-000169 0E01                A    67    	ld	c,fa_read	;open read-only for straigh
+00015B C2 77 03            A    59    	jp	nz,interactive
+00015E 5B23                A    60    	INC.LIL	HL
+000160 5B7E                A    61    	LD.LIL	a,(HL)				;24 bit
+000162 FE63                A    62    	cp	'c'
+000164 C2 91 02            A    63    	jp	nz,badusage
+                           A    64    ;	jp	interactive
+000167 5BDD2706            A    65    	LD.LIL		HL,(IX+6)		; HLU: pointer 
+00016B                     A    66    openit:
+00016B 0E01                A    67    	ld	c,fa_read	;open read-only for straigh
                            A    68    	MOSCALL	mos_fopen
-00016F B7                  A    69    	or	a
-000170 20 0E               A    70    	jr	nz,open_ok
-000172 210400              A    71    	ld	hl,4	;file not found/could not find 
-000175 C9                  A    72    	ret			;exit
+000171 B7                  A    69    	or	a
+000172 20 0E               A    70    	jr	nz,open_ok
+000174 210400              A    71    	ld	hl,4	;file not found/could not find 
+000177 C9                  A    72    	ret			;exit
                            A    73    ;
                            A    74    ;
                            A    75    ; Close and exit routines
                            A    76    ;
                            A    77    
-000176                     A    78    close:
+000178                     A    78    close:
                            A    79    ;C: Filehandle, or 0 to close all open files
                            A    80    ;returns number of still open files - how about
                            A    81    
-000176 0E00                A    82    	ld	c,0
+000178 0E00                A    82    	ld	c,0
                            A    83    	MOSCALL	mos_fclose	
                            A    84    
-00017C                     A    85    exit:
-00017C 210000              A    86    	ld	hl,0	;for Agon - successful exit
-00017F C9                  A    87    	ret
+00017E                     A    85    exit:
+00017E 210000              A    86    	ld	hl,0	;for Agon - successful exit
+000181 C9                  A    87    	ret
                            A    88    ;
                            A    89    ;
-000180                     A    90    open_ok:
+000182                     A    90    open_ok:
                            A    91    
-000180 32 67 06            A    92    	ld	(in_handle),a	;store the file handle 
+000182 32 AC 06            A    92    	ld	(in_handle),a	;store the file handle 
                            A    93    	MOSCALL	mos_sysvars	;get the sysvars locati
-000187 DD7E19              A    94    	ld	a,(IX+sysvar_vkeycount)	;fetch keycount
-00018A 32 7B 08            A    95    	ld	(keycount),a	;store to compare again
-00018D 5B21F0FF FF         A    96    	ld.lil	hl,0-16
-000192 5B22 68 06 0B       A    97    	ld.lil	(counter+BASE),hl
+000189 DD7E19              A    94    	ld	a,(IX+sysvar_vkeycount)	;fetch keycount
+00018C 32 C0 08            A    95    	ld	(keycount),a	;store to compare again
+00018F 5B21F0FF FF         A    96    	ld.lil	hl,0-16
+000194 5B22 AD 06 0B       A    97    	ld.lil	(counter+BASE),hl
                            A    98    
-000197                     A    99    printlp:
+000199                     A    99    printlp:
                            A   100    
                            A   101    
-000197 5B21 7A 06 0B       A   102    	ld.lil	hl,buffer+BASE
-00019C 5B111000 00         A   103    	ld.lil	de,16
-0001A1 3A 67 06            A   104    	ld	a,(in_handle)
-0001A4 4F                  A   105    	ld	c,a
+000199 5B21 BF 06 0B       A   102    	ld.lil	hl,buffer+BASE
+00019E 5B111000 00         A   103    	ld.lil	de,16
+0001A3 3A AC 06            A   104    	ld	a,(in_handle)
+0001A6 4F                  A   105    	ld	c,a
                            A   106    	MOSCALL	mos_fread
-0001A9 7B                  A   107    	ld		a,e
-0001AA B7                  A   108    	or		a
-0001AB CA 27 02            A   109    	jp		z,donefile
-0001AE 47                  A   110    	ld		b,a	;b will track length for next l
-0001AF 5B2A 68 06 0B       A   111    	ld.lil	hl,(counter+BASE)
-0001B4 5B111000 00         A   112    	ld.lil	de,16
-0001B9 5B19                A   113    	add.lil	hl,de
-0001BB 5B22 68 06 0B       A   114    	ld.lil	(counter+BASE),hl
-0001C0 C5                  A   115    	push	bc
-0001C1 CD 3F 06            A   116    	call	Print_Hex24
-0001C4 C1                  A   117    	pop		bc
-0001C5                     A   118    hexloop:
-0001C5 3E3A                A   119    	ld		a,':'
-0001C7 D7                  A   120    	rst		10h
-0001C8 21 7A 06            A   121    	ld		hl,buffer
-0001CB 0E00                A   122    	ld		c,0
-0001CD                     A   123    hexlp1:
-0001CD 79                  A   124    	ld		a,c
-0001CE E603                A   125    	and		3
-0001D0 20 07               A   126    	jr		nz,$f
-0001D2 3E20                A   127    	ld		a,' '
-0001D4 E5                  A   128    	push	hl
-0001D5 C5                  A   129    	push	bc
-0001D6 D7                  A   130    	rst		10h
-0001D7 C1                  A   131    	pop		bc
-0001D8 E1                  A   132    	pop		hl
-0001D9                     A   133    $$:
-0001D9 7E                  A   134    	ld		a,(hl)
+0001AB 7B                  A   107    	ld		a,e
+0001AC B7                  A   108    	or		a
+0001AD CA 2C 02            A   109    	jp		z,donefile
+0001B0 47                  A   110    	ld		b,a	;b will track length for next l
+0001B1 5B2A AD 06 0B       A   111    	ld.lil	hl,(counter+BASE)
+0001B6 5B111000 00         A   112    	ld.lil	de,16
+0001BB 5B19                A   113    	add.lil	hl,de
+0001BD 5B22 AD 06 0B       A   114    	ld.lil	(counter+BASE),hl
+0001C2 C5                  A   115    	push	bc
+0001C3 CD 84 06            A   116    	call	Print_Hex24
+0001C6 C1                  A   117    	pop		bc
+0001C7                     A   118    hexloop:
+0001C7 3E3A                A   119    	ld		a,':'
+0001C9 D7                  A   120    	rst		10h
+0001CA 21 BF 06            A   121    	ld		hl,buffer
+0001CD 0E00                A   122    	ld		c,0
+0001CF                     A   123    hexlp1:
+0001CF 79                  A   124    	ld		a,c
+0001D0 E603                A   125    	and		3
+0001D2 20 07               A   126    	jr		nz,$f
+0001D4 3E20                A   127    	ld		a,' '
+0001D6 E5                  A   128    	push	hl
+0001D7 C5                  A   129    	push	bc
+0001D8 D7                  A   130    	rst		10h
+0001D9 C1                  A   131    	pop		bc
+0001DA E1                  A   132    	pop		hl
+0001DB                     A   133    $$:
+0001DB 7E                  A   134    	ld		a,(hl)
                            A   135    
-0001DA E5                  A   136    	push	hl
-0001DB C5                  A   137    	push	bc
-0001DC CD 54 06            A   138    	call	Print_Hex8
-0001DF C1                  A   139    	pop		bc
-0001E0 E1                  A   140    	pop		hl
-0001E1 23                  A   141    	inc		hl
-0001E2                     A   142    hexlp2:
-0001E2 0C                  A   143    	inc		c
-0001E3 79                  A   144    	ld		a,c
-0001E4 FE10                A   145    	cp		16
-0001E6 CA FA 01            A   146    	jp		z,hexend
-0001E9 B8                  A   147    	cp		b
-0001EA 38 E1               A   148    	jr		c,hexlp1
-0001EC 3E20                A   149    	ld		a,' '
-0001EE D7                  A   150    	rst		10h
-0001EF D7                  A   151    	rst		10h
-0001F0 79                  A   152    	ld		a,c
-0001F1 E603                A   153    	and		3
-0001F3 20 03               A   154    	jr		nz,$f
-0001F5 3E20                A   155    	ld		a,' '
-0001F7 D7                  A   156    	rst		10h
-0001F8                     A   157    $$:
-0001F8 18 E8               A   158    	jr		hexlp2
+0001DC E5                  A   136    	push	hl
+0001DD C5                  A   137    	push	bc
+0001DE CD 99 06            A   138    	call	Print_Hex8
+0001E1 C1                  A   139    	pop		bc
+0001E2 E1                  A   140    	pop		hl
+0001E3 23                  A   141    	inc		hl
+0001E4                     A   142    hexlp2:
+0001E4 0C                  A   143    	inc		c
+0001E5 79                  A   144    	ld		a,c
+0001E6 FE10                A   145    	cp		16
+0001E8 CA FC 01            A   146    	jp		z,hexend
+0001EB B8                  A   147    	cp		b
+0001EC 38 E1               A   148    	jr		c,hexlp1
+0001EE 3E20                A   149    	ld		a,' '
+0001F0 D7                  A   150    	rst		10h
+0001F1 D7                  A   151    	rst		10h
+0001F2 79                  A   152    	ld		a,c
+0001F3 E603                A   153    	and		3
+0001F5 20 03               A   154    	jr		nz,$f
+0001F7 3E20                A   155    	ld		a,' '
+0001F9 D7                  A   156    	rst		10h
+0001FA                     A   157    $$:
+0001FA 18 E8               A   158    	jr		hexlp2
                            A   159    
-0001FA                     A   160    hexend:
-0001FA 3E20                A   161    	ld		a,' '
-0001FC D7                  A   162    	rst		10h
+0001FC                     A   160    hexend:
+0001FC 3E20                A   161    	ld		a,' '
+0001FE D7                  A   162    	rst		10h
                            A   163    
-0001FD                     A   164    asciiloop:
-0001FD 3E7C                A   165    	ld		a,'|'
-0001FF D7                  A   166    	rst		10h
-000200 21 7A 06            A   167    	ld		hl,buffer
-000203 0E00                A   168    	ld		c,0
-000205                     A   169    asciilp1:
-000205 7E                  A   170    	ld		a,(hl)
-000206 CD 47 02            A   171    	call	unprintable
-000209                     A   172    asciilp2:
-000209 E5                  A   173    	push	hl
-00020A C5                  A   174    	push	bc
-00020B D7                  A   175    	rst		10h
-00020C C1                  A   176    	pop		bc
-00020D E1                  A   177    	pop		hl
-00020E 23                  A   178    	inc		hl
-00020F 0C                  A   179    	inc		c
-000210 79                  A   180    	ld		a,c
-000211 FE10                A   181    	cp		16
-000213 CA 1D 02            A   182    	jp		z,asciiend
-000216 B8                  A   183    	cp		b
-000217 38 EC               A   184    	jr		c,asciilp1
-000219 3E20                A   185    	ld		a,' '
-00021B 18 EC               A   186    	jr		asciilp2
+0001FF                     A   164    asciiloop:
+0001FF 3E7C                A   165    	ld		a,'|'
+000201 D7                  A   166    	rst		10h
+000202 21 BF 06            A   167    	ld		hl,buffer
+000205 0E00                A   168    	ld		c,0
+000207                     A   169    asciilp1:
+000207 7E                  A   170    	ld		a,(hl)
+000208 CD 4C 02            A   171    	call	unprintable
+00020B                     A   172    asciilp2:
+00020B E5                  A   173    	push	hl
+00020C C5                  A   174    	push	bc
+00020D D7                  A   175    	rst		10h
+00020E C1                  A   176    	pop		bc
+00020F E1                  A   177    	pop		hl
+000210 23                  A   178    	inc		hl
+000211 0C                  A   179    	inc		c
+000212 79                  A   180    	ld		a,c
+000213 FE10                A   181    	cp		16
+000215 CA 1F 02            A   182    	jp		z,asciiend
+000218 B8                  A   183    	cp		b
+000219 38 EC               A   184    	jr		c,asciilp1
+00021B 3E20                A   185    	ld		a,' '
+00021D 18 EC               A   186    	jr		asciilp2
                            A   187    
-00021D                     A   188    asciiend:
-00021D CD 51 02            A   189    	call	inline_print
-000220 7C0D0A00            A   190    	db		'|',CR,LF,0	
-000224 C3 97 01            A   191    	jp		printlp
-                           A   192    
+00021F                     A   188    asciiend:
+00021F CD 56 02            A   189    	call	inline_print
+000222 7C0D0A00            A   190    	db		'|',CR,LF,0	
+000226 CD 6A 02            A   191    	call	ck_ctrlC	;check at the end of th
+000229 C3 99 01            A   192    	jp		printlp
                            A   193    
                            A   194    
-000227                     A   195    donefile:
-000227 CD 51 02            A   196    	call	inline_print
-00022A 0D0A00              A   197    	db		CR,LF,0
-00022D C3 76 01            A   198    	jp		close
-                           A   199    
-000230                     A   200    hit_EOF:
-000230 CD 51 02            A   201    	call	inline_print
-000233 50617374 20656E64   A   202    	db		'Past end of file',CR,LF,0
-00023B 206F6620 66696C65 
-000243 0D0A00 
-000246 C9                  A   203    	ret
-                           A   204    
-                           A   205    ; Entry:
-                           A   206    ; A is a character to test
-                           A   207    ; Exit:
-                           A   208    ; unprintable character converted to a '.'
-000247                     A   209    unprintable:
-000247 FE20                A   210    	cp	' '
-000249 38 03               A   211    	jr	c,$f
-00024B FE7F                A   212    	cp	127
-00024D D8                  A   213    	ret	c	;always nz
-00024E 3E2E                A   214    $$:	ld	a,'.'	;xor	a	;sets 0 flag
-000250 C9                  A   215    	ret
-                           A   216    ;
-                           A   217    ; Prints string directly after the call
-                           A   218    ;
-000251 E1                  A   219    inline_print:	pop	hl
-000252 CD 58 02            A   220    	call	print_string
-000255 E9                  A   221    	jp	(hl)
-                           A   222    ;
-                           A   223    ; more efficient print string for strings > 1 c
-000256                     A   224    $$:
-000256 D7                  A   225    	rst	10h	;Agon uses this to print the charac
-000257 23                  A   226    	inc	hl
-000258 7E                  A   227    print_string:	ld	a,(hl)
-000259 B7                  A   228    	or	a
-00025A 20 FA               A   229    	jr	nz,$b
-00025C C9                  A   230    	ret
-                           A   231    ;
+                           A   195    
+00022C                     A   196    donefile:
+00022C CD 56 02            A   197    	call	inline_print
+00022F 0D0A00              A   198    	db		CR,LF,0
+000232 C3 78 01            A   199    	jp		close
+                           A   200    
+000235                     A   201    hit_EOF:
+000235 CD 56 02            A   202    	call	inline_print
+000238 50617374 20656E64   A   203    	db		'Past end of file',CR,LF,0
+000240 206F6620 66696C65 
+000248 0D0A00 
+00024B C9                  A   204    	ret
+                           A   205    
+                           A   206    ; Entry:
+                           A   207    ; A is a character to test
+                           A   208    ; Exit:
+                           A   209    ; unprintable character converted to a '.'
+00024C                     A   210    unprintable:
+00024C FE20                A   211    	cp	' '
+00024E 38 03               A   212    	jr	c,$f
+000250 FE7F                A   213    	cp	127
+000252 D8                  A   214    	ret	c	;always nz
+000253 3E2E                A   215    $$:	ld	a,'.'	;xor	a	;sets 0 flag
+000255 C9                  A   216    	ret
+                           A   217    ;
+                           A   218    ; Prints string directly after the call
+                           A   219    ;
+000256 E1                  A   220    inline_print:	pop	hl
+000257 CD 5D 02            A   221    	call	print_string
+00025A E9                  A   222    	jp	(hl)
+                           A   223    ;
+                           A   224    ; more efficient print string for strings > 1 c
+00025B                     A   225    $$:
+00025B D7                  A   226    	rst	10h	;Agon uses this to print the charac
+00025C 23                  A   227    	inc	hl
+00025D 7E                  A   228    print_string:	ld	a,(hl)
+00025E B7                  A   229    	or	a
+00025F 20 FA               A   230    	jr	nz,$b
+000261 C9                  A   231    	ret
                            A   232    ;
-00025D                     A   233    $$:
-00025D D7                  A   234    	rst	10h	;Agon uses this to print the charac
-00025E 23                  A   235    	inc	hl
-00025F 7E                  A   236    print_HL:	ld	a,(hl)
-000260 FE20                A   237    	cp	32
-000262 30 F9               A   238    	jr	nc,$b
-000264 C9                  A   239    	ret
-                           A   240    
+                           A   233    ;
+000262                     A   234    $$:
+000262 D7                  A   235    	rst	10h	;Agon uses this to print the charac
+000263 23                  A   236    	inc	hl
+000264 7E                  A   237    print_HL:	ld	a,(hl)
+000265 FE20                A   238    	cp	32
+000267 30 F9               A   239    	jr	nc,$b
+000269 C9                  A   240    	ret
                            A   241    
-                           A   242    ; Check for ctrl-C. If so, clean stack and exit
-                           A   243    ;
-000265                     A   244    ck_ctrlC:
-000265 3E01                A   245    	ld	a,1		; modified below by self modify
-000267 3D                  A   246    	dec	a
-000268 E60F                A   247    	and	15
-00026A 32 66 02            A   248    	ld	(ck_ctrlC+1),a	; update LD A instructi
-00026D C0                  A   249    	ret	nz		; check every 16 calls only
-                           A   250    	MOSCALL	mos_sysvars	;get the sysvars locati
-000272 5BDD7E19            A   251    	ld.lil	a,(IX+sysvar_vkeycount)	;check if a
-000276 21 7B 08            A   252    	ld	hl,keycount
-000279 BE                  A   253    	cp	(hl)	;compare against keycount for c
-00027A C8                  A   254    	ret	z
-00027B 77                  A   255    	ld	(hl),a	;update keycount
-00027C 5BDD7E05            A   256    	ld.lil	a,(IX+sysvar_keyascii)	;fetch char
-000280 FE03                A   257    	cp	3	;is it ctr-C
-000282 C0                  A   258    	ret	nz
-000283 E1                  A   259    	pop	hl		;clean up stack
-000284 E1                  A   260    	pop	hl
-000285 C3 76 01            A   261    	jp	close
-                           A   262    
-000288 CD 94 02            A   263    okusage:	call usage
-00028B C3 7C 01            A   264    	jp	exit
-                           A   265    
-00028E CD 94 02            A   266    badusage:	call usage
-000291 C3 45 01            A   267    	jp	_err_invalid_param
-                           A   268    ;
-                           A   269    ; usage -- show syntax
-                           A   270    ; 
-000294 CD 51 02            A   271    usage:	call	inline_print
-000297 0D0A6865 7864756D   A   272    	db	CR,LF,'hexdump utility for Agon by Shaw
-00029F 70207574 696C6974 
-0002A7 7920666F 72204167 
-0002AF 6F6E2062 79205368 
-0002B7 61776E20 53696A6E 
-0002BF 73747261 2031352D 
-0002C7 4A756E2D 32303233 
-0002CF 0D0A0D0A 
-0002D3 55736167 653A0D0A   A   273    	db	'Usage:',CR,LF
-0002DB 20202068 65786475   A   274    	db	'   hexdump [-i] <file>',CR,LF,CR,LF
-0002E3 6D70205B 2D695D20 
-0002EB 3C66696C 653E0D0A 
-0002F3 0D0A 
-0002F5 096F7074 696F6E61   A   275    	db	'	optional paramter i uses hexdump in
-0002FD 6C207061 72616D74 
-000305 65722069 20757365 
-00030D 73206865 7864756D 
-000315 7020696E 20696E74 
-00031D 65726163 74697665 
-000325 206D6F64 652E0D0A 
-00032D 53746F72 65206865   A   276    	db 	'Store hexdump.bin in /mos directory. M
-000335 7864756D 702E6269 
-00033D 6E20696E 202F6D6F 
-000345 73206469 72656374 
-00034D 6F72792E 204D696E 
-000355 696D756D 204D4F53 
-00035D 20766572 73696F6E 
-000365 20312E30 332E0D0A 
-00036D 0D0A00 
-000370 C9                  A   277    	ret
-                           A   278    
-                           A   279    ;
-                           A   280    ;
-                           A   281    ;
-                           A   282    ;
-                           A   283    ;
-                           A   284    ;
-000371                     A   285    interactive:
-000371 5BDD2706            A   286    	LD.LIL		HL,(IX+6)		; HLU: pointer 
-000375 0E01                A   287    	ld	c,fa_read	;open read-only for straigh
-                           A   288    	MOSCALL	mos_fopen
-00037B B7                  A   289    	or	a
-00037C 20 04               A   290    	jr	nz,iopen_ok
-00037E 210400              A   291    	ld	hl,4	;file not found/could not find 
-000381 C9                  A   292    	ret			;exit	
-000382                     A   293    iopen_ok:
-000382 32 67 06            A   294    	ld		(in_handle),a
-000385 5B210000 00         A   295    	ld.lil	hl,0
-00038A 5B22 68 06 0B       A   296    	ld.lil	(counter+BASE),hl
-00038F                     A   297    main_loop:
-00038F CD 51 02            A   298    	call	inline_print
-000392 0C110A68 65786475   A   299    	db		12,17,10,'hexdump utility - interac
-00039A 6D702075 74696C69 
-0003A2 7479202D 20696E74 
-0003AA 65726163 74697665 
-0003B2 206D6F64 65110F0D 
-0003BA 0A 
-0003BB 46696C65 6E616D65   A   300    	db		'Filename:',0
-0003C3 3A00 
-0003C5 5BDD2706            A   301    	LD.LIL		HL,(IX+6)
-0003C9 CD 5F 02            A   302    	call	print_HL
-0003CC CD 51 02            A   303    	call	inline_print
-0003CF 0D0A0D0A 55736167   A   304    	db		CR,LF,CR,LF,'Usage instructions:',C
-0003D7 6520696E 73747275 
-0003DF 6374696F 6E733A0D 
-0003E7 0A 
-0003E8 70202D20 70726576   A   305    	db		'p - previous 100h bytes  - - previ
-0003F0 696F7573 20313030 
-0003F8 68206279 74657320 
-000400 202D202D 20707265 
-000408 76696F75 73206279 
-000410 74650D0A 
-000414 6E202D20 6E657874   A   306    	db		'n - next 100h bytes      + - next 
-00041C 20313030 68206279 
-000424 74657320 20202020 
-00042C 202B202D 206E6578 
-000434 74206279 74650D0A 
-00043C 67202D20 676F2074   A   307    	db		'g - go to hex location',CR,LF
-000444 6F206865 78206C6F 
-00044C 63617469 6F6E0D0A 
-000454 71202D20 71756974   A   308    	db		'q - quit',CR,LF,CR,LF,CR,LF,0
-00045C 0D0A0D0A 0D0A00 
-000463 5B210000 00         A   309    	ld.lil	hl,0	
-000468 CD A0 04            A   310    	call	sectorlp
-00046B 5B210001 00         A   311    	ld.lil	hl,256
-000470 CD A0 04            A   312    	call	sectorlp
-000473                     A   313    key_invalid:
-000473 3E1F                A   314    	ld		a,31
-000475 D7                  A   315    	rst		10h
-000476 3E00                A   316    	ld		a,0
-000478 D7                  A   317    	rst		10h
-000479 3E2B                A   318    	ld		a,43
-00047B D7                  A   319    	rst		10h
-                           A   320    	MOSCALL	mos_getkey
-000480 FE6E                A   321    	cp		'n'
-000482 CA 5D 05            A   322    	jp		z,next_sector
-000485 FE70                A   323    	cp		'p'
-000487 CA 79 05            A   324    	jp		z,prev_sector
-00048A FE2B                A   325    	cp		'+'
-00048C CA 52 05            A   326    	jp		z,next_byte
-00048F FE2D                A   327    	cp		'-'
-000491 CA 90 05            A   328    	jp		z,prev_byte
-000494 FE67                A   329    	cp		'g'
-000496 CA A9 05            A   330    	jp		z,goto
-000499 FE71                A   331    	cp		'q'
-00049B 20 D6               A   332    	jr		nz,key_invalid
-00049D C3 7C 01            A   333    	jp		exit
-                           A   334    
-                           A   335    
-                           A   336    
-0004A0                     A   337    sectorlp:
-                           A   338    
-                           A   339    ;	ld.lil	(counter+BASE),hl
-0004A0 5B22 6C 06 0B       A   340    	ld.lil	(rows+BASE),hl
-0004A5 5B11 7A 06 0B       A   341    	ld.lil	de,buffer+BASE
-0004AA 5B19                A   342    	add.lil	hl,de
-0004AC 5B110001 00         A   343    	ld.lil	de,256
-0004B1 3A 67 06            A   344    	ld	a,(in_handle)
-0004B4 4F                  A   345    	ld	c,a
-                           A   346    	MOSCALL	mos_fread
-0004B9 7B                  A   347    	ld		a,e
-0004BA B2                  A   348    	or		d
-0004BB CA 30 02            A   349    	jp		z,hit_EOF		;zero length (DE=0)
-0004BE 43                  A   350    	ld		b,e	;b will track length for next l
-0004BF 0E00                A   351    	ld		c,0	;c will track current value in 
-                           A   352    
-0004C1                     A   353    seclp2:
-                           A   354    ;	push	bc
-                           A   355    		
-                           A   356    
-0004C1                     A   357    iprintlp:
-                           A   358    
-0004C1 5B2A 68 06 0B       A   359    	ld.lil	hl,(counter+BASE)
-0004C6 5BED5B 6C 06 0B     A   360    	ld.lil	de,(rows+BASE)
-0004CC 5B19                A   361    	add.lil	hl,de
-                           A   362    ;	ld.lil	de,16
-                           A   363    ;	add.lil	hl,de
-                           A   364    ;	ld.lil	(counter+BASE),hl
-0004CE C5                  A   365    	push	bc
-0004CF CD 3F 06            A   366    	call	Print_Hex24
-0004D2 C1                  A   367    	pop		bc
-0004D3 C5                  A   368    	push	bc
-                           A   369    ;	ld		d,0		;ignore 2nd 100h block offs
-0004D4                     A   370    ihexloop:
-0004D4 3E3A                A   371    	ld		a,':'
-0004D6 C5                  A   372    	push	bc
-0004D7 D7                  A   373    	rst		10h
-0004D8 C1                  A   374    	pop		bc
-0004D9 21 7A 06            A   375    	ld		hl,buffer
-0004DC 19                  A   376    	add		hl,de
-                           A   377    ;	ld		c,0
-0004DD                     A   378    ihexlp1:
-0004DD 79                  A   379    	ld		a,c
-0004DE E603                A   380    	and		3
-0004E0 20 05               A   381    	jr		nz,$f
-0004E2 3E20                A   382    	ld		a,' '
-                           A   383    ;	push	hl
-0004E4 C5                  A   384    	push	bc
-0004E5 D7                  A   385    	rst		10h
-0004E6 C1                  A   386    	pop		bc
-                           A   387    ;	pop		hl
-0004E7                     A   388    $$:
-                           A   389    
-0004E7 78                  A   390    	ld		a,b
-0004E8 B7                  A   391    	or		a
-0004E9 28 0D               A   392    	jr		z,ihexlp2
-                           A   393    ;	ld		a,b
-0004EB B9                  A   394    	cp		c
-0004EC 28 02               A   395    	jr		z,$F
-0004EE 30 08               A   396    	jr		nc,ihexlp2
-0004F0                     A   397    $$:
-0004F0 3E20                A   398    	ld		a,' '
-0004F2 C5                  A   399    	push	bc
-0004F3 D7                  A   400    	rst		10h
-0004F4 D7                  A   401    	rst		10h
-0004F5 C1                  A   402    	pop		bc
-0004F6 18 09               A   403    	jr		ihexlp3
-0004F8                     A   404    ihexlp2:
-0004F8 7E                  A   405    	ld		a,(hl)
-                           A   406    
-0004F9 E5                  A   407    	push	hl
-0004FA C5                  A   408    	push	bc
-0004FB CD 54 06            A   409    	call	Print_Hex8
-0004FE C1                  A   410    	pop		bc
-0004FF E1                  A   411    	pop		hl
-000500 23                  A   412    	inc		hl
-000501                     A   413    ihexlp3:
-000501 0C                  A   414    	inc		c
-000502 79                  A   415    	ld		a,c
-000503 E60F                A   416    	and		15
-000505 CA 0A 05            A   417    	jp		z,ihexend
-                           A   418    
-                           A   419    ;	ld		a,c
-                           A   420    ;	and		3
-                           A   421    ;	jr		nz,$f
-                           A   422    ;	ld		a,' '
-                           A   423    ;	push	bc
-                           A   424    ;	rst		10h
-                           A   425    ;	pop		bc
-                           A   426    ;$$:
-000508 18 D3               A   427    	jr		ihexlp1
-                           A   428    
-00050A                     A   429    ihexend:
-00050A 3E20                A   430    	ld		a,' '
-00050C D7                  A   431    	rst		10h
-00050D C1                  A   432    	pop		bc		;recover c register.
-00050E                     A   433    iasciiloop:
-00050E 3E7C                A   434    	ld		a,'|'
-000510 C5                  A   435    	push	bc
-000511 D7                  A   436    	rst		10h
-000512 C1                  A   437    	pop		bc
-000513 21 7A 06            A   438    	ld		hl,buffer
-000516 19                  A   439    	add		hl,de
-                           A   440    ;	ld		c,0
-000517                     A   441    iasciilp1:
-000517 78                  A   442    	ld		a,b
-000518 B7                  A   443    	or		a
-000519 28 09               A   444    	jr		z,iasciilp2
-                           A   445    ;	ld		a,b
-00051B B9                  A   446    	cp		c
-00051C 28 02               A   447    	jr		z,$F
-00051E 30 04               A   448    	jr		nc,iasciilp2
-000520                     A   449    $$:
-000520 3E20                A   450    	ld		a,' '
-000522 18 04               A   451    	jr		iasciilp3
-000524                     A   452    iasciilp2:
-000524 7E                  A   453    	ld		a,(hl)
-000525 CD 47 02            A   454    	call	unprintable
-000528                     A   455    iasciilp3:
-000528 E5                  A   456    	push	hl
-000529 C5                  A   457    	push	bc
-00052A D7                  A   458    	rst		10h
-00052B C1                  A   459    	pop		bc
-00052C E1                  A   460    	pop		hl
-00052D 23                  A   461    	inc		hl
-00052E 0C                  A   462    	inc		c
-00052F 79                  A   463    	ld		a,c
-000530 E60F                A   464    	and		15
-                           A   465    ;	jp		z,iasciiend
-                           A   466    ;	cp		b
-                           A   467    ;	jr		c,iasciilp1
-                           A   468    ;	ld		a,' '
-                           A   469    ;	jr		iasciilp2
-000532 20 E3               A   470    	jr		nz,iasciilp1
-                           A   471    
-000534                     A   472    iasciiend:
-000534 CD 51 02            A   473    	call	inline_print
-000537 7C0D0A00            A   474    	db		'|',CR,LF,0
-00053B 5B2A 6C 06 0B       A   475    	ld.lil	hl,(rows+BASE)
-000540 5B111000 00         A   476    	ld.lil	de,16
-000545 5B19                A   477    	add.lil	hl,de
-000547 5B22 6C 06 0B       A   478    	ld.lil	(rows+BASE),hl
-00054C 7D                  A   479    	ld		a,l
-00054D B7                  A   480    	or		a
-00054E C2 C1 04            A   481    	jp		nz,iprintlp
-000551 C9                  A   482    	ret
-                           A   483    
-000552                     A   484    next_byte:
-000552 5B2A 68 06 0B       A   485    	ld.lil	hl,(counter+BASE)
-000557 5B23                A   486    	inc.lil	hl
-000559 1E00                A   487    	ld		e,0
-00055B 18 0C               A   488    	jr		seekit
-00055D                     A   489    next_sector:
-00055D 5B2A 68 06 0B       A   490    	ld.lil	hl,(counter+BASE)
-000562 5B110001 00         A   491    	ld.lil	de,256
-000567 5B19                A   492    	add.lil	hl,de
-000569                     A   493    seekit:
-000569 5B22 68 06 0B       A   494    	ld.lil	(counter+BASE),hl
-00056E 3A 67 06            A   495    	ld		a,(in_handle)
-000571 4F                  A   496    	ld		c,a
-                           A   497    	MOSCALL	mos_flseek
-000576 C3 8F 03            A   498    	jp		main_loop
-                           A   499    
-000579                     A   500    prev_sector:
-000579 5B2A 68 06 0B       A   501    	ld.lil	hl,(counter+BASE)
-00057E 5B110001 00         A   502    	ld.lil	de,256
-000583 B7                  A   503    	or		a
-000584 5BED52              A   504    	sbc.lil	hl,de
-000587 30 E0               A   505    	jr		nc,seekit
-000589 5B210000 00         A   506    	ld.lil	hl,0
-00058E 18 D9               A   507    	jr		seekit
-                           A   508    
-000590                     A   509    prev_byte:
-000590 5B2A 68 06 0B       A   510    	ld.lil	hl,(counter+BASE)
-000595 5B110100 00         A   511    	ld.lil	de,1
-00059A B7                  A   512    	or		a
-00059B 5BED52              A   513    	sbc.lil	hl,de
-00059E 1E00                A   514    	ld		e,0
-0005A0 30 C7               A   515    	jr		nc,seekit
-0005A2 5B210000 00         A   516    	ld.lil	hl,0
-0005A7 18 C0               A   517    	jr		seekit
-                           A   518    
-                           A   519    ;goto routine
-0005A9                     A   520    goto:
-                           A   521    ;position cursor + prompt
-0005A9 CD 51 02            A   522    	call	inline_print
-0005AC 1F010947 6F20746F   A   523    	db		31,1,9,'Go to [hex]?',0
-0005B4 205B6865 785D3F00 
-                           A   524    ;0x09: mos_editline - Invoke the line editor
-                           A   525    ;HL(U): Address of the buffer
-                           A   526    ;BC(U): Buffer length
-                           A   527    ;E: 0 to not clear buffer, 1 to clear
-                           A   528    ;Returns:
-                           A   529    ;A: Key that was used to exit the input loop (C
-0005BC 21 70 06            A   530    	ld		hl,input_buf
-0005BF 010700              A   531    	ld		bc,7
-0005C2 1E01                A   532    	ld		e,1
-                           A   533    	MOSCALL	mos_editline
-0005C8 FE1B                A   534    	cp		27
-0005CA 28 56               A   535    	jr		z,goto_abort
-0005CC 11 70 06            A   536    	ld		de,input_buf
-0005CF 5B210000 00         A   537    	ld.lil	hl,0
-0005D4 0606                A   538    	ld		b,6		;max char count
-0005D6                     A   539    goto_loop:
-0005D6 1A                  A   540    	ld		a,(de)
-0005D7 B7                  A   541    	or		a
-0005D8 CA 69 05            A   542    	jp		z,seekit
-0005DB D630                A   543    	sub		'0'	;30h
-0005DD 38 23               A   544    	jr		c,goto_invalid
-0005DF FE0A                A   545    	cp		9+1
-0005E1 38 12               A   546    	jr		c,goto_nextchar
-0005E3 D610                A   547    	sub		10h
-0005E5 38 1B               A   548    	jr		c,goto_invalid
-0005E7 E61F                A   549    	and		1fh
-0005E9 28 17               A   550    	jr		z,goto_invalid
-0005EB FE07                A   551    	cp		7
-0005ED 30 13               A   552    	jr		nc,goto_invalid
-0005EF C609                A   553    	add		9
-0005F1 FE10                A   554    	cp		16
-0005F3 30 0D               A   555    	jr		nc,goto_invalid	;fix it later
+                           A   242    
+                           A   243    ; Check for ctrl-C. If so, clean stack and exit
+                           A   244    ;
+00026A                     A   245    ck_ctrlC:
+                           A   246    ;	ld	a,1		; modified below by self modify
+                           A   247    ;	dec	a
+                           A   248    ;	and	7
+                           A   249    ;	ld	(ck_ctrlC+1),a	; update LD A instructi
+                           A   250    ;	ret	nz		; check every 8 calls only
+                           A   251    	MOSCALL	mos_sysvars	;get the sysvars locati
+00026E 5BDD7E19            A   252    	ld.lil	a,(IX+sysvar_vkeycount)	;check if a
+000272 21 C0 08            A   253    	ld	hl,keycount
+000275 BE                  A   254    	cp	(hl)	;compare against keycount for c
+000276 C8                  A   255    	ret	z
+000277 77                  A   256    	ld	(hl),a	;update keycount
+000278 5BDD7E05            A   257    	ld.lil	a,(IX+sysvar_keyascii)	;fetch char
+00027C FE1B                A   258    	cp	27	;accept an ESC as well
+00027E 28 07               A   259    	jr	z,$f
+000280 FE71                A   260    	cp	'q'	;accept 'q' for consistency
+000282 28 03               A   261    	jr	z,$f
+000284 FE03                A   262    	cp	3	;is it ctr-C
+000286 C0                  A   263    	ret	nz
+000287                     A   264    $$:
+000287 E1                  A   265    	pop	hl		;clean up stack
+                           A   266    ;	pop	hl
+000288 C3 78 01            A   267    	jp	close
+                           A   268    
+00028B CD 97 02            A   269    okusage:	call usage
+00028E C3 7E 01            A   270    	jp	exit
+                           A   271    
+000291 CD 97 02            A   272    badusage:	call usage
+000294 C3 45 01            A   273    	jp	_err_invalid_param
+                           A   274    ;
+                           A   275    ; usage -- show syntax
+                           A   276    ; 
+000297 CD 56 02            A   277    usage:	call	inline_print
+00029A 0D0A6865 7864756D   A   278    	db	CR,LF,'hexdump utility for Agon by Shaw
+0002A2 70207574 696C6974 
+0002AA 7920666F 72204167 
+0002B2 6F6E2062 79205368 
+0002BA 61776E20 53696A6E 
+0002C2 73747261 20286329 
+0002CA 2031372D 4A756E2D 
+0002D2 32303233 0D0A0D0A 
+0002DA 55736167 653A0D0A   A   279    	db	'Usage:',CR,LF
+0002E2 20202068 65786475   A   280    	db	'   hexdump [-c] <file>',CR,LF,CR,LF
+0002EA 6D70205B 2D635D20 
+0002F2 3C66696C 653E0D0A 
+0002FA 0D0A 
+0002FC 096F7074 696F6E61   A   281    	db	'	optional paramter c uses hexdump in
+000304 6C207061 72616D74 
+00030C 65722063 20757365 
+000314 73206865 7864756D 
+00031C 7020696E 20636F6E 
+000324 74696E75 6F757320 
+00032C 6D6F6465 2E0D0A 
+000333 53746F72 65206865   A   282    	db 	'Store hexdump.bin in /mos directory. M
+00033B 7864756D 702E6269 
+000343 6E20696E 202F6D6F 
+00034B 73206469 72656374 
+000353 6F72792E 204D696E 
+00035B 696D756D 204D4F53 
+000363 20766572 73696F6E 
+00036B 20312E30 332E0D0A 
+000373 0D0A00 
+000376 C9                  A   283    	ret
+                           A   284    
+                           A   285    ;
+                           A   286    ;
+                           A   287    ;
+                           A   288    ; 8,11,10,21 = L,U,D,R
+                           A   289    ;
+                           A   290    ;
+000377                     A   291    interactive:
+                           A   292    ;	LD.LIL		HL,(IX+6)		; HLU: pointer 
+000377 0E01                A   293    	ld	c,fa_read	;open read-only for straigh
+                           A   294    	MOSCALL	mos_fopen
+00037D B7                  A   295    	or	a
+00037E 20 04               A   296    	jr	nz,iopen_ok
+000380 210400              A   297    	ld	hl,4	;file not found/could not find 
+000383 C9                  A   298    	ret			;exit	
+000384                     A   299    iopen_ok:
+000384 32 AC 06            A   300    	ld		(in_handle),a
+000387 5B210000 00         A   301    	ld.lil	hl,0
+00038C 5B22 AD 06 0B       A   302    	ld.lil	(counter+BASE),hl
+000391                     A   303    main_loop:
+000391 CD 56 02            A   304    	call	inline_print
+000394 0C110A68 65786475   A   305    	db		12,17,10,'hexdump utility - interac
+00039C 6D702075 74696C69 
+0003A4 7479202D 20696E74 
+0003AC 65726163 74697665 
+0003B4 206D6F64 65110F0D 
+0003BC 0A 
+0003BD 46696C65 6E616D65   A   306    	db		'Filename:',0
+0003C5 3A00 
+0003C7 5BDD2703            A   307    	LD.LIL		HL,(IX+3)
+0003CB CD 64 02            A   308    	call	print_HL
+0003CE CD 56 02            A   309    	call	inline_print
+0003D1 0D0A0D0A 55736167   A   310    	db		CR,LF,CR,LF,'Usage instructions:',C
+0003D9 6520696E 73747275 
+0003E1 6374696F 6E733A0D 
+0003E9 0A 
+0003EA 70202D20 70726576   A   311    	db		'p - previous 100h bytes  - - previ
+0003F2 696F7573 20313030 
+0003FA 68206279 74657320 
+000402 202D202D 20707265 
+00040A 76696F75 73206279 
+000412 74650D0A 
+000416 6E202D20 6E657874   A   312    	db		'n - next 100h bytes      + - next 
+00041E 20313030 68206279 
+000426 74657320 20202020 
+00042E 202B202D 206E6578 
+000436 74206279 74650D0A 
+00043E 67202D20 676F2074   A   313    	db		'g - go to hex location   arrows - 
+000446 6F206865 78206C6F 
+00044E 63617469 6F6E2020 
+000456 20617272 6F777320 
+00045E 2D206E61 76696761 
+000466 74650D0A 
+00046A 71202D20 71756974   A   314    	db		'q - quit',CR,LF,CR,LF,CR,LF,0
+000472 0D0A0D0A 0D0A00 
+000479 5B210000 00         A   315    	ld.lil	hl,0	
+00047E CD CD 04            A   316    	call	sectorlp
+000481 5B210001 00         A   317    	ld.lil	hl,256
+000486 CD CD 04            A   318    	call	sectorlp
+000489                     A   319    key_invalid:
+000489 3E1F                A   320    	ld		a,31
+00048B D7                  A   321    	rst		10h
+00048C 3E00                A   322    	ld		a,0
+00048E D7                  A   323    	rst		10h
+00048F 3E2B                A   324    	ld		a,43
+000491 D7                  A   325    	rst		10h
+                           A   326    	MOSCALL	mos_getkey
+000496 21 AF 04            A   327    	LD		HL,key_options
+000499 01 0A 00            A   328    	LD		BC,key_table-key_options
+00049C EDB1                A   329    	CPIR
+00049E 20 E9               A   330    	jr		nz,key_invalid
+0004A0 79                  A   331    	ld		a,c
+0004A1 87                  A   332    	add		a,a
+0004A2 010000              A   333    	ld		bc,0
+0004A5 4F                  A   334    	ld		c,a
+0004A6 21 B9 04            A   335    	ld		hl,key_table
+0004A9 09                  A   336    	add		hl,bc
+0004AA 7E                  A   337    	ld		a,(hl)
+0004AB 23                  A   338    	inc		hl
+0004AC 66                  A   339    	ld		h,(hl)
+0004AD 6F                  A   340    	ld		l,a
+0004AE E9                  A   341    	jp		(hl)
+                           A   342    
+0004AF                     A   343    key_options:
+0004AF 6E702B2D 080B0A15   A   344    	db		'np+-',8,11,10,21,'gq'
+0004B7 6771 
+0004B9                     A   345    key_table:
+0004B9 7E01 EE05 8B05      A   346    	dw		exit,goto,next_byte,go_down,go_up,p
+0004BF 7D05 E205 C905 
+0004C5 C905 8B05 B205 
+0004CB 9605 
+                           A   347    ;	cp		'n'
+                           A   348    ;	jp		z,next_sector
+                           A   349    ;	cp		'p'
+                           A   350    ;	jp		z,prev_sector
+                           A   351    ;	cp		'+'
+                           A   352    ;	jp		z,next_byte
+                           A   353    ;	cp		'-'
+                           A   354    ;	jp		z,prev_byte
+                           A   355    ;	cp		'g'
+                           A   356    ;	jp		z,goto
+                           A   357    ;	cp		'q'
+                           A   358    ;	jr		nz,key_invalid
+                           A   359    ;	jp		exit
+                           A   360    
+                           A   361    
+                           A   362    
+0004CD                     A   363    sectorlp:
+                           A   364    
+                           A   365    ;	ld.lil	(counter+BASE),hl
+0004CD 5B22 B1 06 0B       A   366    	ld.lil	(rows+BASE),hl
+0004D2 5B11 BF 06 0B       A   367    	ld.lil	de,buffer+BASE
+0004D7 5B19                A   368    	add.lil	hl,de
+0004D9 5B110001 00         A   369    	ld.lil	de,256
+0004DE 3A AC 06            A   370    	ld	a,(in_handle)
+0004E1 4F                  A   371    	ld	c,a
+                           A   372    	MOSCALL	mos_fread
+0004E6 7B                  A   373    	ld		a,e
+0004E7 B2                  A   374    	or		d
+0004E8 CA 35 02            A   375    	jp		z,hit_EOF		;zero length (DE=0)
+0004EB 43                  A   376    	ld		b,e	;b will track length for next l
+0004EC 0E00                A   377    	ld		c,0	;c will track current value in 
+                           A   378    
+0004EE                     A   379    seclp2:
+                           A   380    ;	push	bc
+                           A   381    		
+                           A   382    
+0004EE                     A   383    iprintlp:
+                           A   384    
+0004EE 5B2A AD 06 0B       A   385    	ld.lil	hl,(counter+BASE)
+0004F3 5BED5B B1 06 0B     A   386    	ld.lil	de,(rows+BASE)
+0004F9 5B19                A   387    	add.lil	hl,de
+                           A   388    ;	ld.lil	de,16
+                           A   389    ;	add.lil	hl,de
+                           A   390    ;	ld.lil	(counter+BASE),hl
+0004FB C5                  A   391    	push	bc
+0004FC CD 84 06            A   392    	call	Print_Hex24
+0004FF C1                  A   393    	pop		bc
+000500 C5                  A   394    	push	bc
+                           A   395    ;	ld		d,0		;ignore 2nd 100h block offs
+000501                     A   396    ihexloop:
+000501 3E3A                A   397    	ld		a,':'
+000503 C5                  A   398    	push	bc
+000504 D7                  A   399    	rst		10h
+000505 C1                  A   400    	pop		bc
+000506 21 BF 06            A   401    	ld		hl,buffer
+000509 19                  A   402    	add		hl,de
+                           A   403    ;	ld		c,0
+00050A                     A   404    ihexlp1:
+00050A 79                  A   405    	ld		a,c
+00050B E603                A   406    	and		3
+00050D 20 05               A   407    	jr		nz,$f
+00050F 3E20                A   408    	ld		a,' '
+                           A   409    ;	push	hl
+000511 C5                  A   410    	push	bc
+000512 D7                  A   411    	rst		10h
+000513 C1                  A   412    	pop		bc
+                           A   413    ;	pop		hl
+000514                     A   414    $$:
+                           A   415    
+000514 78                  A   416    	ld		a,b
+000515 B7                  A   417    	or		a
+000516 28 0D               A   418    	jr		z,ihexlp2
+                           A   419    ;	ld		a,b
+000518 B9                  A   420    	cp		c
+000519 28 02               A   421    	jr		z,$F
+00051B 30 08               A   422    	jr		nc,ihexlp2
+00051D                     A   423    $$:
+00051D 3E20                A   424    	ld		a,' '
+00051F C5                  A   425    	push	bc
+000520 D7                  A   426    	rst		10h
+000521 D7                  A   427    	rst		10h
+000522 C1                  A   428    	pop		bc
+000523 18 07               A   429    	jr		ihexlp3
+000525                     A   430    ihexlp2:
+000525 7E                  A   431    	ld		a,(hl)
+                           A   432    
+                           A   433    ;	push	hl
+000526 C5                  A   434    	push	bc
+000527 CD 99 06            A   435    	call	Print_Hex8
+00052A C1                  A   436    	pop		bc
+                           A   437    ;	pop		hl
+00052B 23                  A   438    	inc		hl
+00052C                     A   439    ihexlp3:
+00052C 0C                  A   440    	inc		c
+00052D 79                  A   441    	ld		a,c
+00052E E60F                A   442    	and		15
+000530 CA 35 05            A   443    	jp		z,ihexend
+                           A   444    
+                           A   445    ;	ld		a,c
+                           A   446    ;	and		3
+                           A   447    ;	jr		nz,$f
+                           A   448    ;	ld		a,' '
+                           A   449    ;	push	bc
+                           A   450    ;	rst		10h
+                           A   451    ;	pop		bc
+                           A   452    ;$$:
+000533 18 D5               A   453    	jr		ihexlp1
+                           A   454    
+000535                     A   455    ihexend:
+000535 3E20                A   456    	ld		a,' '
+000537 D7                  A   457    	rst		10h
+000538 C1                  A   458    	pop		bc		;recover c register.
+000539                     A   459    iasciiloop:
+000539 3E7C                A   460    	ld		a,'|'
+00053B C5                  A   461    	push	bc
+00053C D7                  A   462    	rst		10h
+00053D C1                  A   463    	pop		bc
+00053E 21 BF 06            A   464    	ld		hl,buffer
+000541 19                  A   465    	add		hl,de
+                           A   466    ;	ld		c,0
+000542                     A   467    iasciilp1:
+000542 78                  A   468    	ld		a,b
+000543 B7                  A   469    	or		a
+000544 28 09               A   470    	jr		z,iasciilp2
+                           A   471    ;	ld		a,b
+000546 B9                  A   472    	cp		c
+000547 28 02               A   473    	jr		z,$F
+000549 30 04               A   474    	jr		nc,iasciilp2
+00054B                     A   475    $$:
+00054B 3E20                A   476    	ld		a,' '
+00054D 18 04               A   477    	jr		iasciilp3
+00054F                     A   478    iasciilp2:
+00054F 7E                  A   479    	ld		a,(hl)
+000550 CD 4C 02            A   480    	call	unprintable
+000553                     A   481    iasciilp3:
+000553 E5                  A   482    	push	hl
+000554 C5                  A   483    	push	bc
+000555 D7                  A   484    	rst		10h
+000556 C1                  A   485    	pop		bc
+000557 E1                  A   486    	pop		hl
+000558 23                  A   487    	inc		hl
+000559 0C                  A   488    	inc		c
+00055A 79                  A   489    	ld		a,c
+00055B E60F                A   490    	and		15
+                           A   491    ;	jp		z,iasciiend
+                           A   492    ;	cp		b
+                           A   493    ;	jr		c,iasciilp1
+                           A   494    ;	ld		a,' '
+                           A   495    ;	jr		iasciilp2
+00055D 20 E3               A   496    	jr		nz,iasciilp1
+                           A   497    
+00055F                     A   498    iasciiend:
+00055F CD 56 02            A   499    	call	inline_print
+000562 7C0D0A00            A   500    	db		'|',CR,LF,0
+000566 5B2A B1 06 0B       A   501    	ld.lil	hl,(rows+BASE)
+00056B 5B111000 00         A   502    	ld.lil	de,16
+000570 5B19                A   503    	add.lil	hl,de
+000572 5B22 B1 06 0B       A   504    	ld.lil	(rows+BASE),hl
+000577 7D                  A   505    	ld		a,l
+000578 B7                  A   506    	or		a
+000579 C2 EE 04            A   507    	jp		nz,iprintlp
+00057C C9                  A   508    	ret
+                           A   509    
+00057D                     A   510    go_down:
+00057D 5B2A AD 06 0B       A   511    	ld.lil	hl,(counter+BASE)
+000582 5B111000 00         A   512    	ld.lil	de,16
+000587 5B19                A   513    	add.lil	hl,de
+000589 18 07               A   514    	jr		next_b2
+00058B                     A   515    next_byte:
+00058B 5B2A AD 06 0B       A   516    	ld.lil	hl,(counter+BASE)
+000590 5B23                A   517    	inc.lil	hl
+000592                     A   518    next_b2:
+000592 1E00                A   519    	ld		e,0
+000594 18 0C               A   520    	jr		seekit
+000596                     A   521    next_sector:
+000596 5B2A AD 06 0B       A   522    	ld.lil	hl,(counter+BASE)
+00059B 5B110001 00         A   523    	ld.lil	de,256
+0005A0 5B19                A   524    	add.lil	hl,de
+0005A2                     A   525    seekit:
+0005A2 5B22 AD 06 0B       A   526    	ld.lil	(counter+BASE),hl
+0005A7 3A AC 06            A   527    	ld		a,(in_handle)
+0005AA 4F                  A   528    	ld		c,a
+                           A   529    	MOSCALL	mos_flseek
+0005AF C3 91 03            A   530    	jp		main_loop
+                           A   531    
+0005B2                     A   532    prev_sector:
+0005B2 5B2A AD 06 0B       A   533    	ld.lil	hl,(counter+BASE)
+0005B7 5B110001 00         A   534    	ld.lil	de,256
+0005BC B7                  A   535    	or		a
+0005BD 5BED52              A   536    	sbc.lil	hl,de
+0005C0 30 E0               A   537    	jr		nc,seekit
+0005C2 5B210000 00         A   538    	ld.lil	hl,0
+0005C7 18 D9               A   539    	jr		seekit
+                           A   540    
+0005C9                     A   541    prev_byte:
+0005C9 5B2A AD 06 0B       A   542    	ld.lil	hl,(counter+BASE)
+0005CE 5B110100 00         A   543    	ld.lil	de,1
+0005D3                     A   544    prev_b2:
+0005D3 B7                  A   545    	or		a
+0005D4 5BED52              A   546    	sbc.lil	hl,de
+0005D7 1E00                A   547    	ld		e,0
+0005D9 30 C7               A   548    	jr		nc,seekit
+0005DB 5B210000 00         A   549    	ld.lil	hl,0
+0005E0 18 C0               A   550    	jr		seekit
+                           A   551    
+0005E2                     A   552    go_up:
+0005E2 5B2A AD 06 0B       A   553    	ld.lil	hl,(counter+BASE)
+0005E7 5B111000 00         A   554    	ld.lil	de,16
+0005EC 18 E5               A   555    	jr		prev_b2
                            A   556    
-0005F5                     A   557    goto_nextchar
-0005F5 5B29                A   558    	add.lil	hl,hl
-0005F7 5B29                A   559    	add.lil	hl,hl
-0005F9 5B29                A   560    	add.lil	hl,hl
-0005FB 5B29                A   561    	add.lil	hl,hl
-0005FD B5                  A   562    	or		l
-0005FE 6F                  A   563    	ld	l,a
-0005FF 13                  A   564    	inc		de
-000600 10 D4               A   565    	djnz	goto_loop
-                           A   566    
-000602                     A   567    goto_invalid:
-000602 CD 51 02            A   568    	call	inline_print
-000605 1F010911 89202049   A   569    	db		31,1,9,17,128+8+1,'  Invalid  ',17,
-00060D 6E76616C 69642020 
-000615 11802020 20202020 
-00061D 2000 
-00061F C3 73 04            A   570    	jp		key_invalid
-                           A   571    
-000622                     A   572    goto_abort:
-000622 CD 51 02            A   573    	call	inline_print
-000625 1F010920 20202020   A   574    	db		31,1,9,'                  ',0
-00062D 20202020 20202020 
-000635 20202020 2000 
-00063B C3 73 04            A   575    	jp		key_invalid
-                           A   576    
-                           A   577    ;
-                           A   578    ; data storage . . .
-                           A   579    ;	
-00063E                     A   580    stringlength:
-00063E 04                  A   581    	db	4	;default of 4 characters
-                           A   582    ; uninitialized storage/BSS but can't use that 
-                           A   583    ;
-                           A   584    ; RAM
-                           A   585    ; 
-                           A   586    			DEFINE	LORAM, SPACE = ROM
-                           A   587    ;			ORDER	__VECTORS, CODE, LORAM
-                           A   588    			SEGMENT LORAM
-                           A   589    		
-                           A   590    ;			SEGMENT	BSS
-                           A   591    ;			SEGMENT CODE
-                           A   592    
-000667                     A   593    in_handle:	DS	1	;Only needs 1 byte handle
-000668                     A   594    counter:	DS	4	; current address counter f
-00066C                     A   595    rows:		DS	4
-000670                     A   596    input_buf:	DS	8	;up to 6 characters?
-000678                     A   597    upcount:	DS	2	;upper 2 bytes for file loc
-00067A                     A   598    buffer:		DS	512	;Space to buffer incoming f
-00087A                     A   599    curbyte:	DS	1	;current byte in the buffer
-00087B                     A   600    keycount:	DS	1	;current key count
-                           A   601    	end
+                           A   557    ;goto routine
+0005EE                     A   558    goto:
+                           A   559    ;position cursor + prompt
+0005EE CD 56 02            A   560    	call	inline_print
+0005F1 1F010947 6F20746F   A   561    	db		31,1,9,'Go to [hex]?',0
+0005F9 205B6865 785D3F00 
+                           A   562    ;0x09: mos_editline - Invoke the line editor
+                           A   563    ;HL(U): Address of the buffer
+                           A   564    ;BC(U): Buffer length
+                           A   565    ;E: 0 to not clear buffer, 1 to clear
+                           A   566    ;Returns:
+                           A   567    ;A: Key that was used to exit the input loop (C
+000601 21 B5 06            A   568    	ld		hl,input_buf
+000604 010700              A   569    	ld		bc,7
+000607 1E01                A   570    	ld		e,1
+                           A   571    	MOSCALL	mos_editline
+00060D FE1B                A   572    	cp		27
+00060F 28 56               A   573    	jr		z,goto_abort
+000611 11 B5 06            A   574    	ld		de,input_buf
+000614 5B210000 00         A   575    	ld.lil	hl,0
+000619 0606                A   576    	ld		b,6		;max char count
+00061B                     A   577    goto_loop:
+00061B 1A                  A   578    	ld		a,(de)
+00061C B7                  A   579    	or		a
+00061D CA A2 05            A   580    	jp		z,seekit
+000620 D630                A   581    	sub		'0'	;30h
+000622 38 23               A   582    	jr		c,goto_invalid
+000624 FE0A                A   583    	cp		9+1
+000626 38 12               A   584    	jr		c,goto_nextchar
+000628 D610                A   585    	sub		10h
+00062A 38 1B               A   586    	jr		c,goto_invalid
+00062C E61F                A   587    	and		1fh
+00062E 28 17               A   588    	jr		z,goto_invalid
+000630 FE07                A   589    	cp		7
+000632 30 13               A   590    	jr		nc,goto_invalid
+000634 C609                A   591    	add		9
+000636 FE10                A   592    	cp		16
+000638 30 0D               A   593    	jr		nc,goto_invalid	;fix it later
+                           A   594    
+00063A                     A   595    goto_nextchar
+00063A 5B29                A   596    	add.lil	hl,hl
+00063C 5B29                A   597    	add.lil	hl,hl
+00063E 5B29                A   598    	add.lil	hl,hl
+000640 5B29                A   599    	add.lil	hl,hl
+000642 B5                  A   600    	or		l
+000643 6F                  A   601    	ld	l,a
+000644 13                  A   602    	inc		de
+000645 10 D4               A   603    	djnz	goto_loop
+                           A   604    
+000647                     A   605    goto_invalid:
+000647 CD 56 02            A   606    	call	inline_print
+00064A 1F010911 89202049   A   607    	db		31,1,9,17,128+8+1,'  Invalid  ',17,
+000652 6E76616C 69642020 
+00065A 11802020 20202020 
+000662 2000 
+000664 C3 89 04            A   608    	jp		key_invalid
+                           A   609    
+000667                     A   610    goto_abort:
+000667 CD 56 02            A   611    	call	inline_print
+00066A 1F010920 20202020   A   612    	db		31,1,9,'                  ',0
+000672 20202020 20202020 
+00067A 20202020 2000 
+000680 C3 89 04            A   613    	jp		key_invalid
+                           A   614    
+                           A   615    ;
+                           A   616    ; data storage . . .
+                           A   617    ;	
+000683                     A   618    stringlength:
+000683 04                  A   619    	db	4	;default of 4 characters
+                           A   620    ; uninitialized storage/BSS but can't use that 
+                           A   621    ;
+                           A   622    ; RAM
+                           A   623    ; 
+                           A   624    			DEFINE	LORAM, SPACE = ROM
+                           A   625    ;			ORDER	__VECTORS, CODE, LORAM
+                           A   626    			SEGMENT LORAM
+                           A   627    		
+                           A   628    ;			SEGMENT	BSS
+                           A   629    ;			SEGMENT CODE
+                           A   630    
+0006AC                     A   631    in_handle:	DS	1	;Only needs 1 byte handle
+0006AD                     A   632    counter:	DS	4	; current address counter f
+0006B1                     A   633    rows:		DS	4
+0006B5                     A   634    input_buf:	DS	8	;up to 6 characters?
+0006BD                     A   635    upcount:	DS	2	;upper 2 bytes for file loc
+0006BF                     A   636    buffer:		DS	512	;Space to buffer incoming f
+0008BF                     A   637    curbyte:	DS	1	;current byte in the buffer
+0008C0                     A   638    keycount:	DS	1	;current key count
+                           A   639    	end
 
 
 Errors: 0
 Warnings: 0
-Lines Assembled: 951
+Lines Assembled: 989

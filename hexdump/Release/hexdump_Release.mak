@@ -124,6 +124,7 @@ $(WORKDIR_ESCSPACE)\main.obj :  \
 	 $(AS) $(ASFLAGS) "$(PRJDIR)\main.asm"
 
 $(WORKDIR_ESCSPACE)\output.obj :  \
-            $(PRJDIR_ESCSPACE)\output.asm
+            $(PRJDIR_ESCSPACE)\output.asm  \
+            $(PRJDIR_ESCSPACE)\equs.inc
 	 $(AS) $(ASFLAGS) "$(PRJDIR)\output.asm"
 
