@@ -1,5 +1,5 @@
 # agon-projects
-Multiple projects for the Agon light.
+Multiple projects for the Agon light. Click through to each project for more detailed instructions. Release versions are in the Release directories.
 
 # hexdump
 The start of mos tool to dump the hex and printable contents of a file for visual examination. Copy `hexdump.bin`
