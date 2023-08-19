@@ -284,7 +284,7 @@ usage:	call	inline_print
 
 ;
 ;
-;
+; Arrow key mapping
 ; 8,11,10,21 = L,U,D,R
 ;
 ;
@@ -340,24 +340,11 @@ key_invalid:
 	ld		l,a
 	jp		(hl)
 
+;table below has keys and jumps for each keypress. Note the key_table is backwards.
 key_options:
 	db		'np+-',8,11,10,21,'gq'
 key_table:
 	dw		exit,goto,next_byte,go_down,go_up,prev_byte,prev_byte,next_byte,prev_sector,next_sector
-;	cp		'n'
-;	jp		z,next_sector
-;	cp		'p'
-;	jp		z,prev_sector
-;	cp		'+'
-;	jp		z,next_byte
-;	cp		'-'
-;	jp		z,prev_byte
-;	cp		'g'
-;	jp		z,goto
-;	cp		'q'
-;	jr		nz,key_invalid
-;	jp		exit
-
 
 
 sectorlp:
@@ -441,15 +428,6 @@ ihexlp3:
 	ld		a,c
 	and		15
 	jp		z,ihexend
-
-;	ld		a,c
-;	and		3
-;	jr		nz,$f
-;	ld		a,' '
-;	push	bc
-;	rst		10h
-;	pop		bc
-;$$:
 	jr		ihexlp1
 
 ihexend:
@@ -488,12 +466,7 @@ iasciilp3:
 	inc		c
 	ld		a,c
 	and		15
-;	jp		z,iasciiend
-;	cp		b
-;	jr		c,iasciilp1
-;	ld		a,' '
-;	jr		iasciilp2
-	jr		nz,iasciilp1
+	jr		nz,iasciilp1	;until you get to the 16th for end of row.
 
 iasciiend:
 	call	inline_print

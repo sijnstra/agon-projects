@@ -276,7 +276,7 @@ badusage:	call usage
 ; usage -- show syntax
 ; 
 usage:	call	inline_print
-	db	CR,LF,'hexdumpm utility for Agon by Shawn Sijnstra (c) 17-Jun-2023',CR,LF,CR,LF
+	db	CR,LF,'hexdumpm utility for Agon by Shawn Sijnstra (c) 24-Jun-2023',CR,LF,CR,LF
 	db	'Usage:',CR,LF
 	db	'   hexdumpm <hex address>',CR,LF,CR,LF
 ;	db	'	optional paramter c uses hexdump in continuous mode.',CR,LF
@@ -348,24 +348,11 @@ key_invalid:
 	ld		l,a
 	jp		(hl)
 
+;table below has keys and jumps for each keypress. Note the key_table is backwards.
 key_options:
 	db		'np+-',8,11,10,21,'gq'
 key_table:
 	dw		exit,goto,next_byte,go_down,go_up,prev_byte,prev_byte,next_byte,prev_sector,next_sector
-;	cp		'n'
-;	jp		z,next_sector
-;	cp		'p'
-;	jp		z,prev_sector
-;	cp		'+'
-;	jp		z,next_byte
-;	cp		'-'
-;	jp		z,prev_byte
-;	cp		'g'
-;	jp		z,goto
-;	cp		'q'
-;	jr		nz,key_invalid
-;	jp		exit
-
 
 
 sectorlp:
@@ -498,12 +485,7 @@ iasciilp3:
 	inc		c
 	ld		a,c
 	and		15
-;	jp		z,iasciiend
-;	cp		b
-;	jr		c,iasciilp1
-;	ld		a,' '
-;	jr		iasciilp2
-	jr		nz,iasciilp1
+	jr		nz,iasciilp1	;until you get to the 16th for end of row.
 
 iasciiend:
 	call	inline_print
@@ -591,7 +573,7 @@ goto:
 	ld		de,input_buf
 goto_init:
 	ld.lil	hl,0
-	ld		b,6		;max char count
+	ld		b,7		;max char count
 goto_loop:
 	ld		a,(de)
 ;	or		a
