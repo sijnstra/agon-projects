@@ -2,13 +2,13 @@
 Multiple projects for the Agon light. Click through to each project for more detailed instructions. Release versions are in the respective `Release` directories.
 
 # hexdump
-The start of mos tool to dump the hex and printable contents of a file for visual examination. Copy `hexdump.bin`
+This is a mos tool to dump the hex and printable contents of a file for visual examination, allowing easy navigation through the file. Copy `hexdump.bin`
 into your `/mos` directory and enjoy!
 
 # hexdumpm
-The start of mos tool to dump the hex and printable contents of memory for visual examination. Copy `hexdumpm.bin`
+This is a mos tool to dump the hex and printable contents of memory for visual examination, allowing easy navigation through memory. Copy `hexdumpm.bin`
 into your `/mos` directory and enjoy!
 
 # strings
-This is a cut-down version of the strings utility. It demonstrates the use of the MOScalls `mos_fgetc` and `mos_feof`.
+This is a minimal implementation of the *nix strings utility, allowing the user to search through a binary file for strings of a minimum length (specified in the command line). It demonstrates the use of the MOScalls `mos_fgetc` and `mos_feof`.
 The binary is included in the strings/Release directory. Copy `strings.bin` into your `/mos` directory and enjoy!
