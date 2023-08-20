@@ -1,0 +1,591 @@
+Zilog eZ80 Macro Assembler Version 4.3 (19073001) RELISTED20-Aug-23     11:12:15     page:   1
+
+
+PC     Object              I  Line    Source 
+                           A     1    ; MEMSAVE utility
+                           A     2    ;
+                           A     3    ;
+                           A     4    ; Written Agon native by Shawn Sijnstra
+                           A     5    ;
+                           A     6    ; Notable changes for reference:
+                           A     7    ; required colons on all labels
+                           A     8    ; labels are case sensitive
+                           A     9    ; code is a reserved word and can't be used as 
+                           A    10    ; numeric evaluations are done differently - ch
+                           A    11    ; reserved word INCLUDE needs to be in upper ca
+                           A    12    ; assembly source MUST be .asm, can't use e.g. 
+                           A    13    ; supports defb as a synonym for db, but NOT de
+                           A    14    ; labels can't start with @
+                           A    15    
+                           A    16    
+                           A    17    
+                           A    18    			.ASSUME	ADL = 0				
+                           A    19    
+                           B     0    			INCLUDE	"equs.inc"
+                           B     1    ;
+                           B     2    ; Title:	Memory Dump - Equs
+                           B     3    ; Author:	Dean Belfield
+                           B     4    ; Created:	15/11/2022
+                           B     5    ; Last Updated:	15/11/2022
+                           B     6    ;
+                           B     7    ; Modinfo:
+                           B     8    				
+       0000FF00            B     9    RAM_Top:		EQU		0FF00h
+       00000000            B    10    Stack_Top:		EQU		00000h	; Stack at top
+                           B    11    	
+                           B    12    ; For GPIO
+                           B    13    ; PA not available on eZ80L92
+                           B    14    ;
+       00000096            B    15    PA_DR:			EQU		96h
+       00000097            B    16    PA_DDR:			EQU		97h
+       00000098            B    17    PA_ALT1:		EQU		98h
+       00000099            B    18    PA_ALT2:		EQU		99h
+       0000009A            B    19    PB_DR:          	EQU		9Ah
+       0000009B            B    20    PB_DDR:        	 	EQU		9Bh
+       0000009C            B    21    PB_ALT1:        	EQU		9Ch
+       0000009D            B    22    PB_ALT2:        	EQU		9Dh
+       0000009E            B    23    PC_DR:          	EQU		9Eh
+       0000009F            B    24    PC_DDR:         	EQU		9Fh
+       000000A0            B    25    PC_ALT1:        	EQU		A0h
+       000000A1            B    26    PC_ALT2:        	EQU		A1h
+       000000A2            B    27    PD_DR:          	EQU		A2h
+       000000A3            B    28    PD_DDR:			EQU		A3h
+       000000A4            B    29    PD_ALT1:		EQU		A4h
+       000000A5            B    30    PD_ALT2:		EQU		A5h
+                           B    31    	
+       00000000            B    32    GPIOMODE_OUT:		EQU		0	; Output
+       00000001            B    33    GPIOMODE_IN:		EQU		1	; Input
+       00000002            B    34    GPIOMODE_DIO:		EQU		2	; Open Drain IO
+       00000003            B    35    GPIOMODE_SIO:		EQU		3	; Open Source I
+       00000004            B    36    GPIOMODE_INTD:		EQU		4	; Interrupt, Du
+       00000005            B    37    GPIOMODE_ALTF:		EQU		5;	; Alt Function
+       00000006            B    38    GPIOMODE_INTAL:		EQU		6	; Interrupt, Ac
+       00000007            B    39    GPIOMODE_INTAH:		EQU		7	; Interrupt, Ac
+       00000008            B    40    GPIOMODE_INTFE:		EQU		8	; Interrupt, Fa
+       00000009            B    41    GPIOMODE_INTRE:		EQU		9	; Interrupt, Ri
+                           B    42    	
+                           B    43    ; For serial.asm
+                           B    44    ; 
+       016E3600            B    45    BASE_CLOCK		EQU	24000000	; It's actually
+                           B    46    
+       00000003            B    47    BAUD_500000		EQU	BASE_CLOCK / (16 * 500000)
+       00000006            B    48    BAUD_250000		EQU	BASE_CLOCK / (16 * 250000)
+       0000000C            B    49    BAUD_125000		EQU	BASE_CLOCK / (16 * 125000)
+       0000004E            B    50    BAUD_19200		EQU	BASE_CLOCK / (16 * 19200)	
+                           B    51    
+                           B    52    ; For interrupts.asm
+                           B    53    ;
+                           B    54    
+                           B    55    ;UARTs
+                           B    56    ;
+       00000018            B    57    UART0_IVECT		EQU		18h
+       0000001A            B    58    UART1_IVECT		EQU		1Ah
+                           B    59    
+                           B    60    ;Ports
+                           B    61    ;
+       00000030            B    62    PB0_IVECT   		EQU   	30h	; AGON ITRP Int
+       00000032            B    63    PB1_IVECT  	  	EQU  	32h	; AGON VBLANK Inter
+       00000034            B    64    PB2_IVECT  	  	EQU   	34h
+       00000036            B    65    PB3_IVECT  	  	EQU   	36h
+       00000038            B    66    PB4_IVECT    		EQU   	38h
+       0000003A            B    67    PB5_IVECT    		EQU   	3Ah
+       0000003C            B    68    PB6_IVECT    		EQU   	3Ch
+       0000003E            B    69    PB7_IVECT    		EQU   	3Eh
+                           B    70                           
+       00000040            B    71    PC0_IVECT    		EQU   	40h
+       00000042            B    72    PC1_IVECT    		EQU   	42h
+       00000044            B    73    PC2_IVECT    		EQU   	44h
+       00000046            B    74    PC3_IVECT    		EQU   	46h
+       00000048            B    75    PC4_IVECT    		EQU   	48h
+       0000004A            B    76    PC5_IVECT    		EQU   	4Ah
+       0000004C            B    77    PC6_IVECT    		EQU   	4Ch
+       0000004E            B    78    PC7_IVECT    		EQU   	4Eh
+                           B    79                           
+       00000050            B    80    PD0_IVECT    		EQU   	50h
+       00000052            B    81    PD1_IVECT    		EQU   	52h
+       00000054            B    82    PD2_IVECT    		EQU   	54h
+       00000056            B    83    PD3_IVECT    		EQU   	56h
+       00000058            B    84    PD4_IVECT    		EQU   	58h
+       0000005A            B    85    PD5_IVECT    		EQU   	5Ah
+       0000005C            B    86    PD6_IVECT    		EQU   	5Ch
+       0000005E            B    87    PD7_IVECT    		EQU   	5Eh
+                           B    88    
+                           B    89    ; Originally in main.asm
+                           B    90    ;
+       0000000D            B    91    CR:			EQU     0DH
+       0000000A            B    92    LF:			EQU     0AH
+       0000001B            B    93    ESC:			EQU     1BH
+                           B     0    			INCLUDE "mos_api.inc"	; In MOS/sr
+                           B     1    ;
+                           B     2    ; Title:	AGON MOS - API for user projects
+                           B     3    ; Author:	Dean Belfield
+                           B     4    ; Created:	03/08/2022
+                           B     5    ; Last Updated:	15/04/2023
+                           B     6    ;
+                           B     7    ; Modinfo:
+                           B     8    ; 05/08/2022:	Added mos_feof
+                           B     9    ; 09/08/2022:	Added system variables: cursorX
+                           B    10    ; 18/08/2022:	Added system variables: scrchar
+                           B    11    ; 05/09/2022:	Added mos_ren, vdp_pflag_mode
+                           B    12    ; 24/09/2022:	Added mos_getError, mos_mkdir
+                           B    13    ; 13/10/2022:	Added mos_oscli
+                           B    14    ; 23/02/2023:	Added more sysvars, fixed typo 
+                           B    15    ; 04/03/2023:	Added sysvar_scrpixelIndex
+                           B    16    ; 08/03/2023:	Renamed sysvar_keycode to sysva
+                           B    17    ; 15/03/2023:	Added mos_copy, mos_getrtc, mos
+                           B    18    ; 21/03/2023:	Added mos_setintvector, sysvars
+                           B    19    ; 22/03/2023:	The VDP commands are now indexe
+                           B    20    ; 29/03/2023:	Added mos_uopen, mos_uclose, mo
+                           B    21    ; 13/04/2023:	Added FatFS file structures (FF
+                           B    22    ; 15/04/2023:	Added mos_getfil, mos_fread, mo
+                           B    23    
+                           B    24    ; VDP control (VDU 23, 0, n)
+                           B    25    ;
+       00000080            B    26    vdp_gp:			EQU 	80h
+       00000081            B    27    vdp_keycode:		EQU 	81h
+       00000082            B    28    vdp_cursor:		EQU	82h
+       00000083            B    29    vdp_scrchar:		EQU	83h
+       00000084            B    30    vdp_scrpixel:		EQU	84h
+       00000085            B    31    vdp_audio:		EQU	85h
+       00000086            B    32    vdp_mode:		EQU	86h
+       00000087            B    33    vdp_rtc:		EQU	87h
+       00000088            B    34    vdp_keystate:		EQU	88h
+       000000C0            B    35    vdp_logicalcoords:	EQU	C0h
+       000000FF            B    36    vdp_terminalmode:	EQU	FFh
+                           B    37    
+                           B    38    ; MOS high level functions
+                           B    39    ;
+       00000000            B    40    mos_getkey:		EQU	00h
+       00000001            B    41    mos_load:		EQU	01h
+       00000002            B    42    mos_save:		EQU	02h
+       00000003            B    43    mos_cd:			EQU	03h
+       00000004            B    44    mos_dir:		EQU	04h
+       00000005            B    45    mos_del:		EQU	05h
+       00000006            B    46    mos_ren:		EQU	06h
+       00000007            B    47    mos_mkdir:		EQU	07h
+       00000008            B    48    mos_sysvars:		EQU	08h
+       00000009            B    49    mos_editline:		EQU	09h
+       0000000A            B    50    mos_fopen:		EQU	0Ah
+       0000000B            B    51    mos_fclose:		EQU	0Bh
+       0000000C            B    52    mos_fgetc:		EQU	0Ch
+       0000000D            B    53    mos_fputc:		EQU	0Dh
+       0000000E            B    54    mos_feof:		EQU	0Eh
+       0000000F            B    55    mos_getError:		EQU	0Fh
+       00000010            B    56    mos_oscli:		EQU	10h
+       00000011            B    57    mos_copy:		EQU	11h
+       00000012            B    58    mos_getrtc:		EQU	12h
+       00000013            B    59    mos_setrtc:		EQU	13h
+       00000014            B    60    mos_setintvector:	EQU	14h
+       00000015            B    61    mos_uopen:		EQU	15h
+       00000016            B    62    mos_uclose:		EQU	16h
+       00000017            B    63    mos_ugetc:		EQU	17h
+       00000018            B    64    mos_uputc:		EQU 	18h
+       00000019            B    65    mos_getfil:		EQU	19h
+       0000001A            B    66    mos_fread:		EQU	1Ah
+       0000001B            B    67    mos_fwrite:		EQU	1Bh
+       0000001C            B    68    mos_flseek:		EQU	1Ch
+                           B    69    
+                           B    70    ; FatFS file access functions
+                           B    71    ;
+       00000080            B    72    ffs_fopen:		EQU	80h
+       00000081            B    73    ffs_fclose:		EQU	81h
+       00000082            B    74    ffs_fread:		EQU	82h
+       00000083            B    75    ffs_fwrite:		EQU	83h
+       00000084            B    76    ffs_flseek:		EQU	84h
+       00000085            B    77    ffs_ftruncate:		EQU	85h
+       00000086            B    78    ffs_fsync:		EQU	86h
+       00000087            B    79    ffs_fforward:		EQU	87h
+       00000088            B    80    ffs_fexpand:		EQU	88h
+       00000089            B    81    ffs_fgets:		EQU	89h
+       0000008A            B    82    ffs_fputc:		EQU	8Ah
+       0000008B            B    83    ffs_fputs:		EQU	8Bh
+       0000008C            B    84    ffs_fprintf:		EQU	8Ch
+       0000008D            B    85    ffs_ftell:		EQU	8Dh
+       0000008E            B    86    ffs_feof:		EQU	8Eh
+       0000008F            B    87    ffs_fsize:		EQU	8Fh
+       00000090            B    88    ffs_ferror:		EQU	90h
+                           B    89    
+                           B    90    ; FatFS directory access functions
+                           B    91    ;
+       00000091            B    92    ffs_dopen:		EQU	91h
+       00000092            B    93    ffs_dclose:		EQU	92h
+       00000093            B    94    ffs_dread:		EQU	93h
+       00000094            B    95    ffs_dfindfirst:		EQU	94h
+       00000095            B    96    ffs_dfindnext:		EQU	95h
+                           B    97    
+                           B    98    ; FatFS file and directory management functions
+                           B    99    ;
+       00000096            B   100    ffs_stat:		EQU	96h
+       00000097            B   101    ffs_unlink:		EQU	97h
+       00000098            B   102    ffs_rename:		EQU	98h
+       00000099            B   103    ffs_chmod:		EQU	99h
+       0000009A            B   104    ffs_utime:		EQU	9Ah
+       0000009B            B   105    ffs_mkdir:		EQU	9Bh
+       0000009C            B   106    ffs_chdir:		EQU	9Ch
+       0000009D            B   107    ffs_chdrive:		EQU	9Dh
+       0000009E            B   108    ffs_getcwd:		EQU	9Eh
+                           B   109    
+                           B   110    ; FatFS volume management and system configurat
+                           B   111    ;
+       0000009F            B   112    ffs_mount:		EQU	9Fh
+       000000A0            B   113    ffs_mkfs:		EQU	A0h
+       000000A1            B   114    ffs_fdisk		EQU	A1h
+       000000A2            B   115    ffs_getfree:		EQU	A2h
+       000000A3            B   116    ffs_getlabel:		EQU	A3h
+       000000A4            B   117    ffs_setlabel:		EQU	A4h
+       000000A5            B   118    ffs_setcp:		EQU	A5h
+                           B   119    	
+                           B   120    ; File access modes
+                           B   121    ;
+       00000001            B   122    fa_read:		EQU	01h
+       00000002            B   123    fa_write:		EQU	02h
+       00000000            B   124    fa_open_existing:	EQU	00h
+       00000004            B   125    fa_create_new:		EQU	04h
+       00000008            B   126    fa_create_always:	EQU	08h
+       00000010            B   127    fa_open_always:		EQU	10h
+       00000030            B   128    fa_open_append:		EQU	30h
+                           B   129    	
+                           B   130    ; System variable indexes for api_sysvars
+                           B   131    ; Index into _sysvars in globals.asm
+                           B   132    ;
+       00000000            B   133    sysvar_time:		EQU	00h	; 4: Clock timer in
+       00000004            B   134    sysvar_vpd_pflags:	EQU	04h	; 1: Flags to indic
+       00000005            B   135    sysvar_keyascii:	EQU	05h	; 1: ASCII keycode,
+       00000006            B   136    sysvar_keymods:		EQU	06h	; 1: Keycode modifi
+       00000007            B   137    sysvar_cursorX:		EQU	07h	; 1: Cursor X posit
+       00000008            B   138    sysvar_cursorY:		EQU	08h	; 1: Cursor Y posit
+       00000009            B   139    sysvar_scrchar:		EQU	09h	; 1: Character read
+       0000000A            B   140    sysvar_scrpixel:	EQU	0Ah	; 3: Pixel data rea
+       0000000D            B   141    sysvar_audioChannel:	EQU	0Dh	; 1: Audio chan
+       0000000E            B   142    sysvar_audioSuccess:	EQU	0Eh	; 1: Audio chan
+       0000000F            B   143    sysvar_scrWidth:	EQU	0Fh	; 2: Screen width i
+       00000011            B   144    sysvar_scrHeight:	EQU	11h	; 2: Screen height 
+       00000013            B   145    sysvar_scrCols:		EQU	13h	; 1: Screen columns
+       00000014            B   146    sysvar_scrRows:		EQU	14h	; 1: Screen rows in
+       00000015            B   147    sysvar_scrColours:	EQU	15h	; 1: Number of colo
+       00000016            B   148    sysvar_scrpixelIndex:	EQU	16h	; 1: Index of p
+       00000017            B   149    sysvar_vkeycode:	EQU	17h	; 1: Virtual key co
+       00000018            B   150    sysvar_vkeydown		EQU	18h	; 1: Virtual key st
+       00000019            B   151    sysvar_vkeycount:	EQU	19h	; 1: Incremented ev
+       0000001A            B   152    sysvar_rtc:		EQU	1Ah	; 8: Real time clock da
+       00000022            B   153    sysvar_keydelay:	EQU	22h	; 2: Keyboard repea
+       00000024            B   154    sysvar_keyrate:		EQU	24h	; 2: Keyboard repea
+       00000026            B   155    sysvar_keyled:		EQU	26h	; 1: Keyboard LED s
+                           B   156    	
+                           B   157    ; Flags for the VPD protocol
+                           B   158    ;
+       00000001            B   159    vdp_pflag_cursor:	EQU	00000001b
+       00000002            B   160    vdp_pflag_scrchar:	EQU	00000010b
+       00000004            B   161    vdp_pflag_point:	EQU	00000100b
+       00000008            B   162    vdp_pflag_audio:	EQU	00001000b
+       00000010            B   163    vdp_pflag_mode:		EQU	00010000b
+       00000020            B   164    vdp_pflag_rtc:		EQU	00100000b
+                           B   165    
+                           B   166    ;
+                           B   167    ; FatFS structures
+                           B   168    ; These mirror the structures contained in src_
+                           B   169    ;
+                           B   170    ; Object ID and allocation information (FFOBJID
+                           B   171    ;
+                           B   172    FFOBJID	.STRUCT
+000000                     B   173    	fs:		DS	3	; Pointer to the hosting vo
+000003                     B   174    	id:		DS	2	; Hosting volume mount ID
+000005                     B   175    	attr:		DS	1	; Object attribute
+000006                     B   176    	stat:		DS	1	; Object chain status (
+000007                     B   177    	sclust:		DS	4	; Object data start clu
+00000B                     B   178    	objsize:	DS	4	; Object size (valid wh
+       0000000F            B   179    FFOBJID_SIZE .ENDSTRUCT FFOBJID
+                           B   180    ;
+                           B   181    ; File object structure (FIL)
+                           B   182    ;
+                           B   183    FIL .STRUCT
+000000                     B   184    	obj:		.TAG	FFOBJID	; Object identi
+00000F                     B   185    	flag:		DS	1	; File status flags
+000010                     B   186    	err:		DS	1	; Abort flag (error cod
+000011                     B   187    	fptr:		DS	4	; File read/write point
+000015                     B   188    	clust:		DS	4	; Current cluster of fp
+000019                     B   189    	sect:		DS	4	; Sector number appeari
+00001D                     B   190    	dir_sect:	DS	4	; Sector number contain
+000021                     B   191    	dir_ptr:	DS	3	; Pointer to the direct
+       00000024            B   192    FIL_SIZE .ENDSTRUCT FIL
+                           B   193    ;
+                           B   194    ; Directory object structure (DIR)
+                           B   195    ; 
+                           B   196    DIR .STRUCT
+000000                     B   197    	obj:		.TAG	FFOBJID	; Object identi
+00000F                     B   198    	dptr:		DS	4	; Current read/write of
+000013                     B   199    	clust:		DS	4	; Current cluster
+000017                     B   200    	sect:		DS	4	; Current sector (0:Rea
+00001B                     B   201    	dir:		DS	3	; Pointer to the direct
+00001E                     B   202    	fn:		DS	12	; SFN (in/out) {body[8],ext
+00002A                     B   203    	blk_ofs:	DS	4	; Offset of current ent
+       0000002E            B   204    DIR_SIZE .ENDSTRUCT DIR
+                           B   205    ;
+                           B   206    ; File information structure (FILINFO)
+                           B   207    ;
+                           B   208    FILINFO .STRUCT
+000000                     B   209    	fsize:		DS 	4	; File size
+000004                     B   210    	fdate:		DS	2	; Modified date
+000006                     B   211    	ftime:		DS	2	; Modified time
+000008                     B   212    	fattrib:	DS	1	; File attribute
+000009                     B   213    	altname:	DS	13	; Alternative file name
+000016                     B   214    	fname:		DS	256	; Primary file name
+       00000116            B   215    FILINFO_SIZE .ENDSTRUCT FILINFO
+                           B   216    
+                           B   217    ;
+                           B   218    ; Macro for calling the API
+                           B   219    ; Parameters:
+                           B   220    ; - function: One of the function numbers liste
+                           B   221    ;
+                           B   222    MOSCALL:		MACRO	function
+                           B   223    			LD	A, function
+                           B   224    			RST.LIS	08h
+                           B   225    			ENDMACRO 	
+                           B   226    ;
+                           A    22    
+                           A    23    			SEGMENT CODE
+                           A    24    	
+                           A    25    			XDEF	_main
+                           A    26    			XREF	Print_Hex24
+                           A    27    			XREF	Print_Hex16
+                           A    28    			XREF	Print_Hex8
+                           A    29    			
+                           A    30    ; Error: Invalid parameter
+                           A    31    ;
+000145 211300              A    32    _err_invalid_param:	LD		HL, 19			; T
+000148 C9                  A    33    			RET
+                           A    34    
+                           A    35    
+                           A    36    ; ASCII
+                           A    37    ;
+       00000003            A    38    CtrlC:	equ	03h
+                           A    39    CR:	equ	0Dh
+                           A    40    LF:	equ	0Ah
+       0000001A            A    41    CtrlZ:	equ	1Ah
+                           A    42    ;
+       000B0000            A    43    BASE:	equ	0b0000h
+                           A    44    
+000149                     A    45    _main:
+000149 79                  A    46    	ld	a,c	;AGON - number of parameters
+00014A 3D                  A    47    	dec	a
+00014B CA D6 01            A    48    	jp	z,okusage
+00014E FE03                A    49    	cp	3	;requires exact number of parameter
+000150 C2 DE 01            A    50    	jp	nz,badusage
+                           A    51    
+000153 5BDD1706            A    52    	LD.LIL		DE,(IX+6)		; DEU: pointer 
+000157 CD D9 02            A    53    	call		hexparse
+00015A C2 DE 01            A    54    	jp			nz,badusage
+00015D 5BE5                A    55    	push.lil		hl
+                           A    56    ;	call		Print_Hex24
+00015F 5BDD1709            A    57    	LD.LIL		DE,(IX+9)		; DEU: pointer 
+000163 CD D9 02            A    58    	call		hexparse
+000166 C2 DC 01            A    59    	jp			nz,badusage0
+000169 5BE5                A    60    	push.lil	hl
+                           A    61    ;	call		Print_Hex24
+                           A    62    
+00016B 5BDD2703            A    63    	LD.LIL		HL,(IX+3)		; pointer to fi
+                           A    64    
+00016F                     A    65    openit:
+00016F 0E06                A    66    	ld	c,fa_write+fa_create_new	;open creat
+                           A    67    
+                           A    68    	MOSCALL	mos_fopen
+000175 5BD1                A    69    	pop.lil		de				;Length
+000177 5BE1                A    70    	pop.lil		hl				;start
+000179 B7                  A    71    	or	a
+00017A 20 07               A    72    	jr	nz,open_ok
+                           A    73    ;	ld	hl,4	;file not found/could not find 
+00017C 5B210000 00         A    74    	ld.lil	hl,0
+000181 6F                  A    75    	ld	l,a		;use the returned error code!
+000182 C9                  A    76    	ret			;exit
+                           A    77    
+000183                     A    78    open_ok:
+000183 4F                  A    79    	ld		c,a			;filehand returned in A
+                           A    80    	MOSCALL mos_fwrite
+                           A    81    	
+000188 5BD5                A    82    	push.lil	de
+00018A CD C2 01            A    83    	call	inline_print
+00018D 42797465 73207772   A    84    	db		'Bytes written: ',0
+000195 69747465 6E3A2000 
+00019D 5BE1                A    85    	pop.lil		hl
+00019F CD 12 03            A    86    	call	Print_Hex24
+0001A2 CD C2 01            A    87    	call	inline_print
+0001A5 0D0A0D0A 00         A    88    	db		CR,LF,CR,LF,0
+0001AA C3 B8 01            A    89    	jp		close
+                           A    90    
+                           A    91    
+                           A    92    ;0x02: mos_save
+                           A    93    ;Save a file to SD card
+                           A    94    ;Parameters:
+                           A    95    ;HL(U): Address of filename (zero terminated)
+                           A    96    ;DE(U): Address to save from
+                           A    97    ;BC(U): Number of bytes to save
+                           A    98    ;Returns:
+                           A    99    ;A: File error, or 0 if OK
+                           A   100    ;F: Carry set
+                           A   101    
+                           A   102    	MOSCALL	mos_save
+0001B1 5B210000 00         A   103    	ld.lil	hl,0
+0001B6 6F                  A   104    	ld		l,a		;return error/success code
+0001B7 C9                  A   105    	ret			;exit
+                           A   106    ;
+                           A   107    ;
+                           A   108    ; Close and exit routines
+                           A   109    ;
+                           A   110    
+0001B8                     A   111    close:
+                           A   112    ;C: Filehandle, or 0 to close all open files
+                           A   113    ;returns number of still open files - how about
+                           A   114    
+0001B8 0E00                A   115    	ld	c,0
+                           A   116    	MOSCALL	mos_fclose	
+                           A   117    
+0001BE                     A   118    exit:
+0001BE 210000              A   119    	ld	hl,0	;for Agon - successful exit
+0001C1 C9                  A   120    	ret
+                           A   121    ;
+                           A   122    ;
+                           A   123    ;
+                           A   124    ; Prints string directly after the call
+                           A   125    ;
+0001C2 E1                  A   126    inline_print:	pop	hl
+0001C3 CD C9 01            A   127    	call	print_string
+0001C6 E9                  A   128    	jp	(hl)
+                           A   129    ;
+                           A   130    ; more efficient print string for strings > 1 c
+0001C7                     A   131    $$:
+0001C7 D7                  A   132    	rst	10h	;Agon uses this to print the charac
+0001C8 23                  A   133    	inc	hl
+0001C9 7E                  A   134    print_string:	ld	a,(hl)
+0001CA B7                  A   135    	or	a
+0001CB 20 FA               A   136    	jr	nz,$b
+0001CD C9                  A   137    	ret
+                           A   138    ;
+                           A   139    ;
+0001CE                     A   140    $$:
+0001CE D7                  A   141    	rst	10h	;Agon uses this to print the charac
+0001CF 23                  A   142    	inc	hl
+0001D0 7E                  A   143    print_HL:	ld	a,(hl)
+0001D1 FE20                A   144    	cp	32
+0001D3 30 F9               A   145    	jr	nc,$b
+0001D5 C9                  A   146    	ret
+                           A   147    
+                           A   148    
+0001D6 CD E4 01            A   149    okusage:	call usage
+0001D9 C3 BE 01            A   150    	jp	exit
+                           A   151    
+0001DC 5BE1                A   152    badusage0:	pop.lil	hl	;even up stack 
+0001DE CD E4 01            A   153    badusage:	call	usage
+0001E1 C3 45 01            A   154    	jp	_err_invalid_param
+                           A   155    ;
+                           A   156    ; usage -- show syntax
+                           A   157    ;
+                           A   158    
+0001E4 CD C2 01            A   159    usage:	call	inline_print
+0001E7 0D0A6D65 6D736176   A   160    	db	CR,LF,'memsave utility for Agon by Shaw
+0001EF 65207574 696C6974 
+0001F7 7920666F 72204167 
+0001FF 6F6E2062 79205368 
+000207 61776E20 53696A6E 
+00020F 73747261 20286329 
+000217 2032302D 4175672D 
+00021F 32303233 0D0A0D0A 
+000227 55736167 653A0D0A   A   161    	db	'Usage:',CR,LF
+00022F 2020206D 656D7361   A   162    	db	'   memsave <file> <start> <length>',CR
+000237 7665203C 66696C65 
+00023F 3E203C73 74617274 
+000247 3E203C6C 656E6774 
+00024F 683E0D0A 0D0A 
+000255 09536176 6573206D   A   163    	db	'	Saves memory to <file> where <start
+00025D 656D6F72 7920746F 
+000265 203C6669 6C653E20 
+00026D 77686572 65203C73 
+000275 74617274 3E20616E 
+00027D 64203C6C 656E6774 
+000285 683E2061 72652069 
+00028D 6E206865 782E0D0A 
+000295 53746F72 65206D65   A   164    	db 	'Store memsave.bin in /mos directory. M
+00029D 6D736176 652E6269 
+0002A5 6E20696E 202F6D6F 
+0002AD 73206469 72656374 
+0002B5 6F72792E 204D696E 
+0002BD 696D756D 204D4F53 
+0002C5 20766572 73696F6E 
+0002CD 20312E30 332E0D0A 
+0002D5 0D0A00 
+0002D8 C9                  A   165    	ret
+                           A   166    
+                           A   167    
+                           A   168    ;hexparse routine
+                           A   169    ; input
+                           A   170    ;DE(U): address of hex string
+                           A   171    ; returns
+                           A   172    ;HL(U): parsed hex address
+0002D9                     A   173    hexparse:
+0002D9 5B210000 00         A   174    	ld.lil	hl,0
+0002DE 0606                A   175    	ld		b,6		;max char count
+0002E0                     A   176    goto_loop:
+0002E0 1A                  A   177    	ld		a,(de)
+0002E1 FE21                A   178    	cp		' '+1
+0002E3 38 27               A   179    	jr		c,goto_valid
+0002E5 D630                A   180    	sub		'0'	;30h
+0002E7 38 25               A   181    	jr		c,goto_invalid
+0002E9 FE0A                A   182    	cp		9+1
+0002EB 38 12               A   183    	jr		c,goto_nextchar
+0002ED D610                A   184    	sub		10h
+0002EF 38 1D               A   185    	jr		c,goto_invalid
+0002F1 E61F                A   186    	and		1fh
+0002F3 28 19               A   187    	jr		z,goto_invalid
+0002F5 FE07                A   188    	cp		7
+0002F7 30 15               A   189    	jr		nc,goto_invalid
+0002F9 C609                A   190    	add		9
+0002FB FE10                A   191    	cp		16
+0002FD 30 0F               A   192    	jr		nc,goto_invalid	;fix it later
+                           A   193    
+0002FF                     A   194    goto_nextchar
+0002FF 5B29                A   195    	add.lil	hl,hl
+000301 5B29                A   196    	add.lil	hl,hl
+000303 5B29                A   197    	add.lil	hl,hl
+000305 5B29                A   198    	add.lil	hl,hl
+000307 B5                  A   199    	or		l
+000308 6F                  A   200    	ld	l,a
+000309 13                  A   201    	inc		de
+00030A 10 D4               A   202    	djnz	goto_loop
+                           A   203    
+00030C                     A   204    goto_valid:
+00030C AF                  A   205    	xor		a
+00030D C9                  A   206    	ret
+00030E                     A   207    goto_invalid:
+00030E AF                  A   208    	xor		a
+00030F 3C                  A   209    	inc		a	;nz flag
+000310 C9                  A   210    	ret
+                           A   211    
+                           A   212    ;
+                           A   213    ; data storage . . .
+                           A   214    ;	
+000311                     A   215    stringlength:
+000311 04                  A   216    	db	4	;default of 4 characters
+                           A   217    ; uninitialized storage/BSS but can't use that 
+                           A   218    ;
+                           A   219    ; RAM
+                           A   220    ; 
+                           A   221    			DEFINE	LORAM, SPACE = ROM
+                           A   222    ;			ORDER	__VECTORS, CODE, LORAM
+                           A   223    			SEGMENT LORAM
+                           A   224    		
+                           A   225    ;			SEGMENT	BSS
+                           A   226    ;			SEGMENT CODE
+                           A   227    
+00033A                     A   228    in_handle:	DS	1	;Only needs 1 byte handle
+00033B                     A   229    counter:	DS	4	; current address counter f
+00033F                     A   230    rows:		DS	4
+000343                     A   231    input_buf:	DS	8	;up to 6 characters?
+00034B                     A   232    upcount:	DS	2	;upper 2 bytes for file loc
+00034D                     A   233    buffer:		DS	512	;Space to buffer incoming f
+00054D                     A   234    curbyte:	DS	1	;current byte in the buffer
+00054E                     A   235    keycount:	DS	1	;current key count
+                           A   236    	end
+
+
+Errors: 0
+Warnings: 0
+Lines Assembled: 568
