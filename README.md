@@ -21,3 +21,6 @@ into your `/mos` directory and enjoy!
 # strings
 [strings](https://github.com/sijnstra/agon-projects/tree/main/strings) is a minimal implementation of the *nix strings utility, allowing the user to search through a binary file for strings of a minimum length (specified in the command line). It demonstrates the use of the MOScalls `mos_fgetc` and `mos_feof`.
 The binary is included in the strings/Release directory. Copy `strings.bin` into your `/mos` directory and enjoy!
+
+# TRSCOLR
+[TRSCLOR](https://github.com/sijnstra/agon-projects/tree/main/TRSCOLR) is a utility to change text colour from the command line under TRS-OS.
