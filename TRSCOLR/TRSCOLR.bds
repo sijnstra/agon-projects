@@ -1,0 +1,312 @@
+binary-debuggable-source
+0000 0000 f TRSCOLR.ASM
+0000 0000 s ;	 TRSCOLR text colour changer for the Agon Light running TRS-OS/LS-DOS
+0000 0000 s ;		Copyright (C) 2023 Shawn Sijnstra <shawn@sijnstra.com>
+0000 0000 s ;
+0000 0000 s ;
+0000 0000 s ;
+0000 0000 s ; Service call addresses
+0000 0000 s @GET	EQU	03H
+0000 0000 s @DSPLY	EQU	0AH
+0000 0000 s @PRINT	EQU	0EH	; output string to *PR
+0000 0000 s @INIT	EQU	3AH
+0000 0000 s @PUT	EQU	04H
+0000 0000 s @CLOSE	EQU	3CH
+0000 0000 s @ERROR	EQU	1AH
+0000 0000 s @ABORT	EQU	15H
+0000 0000 s @EXIT	EQU	16H
+0000 0000 s @PARAM	EQU	11H
+0000 0000 s @CLS	EQU	69H
+0000 0000 s @DSP	EQU	02H
+0000 0000 s @HIGH$	EQU	64H
+0000 0000 s @KEY	EQU	01H ; Obtain a character from the *KI device
+0000 0000 s @KBD	EQU	08H ; Scan the *KI device
+0000 0000 s @REW	EQU	44H	;This SVC will rewind a file to its beginning and reset the 3-byte NRN pointer to 0.
+0000 0000 s @KEYIN	EQU	09H	; Obtain a line of characters from *KI (or JCL)
+0000 0000 s @TIME	EQU	13H	; Obtain system time. This one needs 8 character buffer.
+0000 0000 s @SOUND	EQU	68H	; B has code-packed sound of tone and duration.
+0000 0000 s 
+0000 0000 s ;UART0 addresses
+0000 0000 s ;
+0000 0000 s UART0_PORT		EQU	0C0h		; UART0
+0000 0000 s 				
+0000 0000 s UART0_REG_RBR:		EQU	UART0_PORT+0	; Receive buffer
+0000 0000 s UART0_REG_THR:		EQU	UART0_PORT+0	; Transmitter holding
+0000 0000 s UART0_REG_DLL:		EQU	UART0_PORT+0	; Divisor latch low
+0000 0000 s UART0_REG_IER:		EQU	UART0_PORT+1	; Interrupt enable
+0000 0000 s UART0_REG_DLH:		EQU	UART0_PORT+1	; Divisor latch high
+0000 0000 s UART0_REG_IIR:		EQU	UART0_PORT+2	; Interrupt identification
+0000 0000 s UART0_REG_FCT:		EQU	UART0_PORT+2;	; Flow control
+0000 0000 s UART0_REG_LCR:		EQU	UART0_PORT+3	; Line control
+0000 0000 s UART0_REG_MCR:		EQU	UART0_PORT+4	; Modem control
+0000 0000 s UART0_REG_LSR:		EQU	UART0_PORT+5	; Line status
+0000 0000 s UART0_REG_MSR:		EQU	UART0_PORT+6	; Modem status
+0000 0000 s UART0_REG_SCR:		EQU 	UART0_PORT+7	; Scratch
+0000 0000 s 
+0000 0000 s TX_WAIT			EQU	16384 		; Count before a TX times out
+0000 0000 s 
+0000 0000 s UART_LSR_ERR		EQU 	080h		; Error
+0000 0000 s UART_LSR_ETX		EQU 	040h		; Transmit empty
+0000 0000 s UART_LSR_ETH		EQU		020h		; Transmit holding register empty
+0000 0000 s UART_LSR_RDY		EQU		001h		; Data ready
+0000 0000 s 
+0000 0000 s 
+3000 3000 s 		ORG	3000h
+3000 3000 s 
+3000 3000 s ;
+3000 3000 s SVC	MACRO	#NUM
+3000 3000 s 	LD	A,#NUM
+3000 3000 s 	RST	28H
+3000 3000 s 	ENDM
+3000 3000 s ;
+3000 3000 s CR	EQU	0DH
+3000 3000 s LF	EQU	0AH
+3000 3000 s ESC	EQU	1BH
+3000 3000 s ;
+3000 3000 s ;
+3000 3000 s start:
+3000 3000 d 7e
+3001 3000 u 01 01
+3000 3000 s 	ld	a,(hl)	;Command arg pointer in HL from entry
+3001 3001 d fe2d
+3003 3001 u 02 01
+3001 3001 s 	cp	'-'		;is is a valid parameter?
+3003 3003 d c24830
+3006 3003 u 03 01
+3003 3003 s 	jp	nz,usage	;print usage message
+3006 3006 s 
+3006 3006 d 23
+3007 3006 u 01 01
+3006 3006 s 	inc	hl
+3007 3007 d 7e
+3008 3007 u 01 01
+3007 3007 s 	ld	a,(hl)
+3008 3008 d d630
+300a 3008 u 02 01
+3008 3008 s 	sub	'0'
+300a 300a d 383c
+300c 300a u 02 01
+300a 300a s 	jr	c,usage
+300c 300c d fe0a
+300e 300c u 02 01
+300c 300c s 	cp	9+1
+300e 300e d 380a
+3010 300e u 02 01
+300e 300e s 	jr	c,col_store
+3010 3010 d d611
+3012 3010 u 02 01
+3010 3010 s 	sub	'A'-'0'
+3012 3012 d 3834
+3014 3012 u 02 01
+3012 3012 s 	jr	c,usage
+3014 3014 d c60a
+3016 3014 u 02 01
+3014 3014 s 	add	10
+3016 3016 d fe10
+3018 3016 u 02 01
+3016 3016 s 	cp	16
+3018 3018 d 302e
+301a 3018 u 02 01
+3018 3018 s 	jr	nc,usage
+301a 301a s col_store:
+301a 301a s ;    // Set foreground color
+301a 301a s ;    // Seq:
+301a 301a s ;    //   ESC FABGLEXT_STARTCODE FABGLEXTB_SETFGCOLOR COLORINDEX FABGLEXT_ENDCODE
+301a 301a s ;    // params:
+301a 301a s ;    //   COLORINDEX : 0..15 (index of Color enum)
+301a 301a s ; ESC _ l X $
+301a 301a s ; need to output straight to the port as @DSP doesn't do RAW, only cooked.
+301a 301a d 322331
+301d 301a u 03 01
+301a 301a s 	ld	(colstring+3),a
+301d 301d d 212031
+3020 301d u 03 01
+301d 301d s 	ld	hl,colstring
+3020 3020 d 0605
+3022 3020 u 02 01
+3020 3020 s 	ld	b,5	;string length
+3022 3022 s col_loop
+3022 3022 d 7e
+3023 3022 u 01 01
+3022 3022 s 	ld	a,(hl)
+3023 3023 d cd2c30
+3026 3023 u 03 01
+3023 3023 s 	call	UART0_serial_TX	;send raw
+3026 3026 d 23
+3027 3026 u 01 01
+3026 3026 s 	inc	hl
+3027 3027 d 10f9
+3029 3027 u 02 01
+3027 3027 s 	djnz	col_loop
+3029 3029 s 
+3029 3029 s 	SVC	@EXIT
+3029 3029 d 3e16
+302b 3029 u 02 01
+3029 3029 s 	LD	A,@EXIT
+302b 302b d ef
+302c 302b u 01 01
+302b 302b s 	RST	28H
+302c 302c s 	ENDM
+302c 302c s 
+302c 302c s ; Write a character to UART0
+302c 302c s ; Parameters:
+302c 302c s ; - A: Data to write
+302c 302c s ; Returns:
+302c 302c s ; - F: C if written
+302c 302c s ; - F: NC if timed out
+302c 302c s ;
+302c 302c s UART0_serial_TX:
+302c 302c d c5
+302d 302c u 01 01
+302c 302c s 			PUSH		BC			; Stack BC
+302d 302d d f5
+302e 302d u 01 01
+302d 302d s 			PUSH		AF 			; Stack AF
+302e 302e d 010040
+3031 302e u 03 01
+302e 302e s 			LD		BC,TX_WAIT		; Set CB to the transmit timeout
+3031 3031 s UART0_serial_TX1:
+3031 3031 s ;			IN0		A,(UART0_REG_LSR)	; Get the line status register
+3031 3031 d ed38c5
+3034 3031 u 03 02
+3031 3031 s 			defb	0EDh,038h,UART0_REG_LSR		
+3034 3034 d e640
+3036 3034 u 02 01
+3034 3034 s 			AND 		UART_LSR_ETX		; Check for TX empty
+3036 3036 d 2009
+3038 3036 u 02 01
+3036 3036 s 			JR		NZ, UART0_serial_TX2	; If set, then TX is empty, goto transmit
+3038 3038 d 0b
+3039 3038 u 01 01
+3038 3038 s 			DEC		BC
+3039 3039 d 78
+303a 3039 u 01 01
+3039 3039 s 			LD		A, B
+303a 303a d b1
+303b 303a u 01 01
+303a 303a s 			OR		C
+303b 303b d 20f4
+303d 303b u 02 01
+303b 303b s 			JR		NZ, UART0_serial_TX1
+303d 303d d f1
+303e 303d u 01 01
+303d 303d s 			POP		AF			; We've timed out at this point so
+303e 303e d c1
+303f 303e u 01 01
+303e 303e s 			POP		BC			; Restore the stack
+303f 303f d b7
+3040 303f u 01 01
+303f 303f s 			OR		A			; Clear the carry flag and preserve A
+3040 3040 d c9
+3041 3040 u 01 01
+3040 3040 s 			RET	
+3041 3041 s UART0_serial_TX2:
+3041 3041 d f1
+3042 3041 u 01 01
+3041 3041 s 			POP		AF			; Good to send at this point, so
+3042 3042 s ;			OUT0		(UART0_REG_THR),A	; Write the character to the UART transmit buffer
+3042 3042 d ed39c0
+3045 3042 u 03 02
+3042 3042 s 			defb	0EDh,039h,UART0_REG_THR
+3045 3045 d c1
+3046 3045 u 01 01
+3045 3045 s 			POP		BC			; Restore BC
+3046 3046 d 37
+3047 3046 u 01 01
+3046 3046 s 			SCF					; Set the carry flag
+3047 3047 d c9
+3048 3047 u 01 01
+3047 3047 s 			RET
+3048 3048 s 
+3048 3048 s 
+3048 3048 s usage:
+3048 3048 d 215130
+304b 3048 u 03 01
+3048 3048 s 	ld	hl,usage_message
+304b 304b s 	SVC	@DSPLY
+304b 304b d 3e0a
+304d 304b u 02 01
+304b 304b s 	LD	A,@DSPLY
+304d 304d d ef
+304e 304d u 01 01
+304d 304d s 	RST	28H
+304e 304e s 	ENDM
+304e 304e s 	SVC	@EXIT	;don't return an error - just gracefully exit
+304e 304e d 3e16
+3050 304e u 02 01
+304e 304e s 	LD	A,@EXIT
+3050 3050 d ef
+3051 3050 u 01 01
+3050 3050 s 	RST	28H
+3051 3051 s 	ENDM
+3051 3051 s 
+3051 3051 s usage_message:
+3051 3051 d 5452532d4f532041676f6e207465787420636f6c6f7572206368616e6765720a436f7079726967687420536861776e2053696a6e7374726120323032330a
+308f 3051 u 3e 02
+3051 3051 s 	defb	'TRS-OS Agon text colour changer',lf,'Copyright Shawn Sijnstra 2023',lf
+308f 308f d 55736167653a20545253434f4c52202d5820776865726520582069732061206865782064696769742066726f6d20302028626c61636b292e2e2e462028627269676874207768697465290a
+30da 308f u 4b 02
+308f 308f s 	defb	'Usage: TRSCOLR -X where X is a hex digit from 0 (black)...F (bright white)',lf
+30da 30da d 536f7572636520636f646520617661696c61626c652066726f6d2068747470733a2f2f6769746875622e636f6d2f73696a6e737472612f61676f6e2d70726f6a656374730a0d
+3120 30da u 46 02
+30da 30da s 	defb	'Source code available from https://github.com/sijnstra/agon-projects',lf,cr
+3120 3120 s 
+3120 3120 s ; ESC _ l X $
+3120 3120 s colstring:
+3120 3120 d 1b5f6c5824
+3125 3120 u 05 02
+3120 3120 s 	defb	ESC,'_lX$'
+3125 3125 s 
+3125 3125 s 
+3125 3125 f TRSCOLR.ASM
+3125 3125 s 	END		start
+3000 e
+000a v LF
+000d v CR
+001b v ESC
+0008 v @KBD
+0003 v @GET
+0069 v @CLS
+0002 v @DSP
+0001 v @KEY
+0044 v @REW
+0004 v @PUT
+0013 v @TIME
+003a v @INIT
+0016 v @EXIT
+0064 v @HIGH$
+3048 a usage
+3000 a start
+0011 v @PARAM
+003c v @CLOSE
+0015 v @ABORT
+0009 v @KEYIN
+0068 v @SOUND
+001a v @ERROR
+000a v @DSPLY
+000e v @PRINT
+4000 v TX_WAIT
+3022 a col_loop
+301a a col_store
+3120 a colstring
+00c0 v UART0_PORT
+0020 v UART_LSR_ETH
+0080 v UART_LSR_ERR
+0001 v UART_LSR_RDY
+0040 v UART_LSR_ETX
+00c1 v UART0_REG_DLH
+00c0 v UART0_REG_DLL
+00c2 v UART0_REG_FCT
+00c1 v UART0_REG_IER
+00c3 v UART0_REG_LCR
+00c4 v UART0_REG_MCR
+00c2 v UART0_REG_IIR
+00c0 v UART0_REG_RBR
+00c7 v UART0_REG_SCR
+00c0 v UART0_REG_THR
+00c5 v UART0_REG_LSR
+00c6 v UART0_REG_MSR
+3051 a usage_message
+302c a UART0_serial_TX
+3031 a UART0_serial_TX1
+3041 a UART0_serial_TX2

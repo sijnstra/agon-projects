@@ -1,0 +1,2 @@
+D:\TRS80\LSDOSDEV\zmac.exe TRSCOLR.ASM -o TRSCOLR.CMD -o TRSCOLR.bds
+D:\TRS80\LSDOSDEV\trswrite.exe -o ..\..\xfer80_3.DSK TRSCOLR.CMD
