@@ -5,6 +5,8 @@ TRS-OS was designed and built by Danial Paul Martin as a way to run LS-DOS on mo
 
 It is *highly* recommended that you update your VDP to include ADDS25 terminal emulation. At time of writing, this has not been merged into the main branch and required VDP files from [here](https://github.com/sijnstra/vdp-gl).
 
+![TRS-OS screenshot](TRS-OS-boot-20230826_095201.jpg)
+
 # Usage
 `OSboot [-X] <binaryfile> [diskfile]`
 
