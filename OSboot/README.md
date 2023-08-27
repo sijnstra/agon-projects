@@ -19,4 +19,4 @@ The first optional parameter specifies the colour: `-1` (red) ... `-7` (white). 
 
 The `<binaryfile>` is the TRS-OS binary, downloaded using the link above.
 
-The third optional parameter loads a virtual disk image into memory at `0x45300`, in JV1 or DiskDISK format, up to 200K in size. The image can be saved again upon reboot using [`memsave`](https://github.com/sijnstra/agon-projects/edit/main/memsave/). This means you can import and export files into TRS-OS.
+The third optional parameter loads a virtual disk image into memory at `0x45300`, in JV1 or DiskDISK format, up to 210K in size. The image can be saved again upon reboot using [`memsave`](https://github.com/sijnstra/agon-projects/edit/main/memsave/). This means you can import and export files into TRS-OS. DiskDISK will allow you to have your disk geometry of choice, while JV1 is a much simpler format. There are a few programs out there to maipulate JV1 formats. I use them to create an 80 track single sided single density disk which fits in the 210k space.
