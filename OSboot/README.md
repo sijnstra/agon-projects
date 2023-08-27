@@ -10,6 +10,9 @@ It is *highly* recommended that you update your VDP to include ADDS25 terminal e
 # What can I run with it?
 Well behaved TRS-80 model 4 programs are able to run natively on Agon. This includes software on Tim Mann's site, among many others. This works because the TRS-OS operating system is a wrapper for LS-DOS 6.3.1, allowing Agon to boot an unmodified LS-DOS. The devices for keyboard `*KI` and display `*DO` are intercepted by a terminal emulation program, and use UART0 to communicate back the the Agon's VDP. This means the Agon VDP is an external terminal for LS-DOS running on the eZ80, so things like graphics (high or low res) are not yet available.
 
+# What hardware is it equivalent to?
+At the moment it is a fairly standard TRS-80 Model 4 without Model 3 mode. It has 2 virtual floppy drives, with the default being 2 x 180k disks - i.e. they are 40 track, single sided, double density. As communication is over the serial port internally, this means there is no hires and no lo-res graphics. 
+
 If you use the terminal updates above, this enables features like clear screen and reverse character text to work.
 
 # Usage
