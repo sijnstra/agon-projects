@@ -5,11 +5,11 @@ Multiple projects for the Agon light. Click through to each project for more det
 [gunzip.bin](https://github.com/sijnstra/agon-projects/tree/main/gunzip) allows you to uncompress gzip compressed files natively on Agon MOS. Note that this utility can NOT run as a MOSlet. Copy `memsave.bin` into your `/` directory and use the `load` and `run` commands to execute. Documentation is included when you `run` without parameters.
 
 # hexdump
-This is a mos tool to dump the hex and printable contents of a file for visual examination, allowing easy navigation through the file. Copy `hexdump.bin`
+[hexdump.bin](https://github.com/sijnstra/agon-projects/tree/main/hexdump) is a mos tool to dump the hex and printable contents of a file for visual examination, allowing easy navigation through the file. Copy `hexdump.bin`
 into your `/mos` directory and enjoy!
 
 # hexdumpm
-This is a mos tool to dump the hex and printable contents of memory for visual examination, allowing easy navigation through memory. Copy `hexdumpm.bin`
+[hexdumpm.bin](https://github.com/sijnstra/agon-projects/tree/main/hexdumpm) is a mos tool to dump the hex and printable contents of memory for visual examination, allowing easy navigation through memory. Copy `hexdumpm.bin`
 into your `/mos` directory and enjoy!
 
 # memsave
