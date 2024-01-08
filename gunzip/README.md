@@ -1,8 +1,8 @@
 # gunzip
 
-Usage:
-`load gunzip.bin`
-`run . {dir/}gzipfile {dir/destfile}`
+Usage: <br>
+`load gunzip.bin`<br>
+`run . {dir/}gzipfile {dir/destfile}`<br>
 optional: run multiple times without needing to re-load gunzip.bin
 
 If a destination is given, files are extracted (equivalent to gzip -dv)
