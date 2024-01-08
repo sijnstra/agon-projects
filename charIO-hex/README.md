@@ -1,8 +1,8 @@
-# charIOh
+# charIOH
 
 Usage: `charioh`
 
-charIOh is a CHARacter I/O - Hex demonstration `mos` utility to demonstrate terminal mode entry and exit, and provide a simple test for showing the hex values for input keys except:
+charIOH is a CHARacter I/O - Hex demonstration `mos` utility to demonstrate terminal mode entry and exit, and provide a simple test for showing the hex values for input keys except:
 <li>Escape is captured and shown as an 'e', with the following 2 characters displayed literally. This is mainly to show what arrow keys and function keys return.</li>
 <li>CTRL-C is used to exit.</li>
 
