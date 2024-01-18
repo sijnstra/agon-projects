@@ -2,7 +2,7 @@
 
 Usage: <br>
 `load unzip.bin`<br>
-`run . {dir/}gzipfile {*}`<br>
+`run . {dir/}zipfile {*}`<br>
 optional: run multiple times without needing to re-load unzip.bin
 
 If a destination is given, all files are extracted including directory structure.
