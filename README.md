@@ -6,7 +6,7 @@ Multiple projects for the Agon light. Click through to each project for more det
 into your `/mos` directory and enjoy!
 
 # gunzip
-[gunzip.bin](https://github.com/sijnstra/agon-projects/tree/main/gunzip) allows you to uncompress gzip compressed files natively on Agon MOS. Note that this utility can NOT run as a MOSlet. Copy `memsave.bin` into your `/` directory and use the `load` and `run` commands to execute. Documentation is included when you `run` without parameters.
+[gunzip.bin](https://github.com/sijnstra/agon-projects/tree/main/gunzip) allows you to uncompress gzip compressed files natively on Agon MOS. Note that this utility can NOT run as a MOSlet. Copy `gunzip.bin` into your `/` directory and use the `load` and `run` commands to execute. Documentation is included when you `run` without parameters.
 
 # hexdump
 [hexdump.bin](https://github.com/sijnstra/agon-projects/tree/main/hexdump) is a mos tool to dump the hex and printable contents of a file for visual examination, allowing easy navigation through the file. Copy `hexdump.bin`
@@ -33,4 +33,4 @@ The binary is included in the strings/Release directory. Copy `strings.bin` into
 [TRSCLOR/CMD](https://github.com/sijnstra/agon-projects/tree/main/TRSCOLR) is a utility to change text colour from the command line under TRS-OS on the Agon Light computer.
 
 # unzip
-[unzip.bin](https://github.com/sijnstra/agon-projects/tree/main/unzip) allows you to uncompress zip compressed file libraries natively on Agon MOS. Note that this utility can NOT run as a MOSlet. Copy `memsave.bin` into your `/` directory and use the `load` and `run` commands to execute. Documentation is included when you `run` without parameters.
+[unzip.bin](https://github.com/sijnstra/agon-projects/tree/main/unzip) allows you to uncompress zip compressed file libraries natively on Agon MOS. Note that this utility can NOT run as a MOSlet. Copy `unzip.bin` into your `/` directory and use the `load` and `run` commands to execute. Documentation is included when you `run` without parameters.
