@@ -2,7 +2,7 @@
 Multiple projects for the Agon light. Click through to each project for more detailed instructions. Release versions are in the respective `Release` directories.
 
 # calc24
-[calc24.bin](https://github.com/sijnstra/agon-projects/tree/main/calc24) is a mos tool that is intended to provide both a simple 24 bit integer calculator in hex and decimal, working both as a command line or interactive tool. The integer routines may also be useful for other projects. Copy `charioh.bin` into your `/mos` directory and enjoy!
+[calc24.bin](https://github.com/sijnstra/agon-projects/tree/main/calc24) is a mos tool that is intended to provide both a simple 24 bit integer calculator in hex and decimal, working both as a command line or interactive tool. The integer routines may also be useful for other projects. Copy `calc24.bin` into your `/mos` directory and enjoy!
 
 # charIO-hex
 [charioh.bin](https://github.com/sijnstra/agon-projects/tree/main/charIO-hex) is a mos tool to demonstrate terminal mode, and display the keyboard codes to screen in hex. It should make an easy template to understand terminal mode. Copy `charioh.bin`
