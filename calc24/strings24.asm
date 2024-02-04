@@ -2,6 +2,8 @@
 ;  strings24.asm 
 ;
 ; 24-bit native ez80 strings routines for numerical processing
+;  Copyright (c) Shawn Sijnstra 2024
+;  MIT license
 ;------------------------------------------------------------------------
 
 ;------------------------------------------------------------------------
