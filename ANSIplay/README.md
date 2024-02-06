@@ -6,11 +6,13 @@ To properly function, this software requires a minimum of Console8 VDP v2.2.1 wh
 
 # Usage
 Help is also included if the file is run without parameters.
+~~~
 ANSIplay [-x] <file>',CR,LF
 	By default ANSIplay waits for any key to exit once done.
 	-x will exit immediately after file is played.
 	Ctrl-C to abort during play (slightly buggy - can't exit properly DURING an update).
 	SAUCE metadata shown where available, including Title, Author, Group, Year and any available Comments.
+~~~
 	
 # Sample
 Here is an example of an ANSI graphics file being played:
