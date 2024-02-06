@@ -10,7 +10,7 @@ Help is also included if the file is run without parameters.
 ANSIplay [-x] <file>
 	By default ANSIplay waits for any key to exit once done.
 	-x will exit immediately after file is played.
-	Ctrl-C to abort during play (slightly buggy - can't exit properly DURING an update).
+	Ctrl-C to abort during play (slightly buggy - doesn't exit properly if part way through an escape sequence).
 	SAUCE metadata shown where available, including Title, Author, Group, Year and any available Comments.
 ~~~
 	
