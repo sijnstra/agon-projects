@@ -2,7 +2,7 @@
 Multiple projects for the Agon light. Click through to each project for more detailed instructions. Release versions are in the respective `Release` directories.
 
 # ANSIplay
-[ansiplay.bin](https://github.com/sijnstra/agon-projects/tree/main/ansiplay) is a mos tool that plays `.ANS` format ANSI text files, including displaying any available metadata. Copy `calc24.bin` into your `/mos` directory and enjoy!
+[ansiplay.bin](https://github.com/sijnstra/agon-projects/tree/main/ANSIplay) is a mos tool that plays `.ANS` format ANSI text files, including displaying any available metadata. Copy `calc24.bin` into your `/mos` directory and enjoy!
 
 # calc24
 [calc24.bin](https://github.com/sijnstra/agon-projects/tree/main/calc24) is a mos tool that is intended to provide both a simple 24 bit integer calculator in hex and decimal, working both as a command line or interactive tool. The integer routines may also be useful for other projects. Copy `calc24.bin` into your `/mos` directory and enjoy!
