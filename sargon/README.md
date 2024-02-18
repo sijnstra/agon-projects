@@ -1,6 +1,8 @@
 # sargon.bin
 This is the classic. award-winning Sargon Chess program by Dan and Kathe Spracklen from 1978, which I have ported to run natively on Agon. It runs in terminal mode and can be executed as a moslet (ie. from the /mos directory)
 
+sargonc.bin is a version compiled with a different colour scheme as the bright yellow didn't render with enough contrast against white on some monitors.
+
 Note that during setup it asks how many moves to look ahead - I find that anything more than 2 and you really need to be patient.
 
 # Source code
