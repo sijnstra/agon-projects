@@ -12,4 +12,4 @@ Now that it runs natively, I can make it more user-friendly on the Agon platform
 <li>Add sound so you know when the computer is done</li>
 
 # Screenshot
-![Sargon Chess screenshot](calc24_Capture.PNG)
+![Sargon Chess screenshot](sargon_screenshot.jpg)
