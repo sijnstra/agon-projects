@@ -10,10 +10,13 @@ Source code is not provided yet - it's compiled using ZDS-II and I'm looking at 
 
 # Roadmap
 Now that it runs natively, I can make it more user-friendly on the Agon platform. This is what I am aiming to do over time:
+<li>fix display of pieces when castling</li>
 <li>Convert to a more user-friendly assembler</li>
 <li>Improve input methods such as optional joystick</li>
 <li>Improve graphics</li>
 <li>Add sound so you know when the computer is done</li>
+<li>Swap drawing of board if playing black</li>
+<li>Look into adding forfeit for repeating same move 3 times</li>
 
 # Screenshot
 ![Sargon Chess screenshot](sargon_screenshot.jpg)
