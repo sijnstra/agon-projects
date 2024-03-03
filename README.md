@@ -2,10 +2,13 @@
 Multiple projects for the Agon light. Click through to each project for more detailed instructions. Release versions are in the respective `Release` directories.
 
 # ANSIplay
-[ansiplay.bin](https://github.com/sijnstra/agon-projects/tree/main/ANSIplay) is a mos tool that plays `.ANS` format ANSI text files, including displaying any available metadata. Copy `calc24.bin` into your `/mos` directory and enjoy!
+[ansiplay.bin](https://github.com/sijnstra/agon-projects/tree/main/ANSIplay) is a mos tool that plays `.ANS` format ANSI text files, including displaying any available metadata. Copy `ansiplay.bin` into your `/mos` directory and enjoy!
+
+# bootlogo
+[bootlogo.bin](https://github.com/sijnstra/agon-projects/tree/main/bootlogo) is a mos tool that shows the Agon Light logo along with the current screen capabilties. Copy `bootlogo.bin` into your `/mos` then add `bootlogo` to the end of your `autoexec.txt` and enjoy!
 
 # calc24
-[calc24.bin](https://github.com/sijnstra/agon-projects/tree/main/calc24) is a mos tool that is intended to provide both a simple 24 bit integer calculator in hex and decimal, working both as a command line or interactive tool. The integer routines may also be useful for other projects. Copy `calc24.bin` into your `/mos` directory and enjoy!
+[calc24.bin](https://github.com/sijnstra/agon-projects/tree/main/calc24) is a mos tool that is intended to provide both a simple 24 bit integer calculator in hex and decimal, working both as a command line or interactive tool. The integer routines may also be useful for other projects. Copy `calc24.bin` into your `/mos` directory ready to use.
 
 # charIO-hex
 [charioh.bin](https://github.com/sijnstra/agon-projects/tree/main/charIO-hex) is a mos tool to demonstrate terminal mode, and display the keyboard codes to screen in hex. It should make an easy template to understand terminal mode. Copy `charioh.bin`
