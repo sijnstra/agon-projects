@@ -110,7 +110,8 @@ icon_line_8:	db 13,10,231,232,233,234,235,236,"     Colours: ",0;
 full_icon_end:
 
 printby_str:	db	" x ",0
-
+reset_fontload:	db	23,0,145,13,10
+reset_fontload_end:
 args:		db	0
 
 ;------------------------------------------------------------------------
@@ -161,7 +162,7 @@ noargs:
 	call	newline
 	ld		a,(args)
 	or		a
-	ret		nz		;if there's an arg, don't show the colour banner
+	jr		nz,unfont		;if there's an arg, don't show the colour banner
 	ld		a,(ix+sysvar_scrColours)
 	cp		32
 	jr		c,under_32
@@ -198,6 +199,10 @@ reset_colour:
 	rst.lil	10h
 	ld		a,(ix+sysvar_scrColours)
 	dec		a
-	and		15		;should be the top colour, correctly set (fingers crossed)
+	and		15		;should be bright white on all palettes. Need to replace with "current colour"
 	rst.lil	10h
-	jp		newline	;print newline and return to MOS wrapper
+unfont:
+	ld		hl,reset_fontload
+	ld		bc,reset_fontload_end - reset_fontload
+	rst.lil	18h		;reset font, print newline and return to MOS wrapper
+	ret
