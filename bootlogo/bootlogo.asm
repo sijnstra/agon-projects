@@ -96,10 +96,12 @@ boot_logo_icon:
 		db	23,235,127,127,127,127,127,63,15,0
 		db	23,236,248,252,252,252,252,248,240,0
 		db	23,237,255,254,252,248,240,224,192,128
-		db	23,238,255,255,255,255,255,255,255,255	;this is a solid block, not logo - don't need
+		db	23,238,255,255,255,255,255,255,255,255	;this is a solid block, not logo
+boot_logo_icon_end:
+get_fgcol:
 		db	23,0,148,128							;fetch the foreground colour into the sysvar
 
-boot_logo_icon_end:
+		db	'$'
 
 icon_line_1:	db		 "  ",200,201,"     Agon Light 2 with eZ80 CPU",13,10 ;
 icon_line_2:	db		 "  ",202,203,"   ",13,10;
@@ -112,9 +114,13 @@ icon_line_8:	db 13,10,231,232,233,234,235,236,"     Colours: $";
 full_icon_end:
 
 printby_str:	db	" x $"
-reset_fontload:	db	23,0,145,13,10,"$"
-;get_fgcol:		db	23,0,148,128,"$"
-current_col:	db	0
+reset_fontload:	db	23, 0, 0C3h	; Swap the screen buffer and/or wait for VSYNC **
+				db	23, 0, 0C3h	; twice in case of double-buffer
+				db	23,0,145,13,10,"$"
+current_R:		db	0
+current_B:		db	0
+current_G:		db	0
+current_index:	db	15
 args:			db	0
 
 ;------------------------------------------------------------------------
@@ -125,50 +131,62 @@ main:
 	ld	A,(HL)		;test if there was a command-line expression
 	ld	(args),a	;save for later
 
-noargs:
 	ld	hl,boot_logo_icon
 	ld	bc,boot_logo_icon_end - boot_logo_icon
 	rst.lil	18h		;too variable data to use a terminator character
 	moscall mos_sysvars		;I don't use IX so this should remain ok throughout
-	ld		a,(ix+sysvar_scrpixelIndex)	;preserve the current foreground colour fetched at the beginning
-	ld		(current_col),a
-	ld	hl,icon_line_1
+	res		2,(ix + sysvar_vpd_pflags)
+	ld		hl,get_fgcol
+	call	puts
+	ld		hl,current_R	;preload where to store the RGB
+current_col_wait:
+	bit		2,(ix + sysvar_vpd_pflags)
+	jr		z,current_col_wait		;wait for the update to have occurred
+	ld		a,(ix + sysvar_scrpixel_R)	;preserve the current foreground colour fetched at the beginning
+	ld		(hl),a
+	inc		hl
+	ld		a,(ix + sysvar_scrpixel_G)
+	ld		(hl),a
+	inc		hl
+	ld		a,(ix + sysvar_scrpixel_B)
+	ld		(hl),a
+	ld		hl,icon_line_1
 	call	puts
 	ld		hl,0
-	ld		l,(ix+sysvar_scrMode)	;get mode
+	ld		l,(ix + sysvar_scrMode)	;get mode
 	call	print_HLU_u24
 	ld	hl,icon_line_6
 	call	puts
 	ld		hl,0
-	ld		l,(ix+sysvar_scrCols)
+	ld		l,(ix + sysvar_scrCols)
 	call	print_HLU_u24
 	ld		hl,printby_str
 	call	puts
 	ld		hl,0
-	ld		l,(ix+sysvar_scrRows)
+	ld		l,(ix + sysvar_scrRows)
 	call	print_HLU_u24	
 	ld	hl,icon_line_7
 	call	puts
 	ld		hl,0
-	ld		l,(ix+sysvar_scrWidth)
-	ld		h,(ix+sysvar_scrWidth+1)
+	ld		l,(ix + sysvar_scrWidth)
+	ld		h,(ix + sysvar_scrWidth+1)
 	call	print_HLU_u24
 	ld		hl,printby_str
 	call	puts
 	ld		hl,0
-	ld		l,(ix+sysvar_scrHeight)
-	ld		h,(ix+sysvar_scrHeight+1)
+	ld		l,(ix + sysvar_scrHeight)
+	ld		h,(ix + sysvar_scrHeight+1)
 	call	print_HLU_u24
 	ld	hl,icon_line_8
 	call	puts
 	ld		hl,0
-	ld		l,(ix+sysvar_scrColours)
+	ld		l,(ix + sysvar_scrColours)
 	call	print_HLU_u24
 	call	newline
 	ld		a,(args)
 	or		a
 	jr		nz,unfont		;if there's an arg, don't show the colour banner
-	ld		b,(ix+sysvar_scrColours)
+	ld		b,(ix + sysvar_scrColours)
 	ld		c,0
 barloop:
 	ld		a,17
@@ -177,6 +195,7 @@ barloop:
 	rst.lil	10h
 	ld		a,238	;solid block we have defined
 	rst.lil	10h		;print it
+	call	check_colour
 	ld		a,c
 	cp		31	;end of line
 	call	z,newline
@@ -185,10 +204,33 @@ barloop:
 reset_colour:
 	ld		a,17
 	rst.lil	10h
-	ld		a,(ix+sysvar_scrColours)
-	dec		a
-	and		15		;should be bright white on all palettes. Need to replace with "current colour"
+	ld		a,(current_index)
 	rst.lil	10h
 unfont:
 	ld		hl,reset_fontload
 	jp		puts		;reset font, print newline and return to MOS wrapper
+
+;This routine checks whether the current colour matches the originally fetched colour
+check_colour:
+	res		2,(ix + sysvar_vpd_pflags)
+	ld		hl,get_fgcol
+	call	puts	;send the instruction
+check_col_wait:
+	bit		2,(ix + sysvar_vpd_pflags)
+	jr		z,check_col_wait
+
+	ld		hl,current_R
+	ld		a,(ix + sysvar_scrpixel_R)	;lets check R
+	cp		(hl)
+	ret		nz
+	inc		hl
+	ld		a,(ix + sysvar_scrpixel_G)
+	cp		(hl)
+	ret		nz
+	inc		hl
+	ld		a,(ix + sysvar_scrpixel_B)
+	cp		(hl)
+	ret		nz
+	ld		a,c
+	ld		(current_index),a
+	ret

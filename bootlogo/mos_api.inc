@@ -152,6 +152,9 @@ sysvar_cursorX:		EQU	07h	; 1: Cursor X position
 sysvar_cursorY:		EQU	08h	; 1: Cursor Y position
 sysvar_scrchar:		EQU	09h	; 1: Character read from screen
 sysvar_scrpixel:	EQU	0Ah	; 3: Pixel data read from screen (R,B,G)
+sysvar_scrpixel_R:	EQU	0Ah	; 1: Pixel data read from screen (R,B,G)
+sysvar_scrpixel_G:	EQU	0Bh	; 1: Pixel data read from screen (R,B,G)
+sysvar_scrpixel_B:	EQU	0Ch	; 1: Pixel data read from screen (R,B,G)
 sysvar_audioChannel:	EQU	0Dh	; 1: Audio channel 
 sysvar_audioSuccess:	EQU	0Eh	; 1: Audio channel note queued (0 = no, 1 = yes)
 sysvar_scrWidth:	EQU	0Fh	; 2: Screen width in pixels
