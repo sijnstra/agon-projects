@@ -96,23 +96,26 @@ boot_logo_icon:
 		db	23,235,127,127,127,127,127,63,15,0
 		db	23,236,248,252,252,252,252,248,240,0
 		db	23,237,255,254,252,248,240,224,192,128
-		db	23,238,255,255,255,255,255,255,255,255	;this is a solid block, not logo
+		db	23,238,255,255,255,255,255,255,255,255	;this is a solid block, not logo - don't need
+		db	23,0,148,128							;fetch the foreground colour into the sysvar
+
 boot_logo_icon_end:
 
 icon_line_1:	db		 "  ",200,201,"     Agon Light 2 with eZ80 CPU",13,10 ;
 icon_line_2:	db		 "  ",202,203,"   ",13,10;
-icon_line_3:	db		 " ",204,205,206,207,"  ",13,10; VDP version
-icon_line_4:	db		 208,209,210,211,212,213," ",13,10; MOS version
-icon_line_5:	db		 214,215,216,209,217,218," Screen mode: ",0;
-icon_line_6:	db 13,10,219,220,221,222,223,224,"        Text: ",0;
-icon_line_7:	db 13,10,225,226,227,228,229,230,"    Graphics: ",0;
-icon_line_8:	db 13,10,231,232,233,234,235,236,"     Colours: ",0;
+icon_line_3:	db		 " ",204,205,206,207,"  ",13,10			; if available VDP version
+icon_line_4:	db		 208,209,210,211,212,213," ",13,10 		; if available MOS version
+icon_line_5:	db		 214,215,216,209,217,218," Screen mode: $";
+icon_line_6:	db 13,10,219,220,221,222,223,224,"        Text: $";
+icon_line_7:	db 13,10,225,226,227,228,229,230,"    Graphics: $";
+icon_line_8:	db 13,10,231,232,233,234,235,236,"     Colours: $";
 full_icon_end:
 
-printby_str:	db	" x ",0
-reset_fontload:	db	23,0,145,13,10
-reset_fontload_end:
-args:		db	0
+printby_str:	db	" x $"
+reset_fontload:	db	23,0,145,13,10,"$"
+;get_fgcol:		db	23,0,148,128,"$"
+current_col:	db	0
+args:			db	0
 
 ;------------------------------------------------------------------------
 ;
@@ -125,12 +128,14 @@ main:
 noargs:
 	ld	hl,boot_logo_icon
 	ld	bc,boot_logo_icon_end - boot_logo_icon
-	rst.lil	18h
+	rst.lil	18h		;too variable data to use a terminator character
+	moscall mos_sysvars		;I don't use IX so this should remain ok throughout
+	ld		a,(ix+sysvar_scrpixelIndex)	;preserve the current foreground colour fetched at the beginning
+	ld		(current_col),a
 	ld	hl,icon_line_1
 	call	puts
-	moscall mos_sysvars		;I don't use IX so this should remain ok throughout
 	ld		hl,0
-	ld		l,(ix+sysvar_scrMode)
+	ld		l,(ix+sysvar_scrMode)	;get mode
 	call	print_HLU_u24
 	ld	hl,icon_line_6
 	call	puts
@@ -163,37 +168,20 @@ noargs:
 	ld		a,(args)
 	or		a
 	jr		nz,unfont		;if there's an arg, don't show the colour banner
-	ld		a,(ix+sysvar_scrColours)
-	cp		32
-	jr		c,under_32
-	ld		a,32
-under_32:
-	ld		b,a
+	ld		b,(ix+sysvar_scrColours)
 	ld		c,0
-toploop:
+barloop:
 	ld		a,17
 	rst.lil	10h
 	ld		a,c
 	rst.lil	10h
 	ld		a,238	;solid block we have defined
 	rst.lil	10h		;print it
-	inc		c
-	djnz	toploop
-	ld		a,(ix+sysvar_scrColours)
-	cp		32
-	jp		c,reset_colour
-	sub		32
-	ld		b,a
-	call	newline
-bottomloop:
-	ld		a,17
-	rst.lil	10h
 	ld		a,c
-	rst.lil	10h
-	ld		a,238	;solid block we have defined
-	rst.lil	10h		;print it
+	cp		31	;end of line
+	call	z,newline
 	inc		c
-	djnz	bottomloop
+	djnz	barloop
 reset_colour:
 	ld		a,17
 	rst.lil	10h
@@ -203,6 +191,4 @@ reset_colour:
 	rst.lil	10h
 unfont:
 	ld		hl,reset_fontload
-	ld		bc,reset_fontload_end - reset_fontload
-	rst.lil	18h		;reset font, print newline and return to MOS wrapper
-	ret
+	jp		puts		;reset font, print newline and return to MOS wrapper

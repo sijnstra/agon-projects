@@ -140,6 +140,7 @@ char_not_hex:
 ;------------------------------------------------------------------------
 ;  newline
 ;  Output CR+LF; all registers preserved
+;  newline+ adds a space to workaround an old bug
 ;------------------------------------------------------------------------
 newline:
        push   AF
@@ -210,7 +211,7 @@ puts:
        push   AF
        push   BC
        ld     BC, 0                ; Set to 0, so length ignored...
-       ld     A, 0                 ; Use character in A as delimiter
+       ld     A, '$'                 ; Use character in A as delimiter
        RST.LIL    18h                  ; This calls a RST in the eZ80 address space
        pop    BC 
        pop    AF
