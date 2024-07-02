@@ -10,4 +10,4 @@ It's compiled using ZDS-II (the free eZ80 development tool) and I'm looking at c
 Controls are simple - use WASD (or Wordstar control keys) to move the squares. Q is to quit.
 
 # Screenshot
-![2048 screenshot](2048_Capture.jpg)
+![2048 screenshot](2048_Capture.PNG)
