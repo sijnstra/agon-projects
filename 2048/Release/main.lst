@@ -1,0 +1,1650 @@
+Zilog eZ80 Macro Assembler Version 4.3 (19073001) RELISTED                                      02-Jul-24     23:06:05     page:   1
+
+
+PC     Object              I  Line    Source 
+                           A     1    ; CP/M 2048
+                           A     2    ;
+                           A     3    ;
+                           A     4    ; Converted to Agon native by Shawn Sijnstra <shawn@sijnstra.com>
+                           A     5    ;   Based on 2048 created by Gabriele Cirulli.
+                           A     6    ;   Based on the console version for GNU/Linux by Maurits van der Schee
+                           A     7    ;   Ported to Z80 and CP/M by Marco Maccaferri <macca@maccasoft.com>
+                           A     8    ;   Slight VT100 compatibility changes by acn128 <acn@acn.wtf>
+                           A     9    ;
+                           A    10    ; Notable changes for reference:
+                           A    11    ; required colons on all labels
+                           A    12    ; labels are case sensitive
+                           A    13    ; code is a reserved word and can't be used as a label
+                           A    14    ; numeric evaluations are done differently - check results carefully
+                           A    15    ; no dot in front of DB, DW or END
+                           A    16    ; assembly source MUST be .asm, can't use e.g. .zsm
+                           A    17    ; supports defb as a synonym for db, but NOT defw. Must use dw. defs also missing - use ds.
+                           A    18    ; labels can't start with @
+                           A    19    ; Can't finish a line with a backslash
+                           A    20    ; dollar signs don't work for specifying hex
+                           A    21    
+                           A    22    
+                           A    23    			.ASSUME	ADL = 0
+                           A    24    
+                           B     0    			INCLUDE	"equs.inc"
+                           B     1    ;
+                           B     2    ; Title:	Memory Dump - Equs
+                           B     3    ; Author:	Dean Belfield
+                           B     4    ; Created:	15/11/2022
+                           B     5    ; Last Updated:	15/11/2022
+                           B     6    ;
+                           B     7    ; Modinfo:
+                           B     8    				
+                           B     9    ;RAM_Top:		EQU		0FF00h
+                           B    10    ;Stack_Top:		EQU		00000h	; Stack at top
+                           B    11    	
+                           B    12    ; For GPIO
+                           B    13    ; PA not available on eZ80L92
+                           B    14    ;
+       00000096            B    15    PA_DR:			EQU		96h
+       00000097            B    16    PA_DDR:			EQU		97h
+       00000098            B    17    PA_ALT1:		EQU		98h
+       00000099            B    18    PA_ALT2:		EQU		99h
+       0000009A            B    19    PB_DR:          	EQU		9Ah
+       0000009B            B    20    PB_DDR:        	 	EQU		9Bh
+       0000009C            B    21    PB_ALT1:        	EQU		9Ch
+       0000009D            B    22    PB_ALT2:        	EQU		9Dh
+       0000009E            B    23    PC_DR:          	EQU		9Eh
+       0000009F            B    24    PC_DDR:         	EQU		9Fh
+       000000A0            B    25    PC_ALT1:        	EQU		A0h
+       000000A1            B    26    PC_ALT2:        	EQU		A1h
+       000000A2            B    27    PD_DR:          	EQU		A2h
+       000000A3            B    28    PD_DDR:			EQU		A3h
+       000000A4            B    29    PD_ALT1:		EQU		A4h
+       000000A5            B    30    PD_ALT2:		EQU		A5h
+                           B    31    	
+       00000000            B    32    GPIOMODE_OUT:		EQU		0	; Output
+       00000001            B    33    GPIOMODE_IN:		EQU		1	; Input
+       00000002            B    34    GPIOMODE_DIO:		EQU		2	; Open Drain IO
+       00000003            B    35    GPIOMODE_SIO:		EQU		3	; Open Source IO
+       00000004            B    36    GPIOMODE_INTD:		EQU		4	; Interrupt, Dual Edge
+       00000005            B    37    GPIOMODE_ALTF:		EQU		5;	; Alt Function
+       00000006            B    38    GPIOMODE_INTAL:		EQU		6	; Interrupt, Active Low
+       00000007            B    39    GPIOMODE_INTAH:		EQU		7	; Interrupt, Active High
+       00000008            B    40    GPIOMODE_INTFE:		EQU		8	; Interrupt, Falling Edge
+       00000009            B    41    GPIOMODE_INTRE:		EQU		9	; Interrupt, Rising Edge
+                           B    42    	
+                           B    43    ; For serial.asm
+                           B    44    ; 
+       016E3600            B    45    BASE_CLOCK		EQU	24000000	; It's actually 48000000 in the Project Settings
+                           B    46    
+       00000003            B    47    BAUD_500000		EQU	BASE_CLOCK / (16 * 500000)
+       00000006            B    48    BAUD_250000		EQU	BASE_CLOCK / (16 * 250000)
+       0000000C            B    49    BAUD_125000		EQU	BASE_CLOCK / (16 * 125000)
+       0000004E            B    50    BAUD_19200		EQU	BASE_CLOCK / (16 * 19200)	
+                           B    51    
+                           B    52    ; For interrupts.asm
+                           B    53    ;
+                           B    54    
+                           B    55    ;UARTs
+                           B    56    ;
+       00000018            B    57    UART0_IVECT		EQU		18h
+       0000001A            B    58    UART1_IVECT		EQU		1Ah
+                           B    59    
+                           B    60    ;Ports
+                           B    61    ;
+       00000030            B    62    PB0_IVECT   		EQU   	30h	; AGON ITRP Interrupt   (Pin 28/IO17 of the ESP32)
+       00000032            B    63    PB1_IVECT  	  	EQU  	32h	; AGON VBLANK Interrupt (Pin 23/IO15 of the ESP32)
+       00000034            B    64    PB2_IVECT  	  	EQU   	34h
+       00000036            B    65    PB3_IVECT  	  	EQU   	36h
+       00000038            B    66    PB4_IVECT    		EQU   	38h
+       0000003A            B    67    PB5_IVECT    		EQU   	3Ah
+       0000003C            B    68    PB6_IVECT    		EQU   	3Ch
+       0000003E            B    69    PB7_IVECT    		EQU   	3Eh
+                           B    70                           
+       00000040            B    71    PC0_IVECT    		EQU   	40h
+       00000042            B    72    PC1_IVECT    		EQU   	42h
+       00000044            B    73    PC2_IVECT    		EQU   	44h
+       00000046            B    74    PC3_IVECT    		EQU   	46h
+       00000048            B    75    PC4_IVECT    		EQU   	48h
+       0000004A            B    76    PC5_IVECT    		EQU   	4Ah
+       0000004C            B    77    PC6_IVECT    		EQU   	4Ch
+       0000004E            B    78    PC7_IVECT    		EQU   	4Eh
+                           B    79                           
+       00000050            B    80    PD0_IVECT    		EQU   	50h
+       00000052            B    81    PD1_IVECT    		EQU   	52h
+       00000054            B    82    PD2_IVECT    		EQU   	54h
+       00000056            B    83    PD3_IVECT    		EQU   	56h
+       00000058            B    84    PD4_IVECT    		EQU   	58h
+       0000005A            B    85    PD5_IVECT    		EQU   	5Ah
+       0000005C            B    86    PD6_IVECT    		EQU   	5Ch
+       0000005E            B    87    PD7_IVECT    		EQU   	5Eh
+                           B    88    
+                           B    89    ; Originally in main.asm
+                           B    90    ;
+       0000000D            B    91    CR:			EQU     0DH
+       0000000A            B    92    LF:			EQU     0AH
+       0000001B            B    93    ESC:			EQU     1BH
+                           B     0    			INCLUDE "mos_api.inc"	; In MOS/src
+                           B     1    ;
+                           B     2    ; Title:	AGON MOS - API for user projects
+                           B     3    ; Author:	Dean Belfield
+                           B     4    ; Created:	03/08/2022
+                           B     5    ; Last Updated:	15/04/2023
+                           B     6    ;
+                           B     7    ; Modinfo:
+                           B     8    ; 05/08/2022:	Added mos_feof
+                           B     9    ; 09/08/2022:	Added system variables: cursorX, cursorY
+                           B    10    ; 18/08/2022:	Added system variables: scrchar, scrpixel, audioChannel, audioSuccess, vpd_pflags
+                           B    11    ; 05/09/2022:	Added mos_ren, vdp_pflag_mode
+                           B    12    ; 24/09/2022:	Added mos_getError, mos_mkdir
+                           B    13    ; 13/10/2022:	Added mos_oscli
+                           B    14    ; 23/02/2023:	Added more sysvars, fixed typo in sysvar_audioSuccess, offsets for sysvar_scrCols, 
+                           B    15    ; 04/03/2023:	Added sysvar_scrpixelIndex
+                           B    16    ; 08/03/2023:	Renamed sysvar_keycode to sysvar_keyascii, added sysvar_vkeycode
+                           B    17    ; 15/03/2023:	Added mos_copy, mos_getrtc, mos_setrtc, rtc, vdp_pflag_rtc
+                           B    18    ; 21/03/2023:	Added mos_setintvector, sysvars for keyboard status, vdu codes for vdp
+                           B    19    ; 22/03/2023:	The VDP commands are now indexed from 0x80
+                           B    20    ; 29/03/2023:	Added mos_uopen, mos_uclose, mos_ugetc, mos_uputc
+                           B    21    ; 13/04/2023:	Added FatFS file structures (FFOBJID, FIL, DIR, FILINFO)
+                           B    22    ; 15/04/2023:	Added mos_getfil, mos_fread, mos_fwrite and mos_flseek
+                           B    23    
+                           B    24    ; VDP control (VDU 23, 0, n)
+                           B    25    ;
+       00000080            B    26    vdp_gp:			EQU 	80h
+       00000081            B    27    vdp_keycode:		EQU 	81h
+       00000082            B    28    vdp_cursor:		EQU	82h
+       00000083            B    29    vdp_scrchar:		EQU	83h
+       00000084            B    30    vdp_scrpixel:		EQU	84h
+       00000085            B    31    vdp_audio:		EQU	85h
+       00000086            B    32    vdp_mode:		EQU	86h
+       00000087            B    33    vdp_rtc:		EQU	87h
+       00000088            B    34    vdp_keystate:		EQU	88h
+       000000C0            B    35    vdp_logicalcoords:	EQU	C0h
+       000000FF            B    36    vdp_terminalmode:	EQU	FFh
+                           B    37    
+                           B    38    ; MOS high level functions
+                           B    39    ;
+       00000000            B    40    mos_getkey:		EQU	00h
+       00000001            B    41    mos_load:		EQU	01h
+       00000002            B    42    mos_save:		EQU	02h
+       00000003            B    43    mos_cd:			EQU	03h
+       00000004            B    44    mos_dir:		EQU	04h
+       00000005            B    45    mos_del:		EQU	05h
+       00000006            B    46    mos_ren:		EQU	06h
+       00000007            B    47    mos_mkdir:		EQU	07h
+       00000008            B    48    mos_sysvars:		EQU	08h
+       00000009            B    49    mos_editline:		EQU	09h
+       0000000A            B    50    mos_fopen:		EQU	0Ah
+       0000000B            B    51    mos_fclose:		EQU	0Bh
+       0000000C            B    52    mos_fgetc:		EQU	0Ch
+       0000000D            B    53    mos_fputc:		EQU	0Dh
+       0000000E            B    54    mos_feof:		EQU	0Eh
+       0000000F            B    55    mos_getError:		EQU	0Fh
+       00000010            B    56    mos_oscli:		EQU	10h
+       00000011            B    57    mos_copy:		EQU	11h
+       00000012            B    58    mos_getrtc:		EQU	12h
+       00000013            B    59    mos_setrtc:		EQU	13h
+       00000014            B    60    mos_setintvector:	EQU	14h
+       00000015            B    61    mos_uopen:		EQU	15h
+       00000016            B    62    mos_uclose:		EQU	16h
+       00000017            B    63    mos_ugetc:		EQU	17h
+       00000018            B    64    mos_uputc:		EQU 	18h
+       00000019            B    65    mos_getfil:		EQU	19h
+       0000001A            B    66    mos_fread:		EQU	1Ah
+       0000001B            B    67    mos_fwrite:		EQU	1Bh
+       0000001C            B    68    mos_flseek:		EQU	1Ch
+                           B    69    
+                           B    70    ; FatFS file access functions
+                           B    71    ;
+       00000080            B    72    ffs_fopen:		EQU	80h
+       00000081            B    73    ffs_fclose:		EQU	81h
+       00000082            B    74    ffs_fread:		EQU	82h
+       00000083            B    75    ffs_fwrite:		EQU	83h
+       00000084            B    76    ffs_flseek:		EQU	84h
+       00000085            B    77    ffs_ftruncate:		EQU	85h
+       00000086            B    78    ffs_fsync:		EQU	86h
+       00000087            B    79    ffs_fforward:		EQU	87h
+       00000088            B    80    ffs_fexpand:		EQU	88h
+       00000089            B    81    ffs_fgets:		EQU	89h
+       0000008A            B    82    ffs_fputc:		EQU	8Ah
+       0000008B            B    83    ffs_fputs:		EQU	8Bh
+       0000008C            B    84    ffs_fprintf:		EQU	8Ch
+       0000008D            B    85    ffs_ftell:		EQU	8Dh
+       0000008E            B    86    ffs_feof:		EQU	8Eh
+       0000008F            B    87    ffs_fsize:		EQU	8Fh
+       00000090            B    88    ffs_ferror:		EQU	90h
+                           B    89    
+                           B    90    ; FatFS directory access functions
+                           B    91    ;
+       00000091            B    92    ffs_dopen:		EQU	91h
+       00000092            B    93    ffs_dclose:		EQU	92h
+       00000093            B    94    ffs_dread:		EQU	93h
+       00000094            B    95    ffs_dfindfirst:		EQU	94h
+       00000095            B    96    ffs_dfindnext:		EQU	95h
+                           B    97    
+                           B    98    ; FatFS file and directory management functions
+                           B    99    ;
+       00000096            B   100    ffs_stat:		EQU	96h
+       00000097            B   101    ffs_unlink:		EQU	97h
+       00000098            B   102    ffs_rename:		EQU	98h
+       00000099            B   103    ffs_chmod:		EQU	99h
+       0000009A            B   104    ffs_utime:		EQU	9Ah
+       0000009B            B   105    ffs_mkdir:		EQU	9Bh
+       0000009C            B   106    ffs_chdir:		EQU	9Ch
+       0000009D            B   107    ffs_chdrive:		EQU	9Dh
+       0000009E            B   108    ffs_getcwd:		EQU	9Eh
+                           B   109    
+                           B   110    ; FatFS volume management and system configuration functions
+                           B   111    ;
+       0000009F            B   112    ffs_mount:		EQU	9Fh
+       000000A0            B   113    ffs_mkfs:		EQU	A0h
+       000000A1            B   114    ffs_fdisk		EQU	A1h
+       000000A2            B   115    ffs_getfree:		EQU	A2h
+       000000A3            B   116    ffs_getlabel:		EQU	A3h
+       000000A4            B   117    ffs_setlabel:		EQU	A4h
+       000000A5            B   118    ffs_setcp:		EQU	A5h
+                           B   119    	
+                           B   120    ; File access modes
+                           B   121    ;
+       00000001            B   122    fa_read:		EQU	01h
+       00000002            B   123    fa_write:		EQU	02h
+       00000000            B   124    fa_open_existing:	EQU	00h
+       00000004            B   125    fa_create_new:		EQU	04h
+       00000008            B   126    fa_create_always:	EQU	08h
+       00000010            B   127    fa_open_always:		EQU	10h
+       00000030            B   128    fa_open_append:		EQU	30h
+                           B   129    	
+                           B   130    ; System variable indexes for api_sysvars
+                           B   131    ; Index into _sysvars in globals.asm
+                           B   132    ;
+       00000000            B   133    sysvar_time:		EQU	00h	; 4: Clock timer in centiseconds (incremented by 2 every VBLANK)
+       00000004            B   134    sysvar_vpd_pflags:	EQU	04h	; 1: Flags to indicate completion of VDP commands
+       00000005            B   135    sysvar_keyascii:	EQU	05h	; 1: ASCII keycode, or 0 if no key is pressed
+       00000006            B   136    sysvar_keymods:		EQU	06h	; 1: Keycode modifiers
+       00000007            B   137    sysvar_cursorX:		EQU	07h	; 1: Cursor X position
+       00000008            B   138    sysvar_cursorY:		EQU	08h	; 1: Cursor Y position
+       00000009            B   139    sysvar_scrchar:		EQU	09h	; 1: Character read from screen
+       0000000A            B   140    sysvar_scrpixel:	EQU	0Ah	; 3: Pixel data read from screen (R,B,G)
+       0000000D            B   141    sysvar_audioChannel:	EQU	0Dh	; 1: Audio channel 
+       0000000E            B   142    sysvar_audioSuccess:	EQU	0Eh	; 1: Audio channel note queued (0 = no, 1 = yes)
+       0000000F            B   143    sysvar_scrWidth:	EQU	0Fh	; 2: Screen width in pixels
+       00000011            B   144    sysvar_scrHeight:	EQU	11h	; 2: Screen height in pixels
+       00000013            B   145    sysvar_scrCols:		EQU	13h	; 1: Screen columns in characters
+       00000014            B   146    sysvar_scrRows:		EQU	14h	; 1: Screen rows in characters
+       00000015            B   147    sysvar_scrColours:	EQU	15h	; 1: Number of colours displayed
+       00000016            B   148    sysvar_scrpixelIndex:	EQU	16h	; 1: Index of pixel data read from screen
+       00000017            B   149    sysvar_vkeycode:	EQU	17h	; 1: Virtual key code from FabGL
+       00000018            B   150    sysvar_vkeydown		EQU	18h	; 1: Virtual key state from FabGL (0=up, 1=down)
+       00000019            B   151    sysvar_vkeycount:	EQU	19h	; 1: Incremented every time a key packet is received
+       0000001A            B   152    sysvar_rtc:		EQU	1Ah	; 8: Real time clock data
+       00000022            B   153    sysvar_keydelay:	EQU	22h	; 2: Keyboard repeat delay
+       00000024            B   154    sysvar_keyrate:		EQU	24h	; 2: Keyboard repeat reat
+       00000026            B   155    sysvar_keyled:		EQU	26h	; 1: Keyboard LED status
+                           B   156    	
+                           B   157    ; Flags for the VPD protocol
+                           B   158    ;
+       00000001            B   159    vdp_pflag_cursor:	EQU	00000001b
+       00000002            B   160    vdp_pflag_scrchar:	EQU	00000010b
+       00000004            B   161    vdp_pflag_point:	EQU	00000100b
+       00000008            B   162    vdp_pflag_audio:	EQU	00001000b
+       00000010            B   163    vdp_pflag_mode:		EQU	00010000b
+       00000020            B   164    vdp_pflag_rtc:		EQU	00100000b
+                           B   165    
+                           B   166    ;
+                           B   167    ; FatFS structures
+                           B   168    ; These mirror the structures contained in src_fatfs/ff.h in the MOS project
+                           B   169    ;
+                           B   170    ; Object ID and allocation information (FFOBJID)
+                           B   171    ;
+                           B   172    FFOBJID	.STRUCT
+000000                     B   173    	fs:		DS	3	; Pointer to the hosting volume of this object
+000003                     B   174    	id:		DS	2	; Hosting volume mount ID
+000005                     B   175    	attr:		DS	1	; Object attribute
+000006                     B   176    	stat:		DS	1	; Object chain status (b1-0: =0:not contiguous, =2:contiguous, =3:fragmente
+000007                     B   177    	sclust:		DS	4	; Object data start cluster (0:no cluster or root directory)
+00000B                     B   178    	objsize:	DS	4	; Object size (valid when sclust != 0)
+       0000000F            B   179    FFOBJID_SIZE .ENDSTRUCT FFOBJID
+                           B   180    ;
+                           B   181    ; File object structure (FIL)
+                           B   182    ;
+                           B   183    FIL .STRUCT
+000000                     B   184    	obj:		.TAG	FFOBJID	; Object identifier
+00000F                     B   185    	flag:		DS	1	; File status flags
+000010                     B   186    	err:		DS	1	; Abort flag (error code)
+000011                     B   187    	fptr:		DS	4	; File read/write pointer (Zeroed on file open)
+000015                     B   188    	clust:		DS	4	; Current cluster of fpter (invalid when fptr is 0)
+000019                     B   189    	sect:		DS	4	; Sector number appearing in buf[] (0:invalid)
+00001D                     B   190    	dir_sect:	DS	4	; Sector number containing the directory entry
+000021                     B   191    	dir_ptr:	DS	3	; Pointer to the directory entry in the win[]
+       00000024            B   192    FIL_SIZE .ENDSTRUCT FIL
+                           B   193    ;
+                           B   194    ; Directory object structure (DIR)
+                           B   195    ; 
+                           B   196    DIR .STRUCT
+000000                     B   197    	obj:		.TAG	FFOBJID	; Object identifier
+00000F                     B   198    	dptr:		DS	4	; Current read/write offset
+000013                     B   199    	clust:		DS	4	; Current cluster
+000017                     B   200    	sect:		DS	4	; Current sector (0:Read operation has terminated)
+00001B                     B   201    	dir:		DS	3	; Pointer to the directory item in the win[]
+00001E                     B   202    	fn:		DS	12	; SFN (in/out) {body[8],ext[3],status[1]}
+00002A                     B   203    	blk_ofs:	DS	4	; Offset of current entry block being processed (0xFFFFFFFF:Invalid)
+       0000002E            B   204    DIR_SIZE .ENDSTRUCT DIR
+                           B   205    ;
+                           B   206    ; File information structure (FILINFO)
+                           B   207    ;
+                           B   208    FILINFO .STRUCT
+000000                     B   209    	fsize:		DS 	4	; File size
+000004                     B   210    	fdate:		DS	2	; Modified date
+000006                     B   211    	ftime:		DS	2	; Modified time
+000008                     B   212    	fattrib:	DS	1	; File attribute
+000009                     B   213    	altname:	DS	13	; Alternative file name
+000016                     B   214    	fname:		DS	256	; Primary file name
+       00000116            B   215    FILINFO_SIZE .ENDSTRUCT FILINFO
+                           B   216    
+                           B   217    ;
+                           B   218    ; Macro for calling the API
+                           B   219    ; Parameters:
+                           B   220    ; - function: One of the function numbers listed above
+                           B   221    ;
+                           B   222    MOSCALL:		MACRO	function
+                           B   223    			LD	A, function
+                           B   224    			RST.LIS	08h
+                           B   225    			ENDMACRO
+                           B   226    
+                           B   227    MOSCALL24:		MACRO	function
+                           B   228    			LD	A, function
+                           B   229    			RST.LIL	08h
+                           B   230    			ENDMACRO	
+                           B   231    ;	print string terminated by 0
+                           B   232    ;	Entry: HL pointing to string
+                           B   233    ;	destroys a,bc
+                           B   234    Print0:	MACRO
+                           B   235    		XOR	A
+                           B   236    		LD	BC,0		;inefficient - used this way so that 24 bit version will also work
+                           B   237    		RST.LIS	18h
+                           B   238    		ENDMACRO 
+                           B   239    
+                           B   240    Print$:	MACRO
+                           B   241    		LD	a,'$'
+                           B   242    		LD	BC,0		;inefficient - used this way so that 24 bit version will also work
+                           B   243    		RST.LIS	18h
+                           B   244    		ENDMACRO 
+                           B   245    
+                           B   246    
+                           B   247    DSP:	MACRO
+                           B   248    		RST.LIS	10h
+                           B   249    		ENDMACRO
+                           B   250    
+                           B   251    DebugCS:	MACRO	Dchar
+                           B   252    			LD	a,Dchar
+                           B   253    			RST.LIS	10h
+                           B   254    			ENDMACRO
+                           B   255    
+                           B   256    DebugCL:	MACRO	Dchar
+                           B   257    			LD	a,Dchar
+                           B   258    			RST.LIL	10h
+                           B   259    			ENDMACRO
+                           A    27    
+                           A    28    
+                           A    29    			SEGMENT CODE
+                           A    30    
+                           A    31    			XDEF	_main
+                           A    32    	
+                           A    33    ; Error: Invalid parameter
+                           A    34    ;
+000142 211300              A    35    _err_invalid_param:	LD		HL, 19			; The return code: Invalid parameters
+000145 C9                  A    36    			RET
+       000000C0            A    37    UART0_PORT		EQU	%C0		; UART0
+                           A    38    				
+       000000C0            A    39    UART0_REG_RBR:		EQU	UART0_PORT+0	; Receive buffer
+       000000C0            A    40    UART0_REG_THR:		EQU	UART0_PORT+0	; Transmitter holding
+       000000C0            A    41    UART0_REG_DLL:		EQU	UART0_PORT+0	; Divisor latch low
+       000000C1            A    42    UART0_REG_IER:		EQU	UART0_PORT+1	; Interrupt enable
+       000000C1            A    43    UART0_REG_DLH:		EQU	UART0_PORT+1	; Divisor latch high
+       000000C2            A    44    UART0_REG_IIR:		EQU	UART0_PORT+2	; Interrupt identification
+       000000C2            A    45    UART0_REG_FCT:		EQU	UART0_PORT+2;	; Flow control
+       000000C3            A    46    UART0_REG_LCR:		EQU	UART0_PORT+3	; Line control
+       000000C4            A    47    UART0_REG_MCR:		EQU	UART0_PORT+4	; Modem control
+       000000C5            A    48    UART0_REG_LSR:		EQU	UART0_PORT+5	; Line status
+       000000C6            A    49    UART0_REG_MSR:		EQU	UART0_PORT+6	; Modem status
+       000000C7            A    50    UART0_REG_SCR:		EQU 	UART0_PORT+7	; Scratch
+                           A    51    
+       00004000            A    52    TX_WAIT			EQU	16384 		; Count before a TX times out
+                           A    53    
+       00000080            A    54    UART_LSR_ERR		EQU 	%80		; Error
+       00000040            A    55    UART_LSR_ETX		EQU 	%40		; Transmit empty
+       00000020            A    56    UART_LSR_ETH		EQU	%20		; Transmit holding register empty
+       00000001            A    57    UART_LSR_RDY		EQU	%01		; Data ready
+                           A    58    ; Get a GPIO register
+                           A    59    ; Parameters:
+                           A    60    ; - REG: Register to test
+                           A    61    ; - VAL: Bit(s) to test
+                           A    62    ;	
+                           A    63    GET_GPIO:		MACRO	REG, VAL
+                           A    64    			IN0	A,(REG)
+                           A    65    			TST	A, VAL
+                           A    66    			ENDMACRO
+                           A    67    
+       0000000D            A    68    cr:			EQU	0Dh
+       0000000A            A    69    lf:			EQU	0Ah
+                           A    70    
+                           A    71    ; ASCII
+                           A    72    ;
+       00000003            A    73    CtrlC:	equ	03h
+                           A    74    CR:	equ	0Dh
+                           A    75    LF:	equ	0Ah
+       0000001A            A    76    CtrlZ:	equ	1Ah
+                           A    77    ;
+                           A    78    
+                           A    79    ;_main:
+                           A    80    ; RAM
+                           A    81    ; 
+                           A    82    			DEFINE	LORAM, SPACE = ROM
+                           A    83    ;			ORDER	__VECTORS, CODE, LORAM
+                           A    84    ;			SEGMENT LORAM
+                           A    85    		
+                           A    86    ;			SEGMENT	BSS
+                           A    87    			SEGMENT CODE
+                           A    88    
+                           A    89    ;***********************************************************
+                           A    90    ; Terminal mode Serial I/O
+                           A    91    
+                           A    92    ;
+                           A    93    ; Check whether we're clear to send (UART0 only)
+                           A    94    ;
+                           A    95    
+000146                     A    96    UART0_wait_CTS:		GET_GPIO	PD_DR, 8		; Check Port D, bit 3 (CTS)
+00014C 20 F8               A    97    			JR		NZ, UART0_wait_CTS
+00014E C9                  A    98    			RET
+                           A    99    
+                           A   100    ; Write a character to UART0
+                           A   101    ; Parameters:
+                           A   102    ; - A: Data to write
+                           A   103    ; Returns:
+                           A   104    ; - F: C if written
+                           A   105    ; - F: NC if timed out
+                           A   106    ;
+00014F C5                  A   107    UART0_serial_TX:	PUSH		BC			; Stack BC
+000150 F5                  A   108    			PUSH		AF 			; Stack AF
+000151 CD 46 01            A   109    			CALL	UART0_wait_CTS
+000154 010040              A   110    			LD		BC,TX_WAIT		; Set CB to the transmit timeout
+000157 ED38C5              A   111    UART0_serial_TX1:	IN0		A,(UART0_REG_LSR)	; Get the line status register
+00015A E640                A   112    			AND 		UART_LSR_ETX		; Check for TX empty
+00015C 20 09               A   113    			JR		NZ, UART0_serial_TX2	; If set, then TX is empty, goto transmit
+00015E 0B                  A   114    			DEC		BC
+00015F 78                  A   115    			LD		A, B
+000160 B1                  A   116    			OR		C
+000161 20 F4               A   117    			JR		NZ, UART0_serial_TX1
+000163 F1                  A   118    			POP		AF			; We've timed out at this point so
+000164 C1                  A   119    			POP		BC			; Restore the stack
+000165 B7                  A   120    			OR		A			; Clear the carry flag and preserve A
+000166 C9                  A   121    			RET	
+000167 F1                  A   122    UART0_serial_TX2:	POP		AF			; Good to send at this point, so
+000168 ED39C0              A   123    			OUT0		(UART0_REG_THR),A	; Write the character to the UART transmit buffer
+00016B C1                  A   124    			POP		BC			; Restore BC
+00016C 37                  A   125    			SCF					; Set the carry flag
+00016D C9                  A   126    			RET 
+                           A   127    ; Read a character from UART0
+                           A   128    ; Returns:
+                           A   129    ; - A: Data read
+                           A   130    ; - F: C if character read
+                           A   131    ; - F: NC if no character read
+                           A   132    ;
+00016E ED38C5              A   133    UART0_serial_RX:	IN0		A,(UART0_REG_LSR)	; Get the line status register
+000171 E601                A   134    			AND 		UART_LSR_RDY		; Check for characters in buffer
+000173 C8                  A   135    			RET		Z			; Just ret (with carry clear) if no characters
+000174                     A   136    UART0_serial_RX2:
+000174 ED38C0              A   137    			IN0		A,(UART0_REG_RBR)	; Read the character from the UART receive buffer
+000177 37                  A   138    			SCF 					; Set the carry flag
+000178 C9                  A   139    			RET
+                           A   140    
+                           A   141    ; 2048
+                           A   142    ;
+                           A   143    ; Join the numbers and get to the 2048 tile.
+                           A   144    ;
+                           A   145    ; Commands:
+                           A   146    ;
+                           A   147    ;   Use the arrow keys to move the tiles.
+                           A   148    ;   When two tiles with the same number touch, they merge into one.
+                           A   149    ;
+                           A   150    ;   w, s, a, d - Alternate keys (up, down, left, right)
+                           A   151    ;   CTRL-E, CTRL-X, CTRL-S, CTRL-D - Wordstar-compatible control keys
+                           A   152    ;
+                           A   153    ; Compile:
+                           A   154    ;
+                           A   155    ;   TASM -80 -b 2048.ASM 2048.COM
+                           A   156    ;   -or-
+                           A   157    ;   uz80as 2048.ASM 2048.COM
+                           A   158    ;
+                           A   159    ; Credits:
+                           A   160    ;
+                           A   161    ;   Based on 2048 created by Gabriele Cirulli.
+                           A   162    ;   Based on the console version for GNU/Linux by Maurits van der Schee
+                           A   163    ;   Ported to Z80 and CP/M by Marco Maccaferri <macca@maccasoft.com>
+                           A   164    ;   Slight VT100 compatibility changes by acn128 <acn@acn.wtf>
+                           A   165    
+                           A   166    
+       00000001            A   167    CTRL_A      .EQU    1
+       00000002            A   168    CTRL_B      .EQU    2
+       00000003            A   169    CTRL_C      .EQU    3
+       00000004            A   170    CTRL_D      .EQU    4
+       00000005            A   171    CTRL_E      .EQU    5
+       00000006            A   172    CTRL_F      .EQU    6
+       00000007            A   173    CTRL_G      .EQU    7
+       00000008            A   174    CTRL_H      .EQU    8
+       00000009            A   175    CTRL_I      .EQU    9
+       0000000A            A   176    CTRL_J      .EQU    10
+       0000000B            A   177    CTRL_K      .EQU    11
+       0000000C            A   178    CTRL_L      .EQU    12
+       0000000D            A   179    CTRL_M      .EQU    13
+       0000000E            A   180    CTRL_N      .EQU    14
+       0000000F            A   181    CTRL_O      .EQU    15
+       00000010            A   182    CTRL_P      .EQU    16
+       00000011            A   183    CTRL_Q      .EQU    17
+       00000012            A   184    CTRL_R      .EQU    18
+       00000013            A   185    CTRL_S      .EQU    19
+       00000014            A   186    CTRL_T      .EQU    20
+       00000015            A   187    CTRL_U      .EQU    21
+       00000016            A   188    CTRL_V      .EQU    22
+       00000017            A   189    CTRL_W      .EQU    23
+       00000018            A   190    CTRL_X      .EQU    24
+       00000019            A   191    CTRL_Y      .EQU    25
+       0000001A            A   192    CTRL_Z      .EQU    26
+                           A   193    
+       00000007            A   194    BEL         .EQU    07H
+       0000000C            A   195    FF          .EQU    0CH
+                           A   196    CR          .EQU    0DH
+                           A   197    LF          .EQU    0AH
+       00000024            A   198    EOS         .EQU    '$'	;24H
+                           A   199    
+                           A   200    ;BDOS        .EQU    0005H
+                           A   201    
+       00000025            A   202    BOARD_X     .EQU    25H
+       00000006            A   203    BOARD_Y     .EQU    06H
+                           A   204    
+                           A   205    ;            .ORG    0100H
+000179                     A   206    _main:            
+000179 ED5F                A   207                LD      A,R
+00017B 32 BC 06            A   208                LD      (RAND16+1),A
+00017E ED5F                A   209                LD      A,R
+000180 32 BD 06            A   210                LD      (RAND16+2),A
+                           A   211    
+000183 11 52 08            A   212                LD      DE,INIT
+                           A   213    ;            LD      C,09H
+000186 CD EE 06            A   214    	CALL	show_string_de
+                           A   215    
+000189 CD 9D 03            A   216                CALL    ADDRANDOM
+00018C CD 9D 03            A   217                CALL    ADDRANDOM
+                           A   218    
+00018F CD 21 05            A   219                CALL    DRAWBORDER
+000192 CD 87 05            A   220                CALL    DRAWBOARD
+                           A   221    
+000195 3E25                A   222    LOOP2       LD      A,BOARD_X
+000197 32 3E 09            A   223                LD      (XPOS),A
+00019A 3E06                A   224                LD      A,BOARD_Y
+00019C C613                A   225                ADD     A,13H
+00019E 27                  A   226                DAA
+00019F 32 3F 09            A   227                LD      (YPOS),A
+0001A2 CD 61 06            A   228                CALL    GOTOXY
+0001A5 11 B7 08            A   229                LD      DE,MSG1
+                           A   230    ;            LD      C,09H
+0001A8 CD EE 06            A   231                CALL    show_string_de
+                           A   232    
+0001AB                     A   233    LOOP:
+                           A   234    ;            LD      C,06H
+                           A   235    ;            LD      E,0FFH
+                           A   236    ;            CALL    BDOS
+                           A   237    ;            CP      0
+                           A   238    ;            JP      Z,LOOP
+0001AB CD 6E 01            A   239    		call	UART0_serial_RX
+0001AE 30 FB               A   240    		jr		nc,LOOP
+                           A   241                
+0001B0 FE61                A   242                CP      'a'
+0001B2 DA BC 01            A   243                JP      C,K3
+0001B5 FE7B                A   244                CP      '{'
+0001B7 D2 BC 01            A   245                JP      NC,K3
+0001BA E65F                A   246                AND     5FH		;force upper case
+                           A   247    
+0001BC FE03                A   248    K3:          CP      CTRL_C
+0001BE CA C9 02            A   249                JP      Z,EXIT
+                           A   250    
+0001C1 FE05                A   251                CP      CTRL_E
+0001C3 CA 42 02            A   252                JP      Z,TOP
+0001C6 FE18                A   253                CP      CTRL_X
+0001C8 CA 54 02            A   254                JP      Z,BOTTOM
+0001CB FE04                A   255                CP      CTRL_D
+0001CD CA 66 02            A   256                JP      Z,RIGHT
+0001D0 FE13                A   257                CP      CTRL_S
+0001D2 CA 78 02            A   258                JP      Z,LEFT
+                           A   259    
+0001D5 FE57                A   260                CP      'W'
+0001D7 CA 42 02            A   261                JP      Z,TOP
+0001DA FE53                A   262                CP      'S'
+0001DC CA 54 02            A   263                JP      Z,BOTTOM
+0001DF FE44                A   264                CP      'D'
+0001E1 CA 66 02            A   265                JP      Z,RIGHT
+0001E4 FE41                A   266                CP      'A'
+0001E6 CA 78 02            A   267                JP      Z,LEFT
+                           A   268    
+0001E9 FE51                A   269                CP      'Q'
+0001EB CA 7E 02            A   270                JP      Z,QUIT
+                           A   271                
+0001EE FE1B                A   272                CP      1BH
+0001F0 CA FB 01            A   273                JP      Z,K1
+                           A   274    
+                           A   275    ;            LD      C,02H
+0001F3 3E07                A   276                LD      A,BEL
+0001F5 CD 4F 01            A   277                CALL    UART0_serial_TX
+                           A   278    
+0001F8 C3 AB 01            A   279                JP      LOOP
+                           A   280    
+0001FB                     A   281    K1:
+                           A   282    ;          LD      C,06H
+                           A   283    ;            LD      E,0FFH
+                           A   284    ;            CALL    BDOS
+                           A   285    ;            CP      0
+                           A   286    ;            JP      Z,K1
+0001FB CD 6E 01            A   287    		call	UART0_serial_RX
+0001FE 30 FB               A   288    		jr		nc,K1            
+000200 FE4F                A   289                CP      'O'
+000202 C2 0A 02            A   290                JP      NZ,K2
+                           A   291    
+000205                     A   292    K4:
+                           A   293    ;          LD      C,06H
+                           A   294    ;            LD      E,0FFH
+                           A   295    ;            CALL    BDOS
+                           A   296    ;            CP      0
+                           A   297    ;            JP      Z,K4
+000205 CD 6E 01            A   298    		call	UART0_serial_RX
+000208 30 FB               A   299    		jr		nc,K4
+                           A   300    
+00020A FE41                A   301    K2:          CP      'A'
+00020C CA 42 02            A   302                JP      Z,TOP
+00020F FE42                A   303                CP      'B'
+000211 CA 54 02            A   304                JP      Z,BOTTOM
+000214 FE43                A   305                CP      'C'
+000216 CA 66 02            A   306                JP      Z,RIGHT
+000219 FE44                A   307                CP      'D'
+00021B CA 78 02            A   308                JP      Z,LEFT
+                           A   309    
+                           A   310    ;            LD      C,02H
+00021E 3E07                A   311                LD      A,BEL
+000220 CD 4F 01            A   312                CALL    UART0_serial_TX
+                           A   313    
+000223 C3 AB 01            A   314                JP      LOOP
+                           A   315    
+000226 3A 42 09            A   316    LOOP1       LD      A,(MOVED)
+000229 FE00                A   317                CP      0
+00022B CA AB 01            A   318                JP      Z,LOOP
+                           A   319    
+00022E CD 87 05            A   320                CALL    DRAWBOARD
+                           A   321    
+000231 CD 9D 03            A   322                CALL    ADDRANDOM
+000234 CD 87 05            A   323                CALL    DRAWBOARD
+                           A   324    
+000237 CD D5 02            A   325                CALL    ISOVER
+00023A FE01                A   326                CP      1
+00023C CA B5 02            A   327                JP      Z,GAMEOVER
+                           A   328    
+00023F C3 AB 01            A   329                JP      LOOP
+                           A   330    
+000242                     A   331    TOP:
+000242 CD 3E 04            A   332                CALL    ROTATE
+000245 CD 3E 04            A   333                CALL    ROTATE
+000248 CD 3E 04            A   334                CALL    ROTATE
+00024B CD 74 03            A   335                CALL    MOVEMERGE
+00024E CD 3E 04            A   336                CALL    ROTATE
+000251 C3 26 02            A   337                JP      LOOP1
+                           A   338    
+000254                     A   339    BOTTOM:
+000254 CD 3E 04            A   340                CALL    ROTATE
+000257 CD 74 03            A   341                CALL    MOVEMERGE
+00025A CD 3E 04            A   342                CALL    ROTATE
+00025D CD 3E 04            A   343                CALL    ROTATE
+000260 CD 3E 04            A   344                CALL    ROTATE
+000263 C3 26 02            A   345                JP      LOOP1
+                           A   346    
+000266                     A   347    RIGHT:
+000266 CD 3E 04            A   348                CALL    ROTATE
+000269 CD 3E 04            A   349                CALL    ROTATE
+00026C CD 74 03            A   350                CALL    MOVEMERGE
+00026F CD 3E 04            A   351                CALL    ROTATE
+000272 CD 3E 04            A   352                CALL    ROTATE
+000275 C3 26 02            A   353                JP      LOOP1
+                           A   354    
+000278                     A   355    LEFT:
+000278 CD 74 03            A   356                CALL    MOVEMERGE
+00027B C3 26 02            A   357                JP      LOOP1
+                           A   358    
+00027E                     A   359    QUIT:
+00027E 3E25                A   360                LD      A,BOARD_X
+000280 32 3E 09            A   361                LD      (XPOS),A
+000283 3E06                A   362                LD      A,BOARD_Y
+000285 C613                A   363                ADD     A,13H
+000287 27                  A   364                DAA
+000288 32 3F 09            A   365                LD      (YPOS),A
+00028B CD 61 06            A   366                CALL    GOTOXY
+00028E 11 D8 08            A   367                LD      DE,MSG2
+                           A   368     ;           LD      C,09H
+000291 CD EE 06            A   369                CALL    show_string_de
+                           A   370    
+000294                     A   371    Q1:
+                           A   372    ;          LD      C,06H
+                           A   373    ;            LD      E,0FFH
+                           A   374    
+                           A   375    ;            CP      0
+000294 CD 6E 01            A   376    		call	UART0_serial_RX
+000297 30 FB               A   377    		jr		nc,Q1	
+                           A   378    ;            JP      Z,Q1
+                           A   379    
+000299 FE79                A   380                CP      'y'
+00029B CA C9 02            A   381                JP      Z,EXIT
+00029E FE59                A   382                CP      'Y'
+0002A0 CA C9 02            A   383                JP      Z,EXIT
+0002A3 FE6E                A   384                CP      'n'
+0002A5 CA 95 01            A   385                JP      Z,LOOP2
+0002A8 FE4E                A   386                CP      'N'
+0002AA CA 95 01            A   387                JP      Z,LOOP2
+                           A   388    
+                           A   389    ;            LD      C,02H
+0002AD 3E07                A   390                LD      A,BEL
+0002AF CD 4F 01            A   391                CALL    UART0_serial_TX
+0002B2 C3 94 02            A   392                JP      Q1
+                           A   393    
+0002B5                     A   394    GAMEOVER:
+0002B5 3E25                A   395                LD      A,BOARD_X
+0002B7 32 3E 09            A   396                LD      (XPOS),A
+0002BA 3E19                A   397                LD      A,BOARD_Y+13H
+0002BC 27                  A   398                DAA
+0002BD 32 3F 09            A   399                LD      (YPOS),A
+0002C0 CD 61 06            A   400                CALL    GOTOXY
+0002C3 11 F9 08            A   401                LD      DE,MSG3
+                           A   402      ;          LD      C,09H
+0002C6 CD EE 06            A   403                CALL    show_string_de
+                           A   404    
+0002C9                     A   405    EXIT:
+0002C9 11 66 08            A   406                LD      DE,TERM
+                           A   407     ;           LD      C,09H
+0002CC CD EE 06            A   408                CALL    show_string_de
+0002CF 3E24                A   409                ld		a,'$'
+0002D1 CD 4F 01            A   410                call	UART0_serial_TX
+0002D4 C9                  A   411                RET
+                           A   412    
+0002D5                     A   413    ISOVER:
+0002D5 3E01                A   414                LD      A,1
+0002D7 32 43 09            A   415                LD      (RESULT),A
+                           A   416    
+0002DA 0610                A   417                LD      B,16
+0002DC 21 F8 06            A   418                LD      HL,BOARD
+0002DF 7E                  A   419    G1:         LD      A,(HL)
+0002E0 FE0D                A   420                CP      13
+0002E2 CA 24 03            A   421                JP      Z,GR
+0002E5 23                  A   422                INC     HL
+0002E6 10 F7               A   423                DJNZ    G1
+                           A   424    
+0002E8 CD 28 03            A   425                CALL    CANMERGE
+0002EB FE00                A   426                CP      0
+0002ED CA F4 02            A   427                JP      Z,G2
+0002F0 AF                  A   428                XOR     A
+0002F1 32 43 09            A   429                LD      (RESULT),A
+                           A   430    
+0002F4 CD 3E 04            A   431    G2:         CALL    ROTATE
+0002F7 CD 28 03            A   432                CALL    CANMERGE
+0002FA FE00                A   433                CP      0
+0002FC CA 03 03            A   434                JP      Z,G3
+0002FF AF                  A   435                XOR     A
+000300 32 43 09            A   436                LD      (RESULT),A
+                           A   437    
+000303 CD 3E 04            A   438    G3:         CALL    ROTATE
+000306 CD 28 03            A   439                CALL    CANMERGE
+000309 FE00                A   440                CP      0
+00030B CA 12 03            A   441                JP      Z,G4
+00030E AF                  A   442                XOR     A
+00030F 32 43 09            A   443                LD      (RESULT),A
+                           A   444    
+000312 CD 3E 04            A   445    G4:         CALL    ROTATE
+000315 CD 28 03            A   446                CALL    CANMERGE
+000318 FE00                A   447                CP      0
+00031A CA 21 03            A   448                JP      Z,G5
+00031D AF                  A   449                XOR     A
+00031E 32 43 09            A   450                LD      (RESULT),A
+                           A   451    
+000321 CD 3E 04            A   452    G5:         CALL    ROTATE
+                           A   453    
+000324 3A 43 09            A   454    GR:         LD      A,(RESULT)
+000327 C9                  A   455                RET
+                           A   456    
+000328                     A   457    CANMERGE:
+000328 21 F8 06            A   458                LD      HL,BOARD
+00032B 22 40 09            A   459                LD      (BOARDPTR),HL
+00032E CD 56 03            A   460                CALL    TESTMERGE
+000331 FE01                A   461                CP      1
+000333 C8                  A   462                RET     Z
+000334 21 FC 06            A   463                LD      HL,BOARD+4
+000337 22 40 09            A   464                LD      (BOARDPTR),HL
+00033A CD 56 03            A   465                CALL    TESTMERGE
+00033D FE01                A   466                CP      1
+00033F C8                  A   467                RET     Z
+000340 21 00 07            A   468                LD      HL,BOARD+8
+000343 22 40 09            A   469                LD      (BOARDPTR),HL
+000346 CD 56 03            A   470                CALL    TESTMERGE
+000349 FE01                A   471                CP      1
+00034B C8                  A   472                RET     Z
+00034C 21 04 07            A   473                LD      HL,BOARD+12
+00034F 22 40 09            A   474                LD      (BOARDPTR),HL
+000352 CD 56 03            A   475                CALL    TESTMERGE
+000355 C9                  A   476                RET
+                           A   477    
+000356                     A   478    TESTMERGE:
+000356 ED5B 40 09          A   479                LD      DE,(BOARDPTR)
+00035A 2A 40 09            A   480                LD      HL,(BOARDPTR)
+00035D 23                  A   481                INC     HL
+                           A   482    
+00035E 0603                A   483                LD      B,3
+000360 1A                  A   484    M8          LD      A,(DE)
+000361 FE00                A   485                CP      0
+000363 CA 71 03            A   486                JP      Z,M7
+000366 4E                  A   487                LD      C,(HL)
+000367 B9                  A   488                CP      C
+000368 CA 71 03            A   489                JP      Z,M7
+00036B 23                  A   490                INC     HL
+00036C 13                  A   491                INC     DE
+00036D 10 F1               A   492                DJNZ    M8
+00036F AF                  A   493                XOR     A
+000370 C9                  A   494                RET
+000371 3E01                A   495    M7          LD      A,1
+000373 C9                  A   496                RET
+                           A   497    
+000374                     A   498    MOVEMERGE:
+000374 AF                  A   499                XOR     A
+000375 32 42 09            A   500                LD      (MOVED),A
+                           A   501    
+000378 21 F8 06            A   502                LD      HL,BOARD
+00037B 22 40 09            A   503                LD      (BOARDPTR),HL
+00037E CD E8 03            A   504                CALL    MERGE
+000381 21 FC 06            A   505                LD      HL,BOARD+4
+000384 22 40 09            A   506                LD      (BOARDPTR),HL
+000387 CD E8 03            A   507                CALL    MERGE
+00038A 21 00 07            A   508                LD      HL,BOARD+8
+00038D 22 40 09            A   509                LD      (BOARDPTR),HL
+000390 CD E8 03            A   510                CALL    MERGE
+000393 21 04 07            A   511                LD      HL,BOARD+12
+000396 22 40 09            A   512                LD      (BOARDPTR),HL
+000399 CD E8 03            A   513                CALL    MERGE
+                           A   514    
+00039C C9                  A   515                RET
+                           A   516    
+00039D                     A   517    ADDRANDOM:
+00039D 110000              A   518                LD      DE,0
+0003A0 0610                A   519                LD      B,16
+0003A2 21 F8 06            A   520                LD      HL,BOARD
+0003A5 7E                  A   521    N2          LD      A,(HL)
+0003A6 FE00                A   522                CP      0
+0003A8 C2 AC 03            A   523                JP      NZ,N1
+0003AB 1C                  A   524                INC     E
+0003AC 23                  A   525    N1          INC     HL
+0003AD 10 F6               A   526                DJNZ    N2
+                           A   527                
+0003AF 7B                  A   528                LD      A,E
+0003B0 FE00                A   529                CP      0
+0003B2 C8                  A   530                RET     Z
+                           A   531    
+0003B3 D5                  A   532                PUSH    DE
+0003B4 CD BB 06            A   533                CALL    RAND16
+0003B7 D1                  A   534                POP     DE
+0003B8 CD D6 06            A   535                CALL    DIV16
+                           A   536    
+0003BB 45                  A   537                LD      B,L
+0003BC 0E10                A   538    N4:         LD      C,16
+0003BE 21 F8 06            A   539                LD      HL,BOARD
+0003C1 7E                  A   540    N5:         LD      A,(HL)
+0003C2 FE00                A   541                CP      0
+0003C4 C2 CB 03            A   542                JP      NZ,N3
+0003C7 05                  A   543                DEC     B
+0003C8 CA D3 03            A   544                JP      Z,N6
+0003CB 23                  A   545    N3:         INC     HL
+0003CC 0D                  A   546                DEC     C
+0003CD C2 C1 03            A   547                JP      NZ,N5
+0003D0 C3 BC 03            A   548                JP      N4
+                           A   549    
+0003D3 E5                  A   550    N6          PUSH    HL
+                           A   551    
+0003D4 CD BB 06            A   552                CALL    RAND16
+0003D7 110A00              A   553                LD      DE,10
+0003DA CD D6 06            A   554                CALL    DIV16
+0003DD 110900              A   555                LD      DE,9
+0003E0 CD D6 06            A   556                CALL    DIV16
+0003E3 7B                  A   557                LD      A,E
+0003E4 3C                  A   558                INC     A
+                           A   559                
+0003E5 E1                  A   560                POP     HL
+0003E6 77                  A   561                LD      (HL),A
+                           A   562    
+0003E7 C9                  A   563                RET
+                           A   564    
+0003E8                     A   565    MERGE:
+0003E8 CD 18 04            A   566                CALL    COLLAPSE
+                           A   567    
+                           A   568                ; merge tiles with same value
+                           A   569    
+0003EB ED5B 40 09          A   570                LD      DE,(BOARDPTR)
+0003EF 2A 40 09            A   571                LD      HL,(BOARDPTR)
+0003F2 23                  A   572                INC     HL
+                           A   573    
+0003F3 0603                A   574                LD      B,3
+0003F5 1A                  A   575    M6:         LD      A,(DE)
+0003F6 FE00                A   576                CP      0
+0003F8 C8                  A   577                RET     Z
+0003F9 4E                  A   578                LD      C,(HL)
+0003FA B9                  A   579                CP      C
+0003FB C2 13 04            A   580                JP      NZ,M5
+                           A   581    
+0003FE 3C                  A   582                INC     A
+0003FF 12                  A   583                LD      (DE),A
+000400 CD A7 04            A   584                CALL    ADDPOINTS
+000403 AF                  A   585                XOR     A
+000404 77                  A   586                LD      (HL),A
+                           A   587    
+000405 3A 42 09            A   588                LD      A,(MOVED)
+000408 3C                  A   589                INC     A
+000409 32 42 09            A   590                LD      (MOVED),A
+                           A   591    
+00040C D5                  A   592                PUSH    DE
+00040D E5                  A   593                PUSH    HL
+00040E CD 18 04            A   594                CALL    COLLAPSE
+000411 E1                  A   595                POP     HL
+000412 D1                  A   596                POP     DE
+                           A   597    
+000413 23                  A   598    M5:         INC     HL
+000414 13                  A   599                INC     DE
+000415 10 DE               A   600                DJNZ    M6
+                           A   601    
+000417 C9                  A   602                RET
+                           A   603    
+000418                     A   604    COLLAPSE:
+                           A   605                ; collapse all tiles
+                           A   606    
+000418 2A 40 09            A   607                LD      HL,(BOARDPTR)
+                           A   608    
+00041B 0604                A   609                LD      B,4             ; find first zero
+00041D 7E                  A   610    M1:         LD      A,(HL)
+00041E FE00                A   611                CP      0
+000420 CA 27 04            A   612                JP      Z,M2
+000423 23                  A   613                INC     HL
+000424 10 F7               A   614                DJNZ    M1
+000426 C9                  A   615                RET
+                           A   616    
+000427 5D                  A   617    M2:         LD      E,L             ; DE=fist zero position
+000428 54                  A   618                LD      D,H
+                           A   619    
+000429 7E                  A   620    M4:         LD      A,(HL)          ; move all non-zero tiles
+00042A FE00                A   621                CP      0
+00042C CA 3A 04            A   622                JP      Z,M3
+                           A   623    
+00042F 12                  A   624                LD      (DE),A
+000430 13                  A   625                INC     DE
+000431 AF                  A   626                XOR     A
+000432 77                  A   627                LD      (HL),A
+                           A   628    
+000433 3A 42 09            A   629                LD      A,(MOVED)
+000436 3C                  A   630                INC     A
+000437 32 42 09            A   631                LD      (MOVED),A
+                           A   632    
+00043A 23                  A   633    M3:         INC     HL
+00043B 10 EC               A   634                DJNZ    M4
+                           A   635    
+00043D C9                  A   636                RET
+                           A   637    
+00043E                     A   638    ROTATE:
+                           A   639                ; outer ring
+                           A   640    
+00043E 0603                A   641                LD      B,3
+                           A   642    
+000440 3A FB 06            A   643    R1:         LD      A,(BOARD+3)
+000443 4F                  A   644                LD      C,A
+                           A   645    
+000444 3A FA 06            A   646                LD      A,(BOARD+2)
+000447 32 FB 06            A   647                LD      (BOARD+3),A
+00044A 3A F9 06            A   648                LD      A,(BOARD+1)
+00044D 32 FA 06            A   649                LD      (BOARD+2),A
+000450 3A F8 06            A   650                LD      A,(BOARD+0)
+000453 32 F9 06            A   651                LD      (BOARD+1),A
+                           A   652    
+000456 3A FC 06            A   653                LD      A,(BOARD+4)
+000459 32 F8 06            A   654                LD      (BOARD+0),A
+00045C 3A 00 07            A   655                LD      A,(BOARD+8)
+00045F 32 FC 06            A   656                LD      (BOARD+4),A
+000462 3A 04 07            A   657                LD      A,(BOARD+12)
+000465 32 00 07            A   658                LD      (BOARD+8),A
+                           A   659    
+000468 3A 05 07            A   660                LD      A,(BOARD+13)
+00046B 32 04 07            A   661                LD      (BOARD+12),A
+00046E 3A 06 07            A   662                LD      A,(BOARD+14)
+000471 32 05 07            A   663                LD      (BOARD+13),A
+000474 3A 07 07            A   664                LD      A,(BOARD+15)
+000477 32 06 07            A   665                LD      (BOARD+14),A
+                           A   666    
+00047A 3A 03 07            A   667                LD      A,(BOARD+11)
+00047D 32 07 07            A   668                LD      (BOARD+15),A
+000480 3A FF 06            A   669                LD      A,(BOARD+7)
+000483 32 03 07            A   670                LD      (BOARD+11),A
+000486 79                  A   671                LD      A,C
+000487 32 FF 06            A   672                LD      (BOARD+7),A
+                           A   673    
+00048A 10 B4               A   674                DJNZ    R1
+                           A   675    
+                           A   676                ; inner ring
+                           A   677    
+00048C 3A FE 06            A   678                LD      A,(BOARD+6)
+00048F 4F                  A   679                LD      C,A
+                           A   680    
+000490 3A FD 06            A   681                LD      A,(BOARD+5)
+000493 32 FE 06            A   682                LD      (BOARD+6),A
+000496 3A 01 07            A   683                LD      A,(BOARD+9)
+000499 32 FD 06            A   684                LD      (BOARD+5),A
+00049C 3A 02 07            A   685                LD      A,(BOARD+10)
+00049F 32 01 07            A   686                LD      (BOARD+9),A
+                           A   687    
+0004A2 79                  A   688                LD      A,C
+0004A3 32 02 07            A   689                LD      (BOARD+10),A
+                           A   690    
+0004A6 C9                  A   691                RET
+                           A   692    
+0004A7                     A   693    ADDPOINTS:
+0004A7 D5                  A   694                PUSH    DE
+0004A8 E5                  A   695                PUSH    HL
+                           A   696    
+0004A9 5F                  A   697                LD      E,A
+0004AA 1600                A   698                LD      D,0
+0004AC 21 36 08            A   699                LD      HL,POINTS
+0004AF 19                  A   700                ADD     HL,DE
+0004B0 19                  A   701                ADD     HL,DE
+0004B1 5E                  A   702                LD      E,(HL)
+0004B2 23                  A   703                INC     HL
+0004B3 56                  A   704                LD      D,(HL)
+                           A   705    
+0004B4 3A 47 09            A   706                LD      A,(SCORE+3)
+0004B7 83                  A   707                ADD     A,E
+0004B8 27                  A   708                DAA
+0004B9 32 47 09            A   709                LD      (SCORE+3),A
+                           A   710    
+0004BC 3A 46 09            A   711                LD      A,(SCORE+2)
+0004BF 8A                  A   712                ADC     A,D
+0004C0 27                  A   713                DAA
+0004C1 32 46 09            A   714                LD      (SCORE+2),A
+                           A   715    
+0004C4 3A 45 09            A   716                LD      A,(SCORE+1)
+0004C7 CE00                A   717                ADC     A,00H
+0004C9 27                  A   718                DAA
+0004CA 32 45 09            A   719                LD      (SCORE+1),A
+                           A   720    
+0004CD 3A 44 09            A   721                LD      A,(SCORE)
+0004D0 CE00                A   722                ADC     A,00H
+0004D2 27                  A   723                DAA
+0004D3 32 44 09            A   724                LD      (SCORE),A
+                           A   725    
+0004D6 E1                  A   726                POP     HL
+0004D7 D1                  A   727                POP     DE
+0004D8 C9                  A   728                RET
+                           A   729    
+0004D9                     A   730    PRINTSCORE:
+0004D9 21 44 09            A   731                LD      HL,SCORE
+0004DC 11 4C 09            A   732                LD      DE,SCORESTR+4
+0004DF 0604                A   733                LD      B,4
+                           A   734    
+0004E1 7E                  A   735    P1:         LD      A,(HL)
+0004E2 1F                  A   736                RRA
+0004E3 1F                  A   737                RRA
+0004E4 1F                  A   738                RRA
+0004E5 1F                  A   739                RRA
+0004E6 E60F                A   740                AND     0FH
+0004E8 C630                A   741                ADD     A,30H
+0004EA 12                  A   742                LD      (DE),A
+0004EB 13                  A   743                INC     DE
+                           A   744    
+0004EC 7E                  A   745                LD      A,(HL)
+0004ED E60F                A   746                AND     0FH
+0004EF C630                A   747                ADD     A,30H
+0004F1 12                  A   748                LD      (DE),A
+0004F2 13                  A   749                INC     DE
+                           A   750    
+0004F3 23                  A   751                INC     HL
+0004F4 10 EB               A   752                DJNZ    P1
+                           A   753    
+0004F6 21 4C 09            A   754                LD      HL,SCORESTR+4
+0004F9 0607                A   755                LD      B,7
+0004FB 7E                  A   756    P3:         LD      A,(HL)
+0004FC FE30                A   757                CP      30H
+0004FE C2 07 05            A   758                JP      NZ,P2
+000501 3E20                A   759                LD      A,20H
+000503 77                  A   760                LD      (HL),A
+000504 23                  A   761                INC     HL
+000505 10 F4               A   762                DJNZ    P3
+                           A   763    
+000507 3E25                A   764    P2:         LD      A,BOARD_X
+000509 C616                A   765                ADD     A,16H
+00050B 27                  A   766                DAA
+00050C 32 3E 09            A   767                LD      (XPOS),A
+00050F 3E06                A   768                LD      A,BOARD_Y
+000511 D602                A   769                SUB     02H
+000513 27                  A   770                DAA
+000514 32 3F 09            A   771                LD      (YPOS),A
+000517 CD 61 06            A   772                CALL    GOTOXY
+                           A   773    
+00051A 11 48 09            A   774                LD      DE,SCORESTR
+                           A   775     ;           LD      C,09H
+00051D CD EE 06            A   776                CALL    show_string_de
+000520 C9                  A   777                RET
+                           A   778    
+000521                     A   779    DRAWBORDER:
+000521 3E25                A   780                LD      A,BOARD_X
+000523 32 3E 09            A   781                LD      (XPOS),A
+000526 3E06                A   782                LD      A,BOARD_Y
+000528 D602                A   783                SUB     02H
+00052A 27                  A   784                DAA
+00052B 32 3F 09            A   785                LD      (YPOS),A
+00052E CD 61 06            A   786                CALL    GOTOXY
+                           A   787    
+000531 11 1D 09            A   788                LD      DE,MSG4
+                           A   789     ;           LD      C,09H
+000534 CD EE 06            A   790                CALL    show_string_de
+                           A   791    
+                           A   792    
+000537 3E25                A   793                LD      A,BOARD_X
+000539 D601                A   794                SUB     01H
+00053B 27                  A   795                DAA
+00053C 32 3E 09            A   796                LD      (XPOS),A
+00053F 3E06                A   797                LD      A,BOARD_Y
+000541 D601                A   798                SUB     01H
+000543 27                  A   799                DAA
+000544 32 3F 09            A   800                LD      (YPOS),A
+000547 CD 61 06            A   801                CALL    GOTOXY
+                           A   802    
+00054A 11 79 08            A   803                LD      DE,TOPBORDER
+                           A   804     ;           LD      C,09H
+00054D CD EE 06            A   805                CALL    show_string_de
+                           A   806    
+000550 060C                A   807                LD      B,12
+000552 C5                  A   808    L4:         PUSH    BC
+000553 3A 3F 09            A   809                LD      A,(YPOS)
+000556 C601                A   810                ADD     A,1
+000558 27                  A   811                DAA
+000559 32 3F 09            A   812                LD      (YPOS),A
+00055C CD 61 06            A   813                CALL    GOTOXY
+                           A   814     ;           LD      C,02H
+00055F 3EDB                A   815                LD      A,0DBH
+000561 CD 4F 01            A   816                CALL    UART0_serial_TX
+000564 11 73 08            A   817                LD      DE,ADVANCE
+                           A   818     ;           LD      C,09H
+000567 CD EE 06            A   819                CALL    show_string_de
+                           A   820     ;           LD      C,02H
+00056A 3EDB                A   821                LD      A,0DBH
+00056C CD 4F 01            A   822                CALL    UART0_serial_TX
+00056F C1                  A   823                POP     BC
+000570 05                  A   824                DEC     B
+000571 C2 52 05            A   825                JP      NZ,L4
+                           A   826    
+000574 3A 3F 09            A   827                LD      A,(YPOS)
+000577 C601                A   828                ADD     A,1
+000579 27                  A   829                DAA
+00057A 32 3F 09            A   830                LD      (YPOS),A
+00057D CD 61 06            A   831                CALL    GOTOXY
+000580 11 98 08            A   832                LD      DE,BTMBORDER
+                           A   833     ;           LD      C,09H
+000583 CD EE 06            A   834                CALL    show_string_de
+                           A   835    
+000586 C9                  A   836                RET
+                           A   837    
+000587                     A   838    DRAWBOARD:
+000587 CD D9 04            A   839                CALL    PRINTSCORE
+                           A   840    
+00058A 3E25                A   841                LD      A,BOARD_X
+00058C 32 3E 09            A   842                LD      (XPOS),A
+00058F 3E06                A   843                LD      A,BOARD_Y
+000591 D601                A   844                SUB     01H
+000593 27                  A   845                DAA
+000594 32 3F 09            A   846                LD      (YPOS),A
+                           A   847    
+000597 21 F8 06            A   848                LD      HL,BOARD
+00059A 0604                A   849                LD      B,4
+00059C C5                  A   850    L1:         PUSH    BC
+                           A   851    
+00059D E5                  A   852                PUSH    HL
+00059E 3A 3F 09            A   853                LD      A,(YPOS)
+0005A1 C601                A   854                ADD     A,1
+0005A3 27                  A   855                DAA
+0005A4 32 3F 09            A   856                LD      (YPOS),A
+0005A7 CD 61 06            A   857                CALL    GOTOXY
+0005AA E1                  A   858                POP     HL
+                           A   859    
+0005AB E5                  A   860                PUSH    HL
+0005AC 5E                  A   861                LD      E,(HL)
+0005AD CD 2E 06            A   862                CALL    PRINTSPACE
+0005B0 E1                  A   863                POP     HL
+0005B1 23                  A   864                INC     HL
+0005B2 E5                  A   865                PUSH    HL
+0005B3 5E                  A   866                LD      E,(HL)
+0005B4 CD 2E 06            A   867                CALL    PRINTSPACE
+0005B7 E1                  A   868                POP     HL
+0005B8 23                  A   869                INC     HL
+0005B9 E5                  A   870                PUSH    HL
+0005BA 5E                  A   871                LD      E,(HL)
+0005BB CD 2E 06            A   872                CALL    PRINTSPACE
+0005BE E1                  A   873                POP     HL
+0005BF 23                  A   874                INC     HL
+0005C0 E5                  A   875                PUSH    HL
+0005C1 5E                  A   876                LD      E,(HL)
+0005C2 CD 2E 06            A   877                CALL    PRINTSPACE
+0005C5 CD B0 06            A   878                CALL    NEWLINE
+0005C8 E1                  A   879                POP     HL
+                           A   880    
+0005C9 2B                  A   881                DEC     HL
+0005CA 2B                  A   882                DEC     HL
+0005CB 2B                  A   883                DEC     HL
+                           A   884    
+0005CC E5                  A   885                PUSH    HL
+0005CD 3A 3F 09            A   886                LD      A,(YPOS)
+0005D0 C601                A   887                ADD     A,1
+0005D2 27                  A   888                DAA
+0005D3 32 3F 09            A   889                LD      (YPOS),A
+0005D6 CD 61 06            A   890                CALL    GOTOXY
+0005D9 E1                  A   891                POP     HL
+                           A   892    
+0005DA E5                  A   893                PUSH    HL
+0005DB 5E                  A   894                LD      E,(HL)
+0005DC CD 44 06            A   895                CALL    PRINTLABEL
+0005DF E1                  A   896                POP     HL
+0005E0 23                  A   897                INC     HL
+0005E1 E5                  A   898                PUSH    HL
+0005E2 5E                  A   899                LD      E,(HL)
+0005E3 CD 44 06            A   900                CALL    PRINTLABEL
+0005E6 E1                  A   901                POP     HL
+0005E7 23                  A   902                INC     HL
+0005E8 E5                  A   903                PUSH    HL
+0005E9 5E                  A   904                LD      E,(HL)
+0005EA CD 44 06            A   905                CALL    PRINTLABEL
+0005ED E1                  A   906                POP     HL
+0005EE 23                  A   907                INC     HL
+0005EF E5                  A   908                PUSH    HL
+0005F0 5E                  A   909                LD      E,(HL)
+0005F1 CD 44 06            A   910                CALL    PRINTLABEL
+0005F4 CD B0 06            A   911                CALL    NEWLINE
+0005F7 E1                  A   912                POP     HL
+                           A   913    
+0005F8 2B                  A   914                DEC     HL
+0005F9 2B                  A   915                DEC     HL
+0005FA 2B                  A   916                DEC     HL
+                           A   917    
+0005FB E5                  A   918                PUSH    HL
+0005FC 3A 3F 09            A   919                LD      A,(YPOS)
+0005FF C601                A   920                ADD     A,1
+000601 27                  A   921                DAA
+000602 32 3F 09            A   922                LD      (YPOS),A
+000605 CD 61 06            A   923                CALL    GOTOXY
+000608 E1                  A   924                POP     HL
+                           A   925    
+000609 E5                  A   926                PUSH    HL
+00060A 5E                  A   927                LD      E,(HL)
+00060B CD 2E 06            A   928                CALL    PRINTSPACE
+00060E E1                  A   929                POP     HL
+00060F 23                  A   930                INC     HL
+000610 E5                  A   931                PUSH    HL
+000611 5E                  A   932                LD      E,(HL)
+000612 CD 2E 06            A   933                CALL    PRINTSPACE
+000615 E1                  A   934                POP     HL
+000616 23                  A   935                INC     HL
+000617 E5                  A   936                PUSH    HL
+000618 5E                  A   937                LD      E,(HL)
+000619 CD 2E 06            A   938                CALL    PRINTSPACE
+00061C E1                  A   939                POP     HL
+00061D 23                  A   940                INC     HL
+00061E E5                  A   941                PUSH    HL
+00061F 5E                  A   942                LD      E,(HL)
+000620 CD 2E 06            A   943                CALL    PRINTSPACE
+000623 CD B0 06            A   944                CALL    NEWLINE
+000626 E1                  A   945                POP     HL
+                           A   946    
+000627 23                  A   947                INC     HL
+                           A   948    
+000628 C1                  A   949                POP     BC
+000629 05                  A   950                DEC     B
+00062A C2 9C 05            A   951                JP      NZ,L1
+                           A   952    
+00062D C9                  A   953                RET
+                           A   954    
+00062E                     A   955    PRINTSPACE:
+00062E 1600                A   956                LD      D,0
+                           A   957    
+000630 D5                  A   958                PUSH    DE
+000631 21 9C 07            A   959                LD      HL,COLORPTR
+000634 19                  A   960                ADD     HL,DE
+000635 19                  A   961                ADD     HL,DE
+000636 5E                  A   962                LD      E,(HL)
+000637 23                  A   963                INC     HL
+000638 56                  A   964                LD      D,(HL)
+                           A   965     ;           LD      C,09H
+000639 CD EE 06            A   966                CALL    show_string_de
+00063C D1                  A   967                POP     DE
+                           A   968    
+00063D 11 08 07            A   969                LD      DE,SPACER
+                           A   970     ;           LD      C,09H
+000640 CD EE 06            A   971                CALL    show_string_de
+                           A   972    
+000643 C9                  A   973                RET
+                           A   974    
+000644                     A   975    PRINTLABEL:
+000644 1600                A   976                LD      D,0
+                           A   977    
+000646 D5                  A   978                PUSH    DE
+000647 21 9C 07            A   979                LD      HL,COLORPTR
+00064A 19                  A   980                ADD     HL,DE
+00064B 19                  A   981                ADD     HL,DE
+00064C 5E                  A   982                LD      E,(HL)
+00064D 23                  A   983                INC     HL
+00064E 56                  A   984                LD      D,(HL)
+                           A   985     ;           LD      C,09H
+00064F CD EE 06            A   986                CALL    show_string_de
+000652 D1                  A   987                POP     DE
+                           A   988    
+000653 D5                  A   989                PUSH    DE
+000654 21 10 07            A   990                LD      HL,LABELPTR
+000657 19                  A   991                ADD     HL,DE
+000658 19                  A   992                ADD     HL,DE
+000659 5E                  A   993                LD      E,(HL)
+00065A 23                  A   994                INC     HL
+00065B 56                  A   995                LD      D,(HL)
+                           A   996    ;            LD      C,09H
+00065C CD EE 06            A   997    	CALL	show_string_de
+00065F D1                  A   998                POP     DE
+                           A   999    
+000660 C9                  A  1000                RET
+                           A  1001    
+000661                     A  1002    GOTOXY:
+                           A  1003    ;            LD      C,02H
+000661 3E1B                A  1004                LD      a,1BH
+000663 CD 4F 01            A  1005                CALL    UART0_serial_TX
+                           A  1006    ;            LD      C,02H
+000666 3E5B                A  1007                LD      a,'['
+000668 CD 4F 01            A  1008                CALL    UART0_serial_TX
+                           A  1009    
+00066B 3A 3F 09            A  1010                LD      A,(YPOS)
+00066E FE10                A  1011                CP      10H
+000670 DA 81 06            A  1012                JP      C,L2
+                           A  1013    
+000673 1F                  A  1014                RRA
+000674 1F                  A  1015                RRA
+000675 1F                  A  1016                RRA
+000676 1F                  A  1017                RRA
+000677 E60F                A  1018                AND     0FH
+000679 C630                A  1019                ADD     A,'0'
+                           A  1020    
+                           A  1021    ;            LD      C,02H
+                           A  1022    ;            LD      E,A
+00067B CD 4F 01            A  1023                CALL    UART0_serial_TX
+                           A  1024    
+00067E 3A 3F 09            A  1025                LD      A,(YPOS)
+                           A  1026    
+000681 E60F                A  1027    L2:         AND     0FH
+000683 C630                A  1028                ADD     A,'0'
+                           A  1029    
+                           A  1030    ;            LD      C,02H
+                           A  1031    ;            LD      E,A
+000685 CD 4F 01            A  1032                CALL    UART0_serial_TX
+                           A  1033    
+                           A  1034    ;            LD      C,02H
+000688 3E3B                A  1035                LD      A,3BH
+00068A CD 4F 01            A  1036                CALL    UART0_serial_TX
+                           A  1037    
+00068D 3A 3E 09            A  1038                LD      A,(XPOS)
+000690 FE10                A  1039                CP      10H
+000692 DA A3 06            A  1040                JP      C,L3
+                           A  1041    
+000695 1F                  A  1042                RRA
+000696 1F                  A  1043                RRA
+000697 1F                  A  1044                RRA
+000698 1F                  A  1045                RRA
+000699 E60F                A  1046                AND     0FH
+00069B C630                A  1047                ADD     A,'0'
+                           A  1048    
+                           A  1049    ;            LD      C,02H
+                           A  1050    ;            LD      E,A
+00069D CD 4F 01            A  1051                CALL    UART0_serial_TX
+                           A  1052    
+0006A0 3A 3E 09            A  1053                LD      A,(XPOS)
+                           A  1054    
+0006A3 E60F                A  1055    L3:         AND     0FH
+0006A5 C630                A  1056                ADD     A,'0'
+                           A  1057    
+                           A  1058    ;            LD      C,02H
+                           A  1059    ;            LD      E,A
+0006A7 CD 4F 01            A  1060                CALL    UART0_serial_TX
+                           A  1061    
+                           A  1062    ;            LD      C,02H
+0006AA 3E48                A  1063                LD      a,'H'
+0006AC CD 4F 01            A  1064                CALL    UART0_serial_TX
+                           A  1065    
+0006AF C9                  A  1066                RET
+                           A  1067    
+0006B0                     A  1068    NEWLINE:
+                           A  1069    
+                           A  1070    ;            LD      C,02H
+0006B0 3E0D                A  1071                LD      A,CR
+0006B2 CD 4F 01            A  1072                CALL    UART0_serial_TX
+                           A  1073    
+                           A  1074    ;            LD      C,02H
+0006B5 3E0A                A  1075                LD      A,LF
+0006B7 CD 4F 01            A  1076                CALL    UART0_serial_TX
+                           A  1077    
+0006BA C9                  A  1078                RET
+                           A  1079    
+0006BB 110000              A  1080    RAND16:     LD      DE,0
+0006BE 7A                  A  1081                LD      A,D
+0006BF 63                  A  1082                LD      H,E
+0006C0 2EFD                A  1083                LD      L,253
+0006C2 B7                  A  1084                OR      A
+0006C3 ED52                A  1085                SBC     HL,DE
+0006C5 DE00                A  1086                SBC     A,0
+0006C7 ED52                A  1087                SBC     HL,DE
+0006C9 1600                A  1088                LD      D,0
+0006CB 9A                  A  1089                SBC     A,D
+0006CC 5F                  A  1090                LD      E,A
+0006CD ED52                A  1091                SBC     HL,DE
+0006CF 30 01               A  1092                JR      NC,RAND
+0006D1 23                  A  1093                INC     HL
+0006D2 22 BC 06            A  1094    RAND:       LD      (RAND16+1),HL
+0006D5 C9                  A  1095                RET
+                           A  1096    
+0006D6                     A  1097    DIV16:
+0006D6 7C                  A  1098                LD      A,H         ; HL = HL % DE
+0006D7 4D                  A  1099                LD      C,L
+0006D8 210000              A  1100                LD      HL,0
+0006DB 0610                A  1101                LD      B,16
+                           A  1102    
+0006DD 37                  A  1103    DL1:        SCF
+0006DE CB11                A  1104                RL      C
+0006E0 17                  A  1105                RLA
+0006E1 ED6A                A  1106                ADC     HL,HL
+0006E3 ED52                A  1107                SBC     HL,DE
+0006E5 30 02               A  1108                JR      NC,$+4
+0006E7 19                  A  1109                ADD     HL,DE
+0006E8 0D                  A  1110                DEC     C
+0006E9 10 F2               A  1111                DJNZ    DL1
+                           A  1112    
+0006EB 57                  A  1113                LD      D,A         ; DE = HL / DE
+0006EC 59                  A  1114                LD      E,C
+0006ED C9                  A  1115                RET
+                           A  1116    
+0006EE                     A  1117    show_string_de:
+                           A  1118    ;        ld c, BDOS_Print_String = 9
+0006EE 1A                  A  1119            ld      a,(de)
+0006EF FE24                A  1120            cp      '$'
+0006F1 C8                  A  1121            ret     z
+                           A  1122    ;        push    de
+                           A  1123    ;        rst     10h
+0006F2 CD 4F 01            A  1124    		call	UART0_serial_TX
+                           A  1125    ;        pop     de
+0006F5 13                  A  1126            inc     de
+0006F6 18 F6               A  1127            jr      show_string_de
+                           A  1128    
+0006F8                     A  1129    BOARD:
+0006F8 00000000            A  1130                DB     00, 00, 00, 00
+0006FC 00000000            A  1131                DB     00, 00, 00, 00
+000700 00000000            A  1132                DB     00, 00, 00, 00
+000704 00000000            A  1133                DB     00, 00, 00, 00
+                           A  1134    
+000708 20202020 20202024   A  1135    SPACER:     DB     "       ", '$'
+                           A  1136    
+000710 2C07                A  1137    LABELPTR:   DW     LABELS
+000712 3407                A  1138                DW     LABELS + 8
+000714 3C07                A  1139                DW     LABELS + 16
+000716 4407                A  1140                DW     LABELS + 24
+000718 4C07                A  1141                DW     LABELS + 32
+00071A 5407                A  1142                DW     LABELS + 40
+00071C 5C07                A  1143                DW     LABELS + 48
+00071E 6407                A  1144                DW     LABELS + 56
+000720 6C07                A  1145                DW     LABELS + 64
+000722 7407                A  1146                DW     LABELS + 72
+000724 7C07                A  1147                DW     LABELS + 80
+000726 8407                A  1148                DW     LABELS + 88
+000728 8C07                A  1149                DW     LABELS + 96
+00072A 9407                A  1150                DW     LABELS + 104
+                           A  1151    
+00072C 202020F9 20202024   A  1152    LABELS:     DB     "   ", 0F9H, "   ", EOS
+000734 20202032 20202024   A  1153                DB     "   2   ", EOS
+00073C 20202034 20202024   A  1154                DB     "   4   ", EOS
+000744 20202038 20202024   A  1155                DB     "   8   ", EOS
+00074C 20202031 36202024   A  1156                DB     "   16  ", EOS
+000754 20202033 32202024   A  1157                DB     "   32  ", EOS
+00075C 20202036 34202024   A  1158                DB     "   64  ", EOS
+000764 20203132 38202024   A  1159                DB     "  128  ", EOS
+00076C 20203235 36202024   A  1160                DB     "  256  ", EOS
+000774 20203531 32202024   A  1161                DB     "  512  ", EOS
+00077C 20313032 34202024   A  1162                DB     " 1024  ", EOS
+000784 20323034 38202024   A  1163                DB     " 2048  ", EOS
+00078C 20343039 36202024   A  1164                DB     " 4096  ", EOS
+000794 20383139 32202024   A  1165                DB     " 8192  ", EOS
+                           A  1166    
+00079C B807                A  1167    COLORPTR:   DW     COLORS
+00079E C107                A  1168                DW     COLORS + 9
+0007A0 CA07                A  1169                DW     COLORS + 18
+0007A2 D307                A  1170                DW     COLORS + 27
+0007A4 DC07                A  1171                DW     COLORS + 36
+0007A6 E507                A  1172                DW     COLORS + 45
+0007A8 EE07                A  1173                DW     COLORS + 54
+0007AA F707                A  1174                DW     COLORS + 63
+0007AC 0008                A  1175                DW     COLORS + 72
+0007AE 0908                A  1176                DW     COLORS + 81
+0007B0 1208                A  1177                DW     COLORS + 90
+0007B2 1B08                A  1178                DW     COLORS + 99
+0007B4 2408                A  1179                DW     COLORS + 108
+0007B6 2D08                A  1180                DW     COLORS + 117
+                           A  1181    
+0007B8 1B5B3430 3B33376D   A  1182    COLORS:     DB     1BH, "[40;37m", EOS  ; 0
+0007C0 24 
+0007C1 1B5B3434 3B33376D   A  1183                DB     1BH, "[44;37m", EOS  ; 2
+0007C9 24 
+0007CA 1B5B3436 3B33376D   A  1184                DB     1BH, "[46;37m", EOS  ; 4
+0007D2 24 
+0007D3 1B5B3432 3B33376D   A  1185                DB     1BH, "[42;37m", EOS  ; 8
+0007DB 24 
+0007DC 1B5B3433 3B33306D   A  1186                DB     1BH, "[43;30m", EOS  ; 16
+0007E4 24 
+0007E5 1B5B3435 3B33376D   A  1187                DB     1BH, "[45;37m", EOS  ; 32
+0007ED 24 
+0007EE 1B5B3431 3B33376D   A  1188                DB     1BH, "[41;37m", EOS  ; 64
+0007F6 24 
+0007F7 1B5B3437 3B33306D   A  1189                DB     1BH, "[47;30m", EOS  ; 128
+0007FF 24 
+000800 1B5B3434 3B33376D   A  1190                DB     1BH, "[44;37m", EOS  ; 256
+000808 24 
+000809 1B5B3436 3B33376D   A  1191                DB     1BH, "[46;37m", EOS  ; 512
+000811 24 
+000812 1B5B3432 3B33376D   A  1192                DB     1BH, "[42;37m", EOS  ; 1024
+00081A 24 
+00081B 1B5B3433 3B33306D   A  1193                DB     1BH, "[43;30m", EOS  ; 2048
+000823 24 
+000824 1B5B3435 3B33376D   A  1194                DB     1BH, "[45;37m", EOS  ; 4096
+00082C 24 
+00082D 1B5B3431 3B33376D   A  1195                DB     1BH, "[41;37m", EOS  ; 8192
+000835 24 
+                           A  1196    
+000836 0000                A  1197    POINTS:     DW     0000H
+000838 0000                A  1198                DW     0000H
+00083A 0400                A  1199                DW     0004H
+00083C 0800                A  1200                DW     0008H
+00083E 1600                A  1201                DW     0016H
+000840 3200                A  1202                DW     0032H
+000842 6400                A  1203                DW     0064H
+000844 2801                A  1204                DW     0128H
+000846 5602                A  1205                DW     0256H
+000848 1205                A  1206                DW     0512H
+00084A 2410                A  1207                DW     1024H
+00084C 4820                A  1208                DW     2048H
+00084E 9640                A  1209                DW     4096H
+000850 9281                A  1210                DW     8192H
+                           A  1211    
+000852                     A  1212    INIT:
+000852 1700C100            A  1213    	db	23,0,193,0	;turn off legacy mode so that mode 1 makes sense
+000856 1600                A  1214    	db	22,0		;VDU 22 0 = set mode 0
+000858 1700FF              A  1215    	db	23,0,255	;VDU 23 0 0xFF = set terminal mode       
+00085B 1B5B3F32 356C1B5B   A  1216    		DB     1BH, "[?25l", 1BH, "[2J", EOS
+000863 324A24 
+000866 7F7F1B5F 23512124   A  1217    TERM:      db		7fh,7fh,ESC,'_#Q!$'	 
+                           A  1218    ;	DB     1BH, "[?25h"
+00086E 1B5B306D 24         A  1219    RESET:      DB     1BH, "[0m", EOS
+                           A  1220    
+000873 1B5B3238 4324       A  1221    ADVANCE:    DB     1BH, "[28C", EOS
+                           A  1222    
+000879 DC                  A  1223    TOPBORDER:  DB     0DCH
+00087A DCDCDCDC DCDCDC     A  1224                DB     0DCH, 0DCH, 0DCH, 0DCH, 0DCH, 0DCH, 0DCH
+000881 DCDCDCDC DCDCDC     A  1225                DB     0DCH, 0DCH, 0DCH, 0DCH, 0DCH, 0DCH, 0DCH
+000888 DCDCDCDC DCDCDC     A  1226                DB     0DCH, 0DCH, 0DCH, 0DCH, 0DCH, 0DCH, 0DCH
+00088F DCDCDCDC DCDCDC     A  1227                DB     0DCH, 0DCH, 0DCH, 0DCH, 0DCH, 0DCH, 0DCH
+000896 DC24                A  1228                DB     0DCH, EOS
+                           A  1229    
+000898 DF                  A  1230    BTMBORDER:  DB     0DFH
+000899 DFDFDFDF DFDFDF     A  1231                DB     0DFH, 0DFH, 0DFH, 0DFH, 0DFH, 0DFH, 0DFH
+0008A0 DFDFDFDF DFDFDF     A  1232                DB     0DFH, 0DFH, 0DFH, 0DFH, 0DFH, 0DFH, 0DFH
+0008A7 DFDFDFDF DFDFDF     A  1233                DB     0DFH, 0DFH, 0DFH, 0DFH, 0DFH, 0DFH, 0DFH
+0008AE DFDFDFDF DFDFDF     A  1234                DB     0DFH, 0DFH, 0DFH, 0DFH, 0DFH, 0DFH, 0DFH
+0008B5 DF24                A  1235                DB     0DFH, EOS
+                           A  1236    
+0008B7 1B5B306D            A  1237    MSG1:       DB     1BH, "[0m"
+0008BB 20202020 20202020   A  1238                DB     "        w/a/s/d or q        "
+0008C3 772F612F 732F6420 
+0008CB 6F722071 20202020 
+0008D3 20202020 
+0008D7 24                  A  1239                DB     EOS
+0008D8 1B5B306D            A  1240    MSG2:       DB     1BH, "[0m"
+0008DC 20202020 20202020   A  1241                DB     "        QUIT? (y/n)         "
+0008E4 51554954 3F202879 
+0008EC 2F6E2920 20202020 
+0008F4 20202020 
+0008F8 24                  A  1242                DB     EOS
+0008F9 1B5B306D            A  1243    MSG3:       DB     1BH, "[0m"
+0008FD 20202020 20202020   A  1244                DB     "         GAME OVER!         "
+000905 2047414D 45204F56 
+00090D 45522120 20202020 
+000915 20202020 
+000919 070D0A24            A  1245                DB     BEL, CR, LF, EOS
+00091D 1B5B306D            A  1246    MSG4:       DB     1BH, "[0m"
+000921 32303438 20202020   A  1247                DB     "2048                     pts"
+000929 20202020 20202020 
+000931 20202020 20202020 
+000939 20707473 
+00093D 24                  A  1248                DB     EOS
+                           A  1249    
+                           A  1250    ; variables
+                           A  1251    
+00093E 00                  A  1252    XPOS:       DB     0
+00093F 00                  A  1253    YPOS:       DB     0
+000940 0000                A  1254    BOARDPTR:   DW     0
+000942 00                  A  1255    MOVED:      DB     0
+000943 00                  A  1256    RESULT:     DB     0
+000944 00000000            A  1257    SCORE:      DB     00H, 00H, 00H, 00H
+000948 1B5B306D 20202020   A  1258    SCORESTR:   DB     1BH, "[0m        $"
+000950 20202020 24 
+                           A  1259    
+                           A  1260                END
+                           A  1261    
+
+
+Errors: 0
+Warnings: 0
+Lines Assembled: 1616
