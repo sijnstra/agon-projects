@@ -2,7 +2,7 @@
 Multiple projects for the Agon light. Click through to each project for more detailed instructions. Release versions are in the respective `Release` directories.
 
 # 2048
-[2048.bin](https://github.com/sijnstra/agon-projects/tree/main/2048) is a port of the popular game 2048, including source. Copy `ansiplay.bin` into your `/mos` (or bin) directory and enjoy!
+[2048.bin](https://github.com/sijnstra/agon-projects/tree/main/2048) is a port of the popular game 2048, including source. Copy `2048.bin` into your `/mos` (or bin) directory and enjoy!
 
 # ANSIplay
 [ansiplay.bin](https://github.com/sijnstra/agon-projects/tree/main/ANSIplay) is a mos tool that plays `.ANS` format ANSI text files, including displaying any available metadata. Copy `ansiplay.bin` into your `/mos` directory and enjoy!
