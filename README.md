@@ -1,5 +1,5 @@
 # agon-projects
-Multiple projects for the Agon light. Click through to each project for more detailed instructions. Release versions are in the respective `Release` directories.
+Multiple projects for the Agon light. Click through to each project for more detailed instructions. Release versions are in the respective `Release` directories under each project. If you're interested in `C` programming, check out my matching [AgDev C repo](https://github.com/sijnstra/agdev-projects/).
 
 # 2048
 [2048.bin](https://github.com/sijnstra/agon-projects/tree/main/2048) is a port of the popular game 2048, including source. Copy `2048.bin` into your `/mos` (or bin) directory and enjoy!
