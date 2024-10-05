@@ -45,7 +45,7 @@ into your `/mos` directory and enjoy!
 The binary is included in the strings/Release directory. Copy `strings.bin` into your `/mos` directory and enjoy!
 
 # TRSCOLR
-[TRSCLOR/CMD](https://github.com/sijnstra/agon-projects/tree/main/TRSCOLR) is a utility to change text colour from the command line under TRS-OS on the Agon Light computer.
+[TRSCOLR/CMD](https://github.com/sijnstra/agon-projects/tree/main/TRSCOLR) is a utility to change text colour from the command line under TRS-OS on the Agon Light computer.
 
 # unzip
 [unzip.bin](https://github.com/sijnstra/agon-projects/tree/main/unzip) allows you to uncompress zip compressed file libraries natively on Agon MOS. Note that this utility can NOT run as a MOSlet. Copy `unzip.bin` into your `/` directory and use the `load` and `run` commands to execute. Documentation is included when you `run` without parameters.
