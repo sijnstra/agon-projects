@@ -6,7 +6,7 @@ TRS-OS was designed and built by Danial Paul Martin as a way to run LS-DOS on mo
 For the best expeience, it is *highly* recommended that you update your MOS and VDP, along with vdp-gl to version 1.04. This will include ADDS25 terminal emulation, ensuring the screen behaves properly. The ADDS25 terminal code has now been merged into the main branch and required VDP files - my fork is [here](https://github.com/sijnstra/vdp-gl).
 
 # Woodie edition
-I've provided a Woodie edition update `OSbootW.bin` which also has some extra features (currently under testing) baked in.
+I've provided a Woodie edition update `OSbootW.bin` which also has some extra features (currently under testing) baked in. Once my updates are merged or you grab them yourself from https://github.com/sijnstra/agon-vdp-console8 you can take advantage of the new features. You'll need to load the font using `loadfont 1 <pathname>\TRS80M4Pg.F10`, after which you can take advantage of the new `-f` command to load the contents of font 1 into the terminal mode.
 
 # What can I run with it?
 Well behaved TRS-80 model 4 programs are able to run natively on Agon. This includes software on Tim Mann's site, among many others. This works because the TRS-OS operating system is a wrapper for LS-DOS 6.3.1, allowing Agon to boot an unmodified LS-DOS. The devices for keyboard `*KI` and display `*DO` are intercepted by a terminal emulation program, and use UART0 to communicate back the the Agon's VDP. This means the Agon VDP is an external terminal for LS-DOS running on the eZ80, so things like graphics (high or low res) are not yet available.
