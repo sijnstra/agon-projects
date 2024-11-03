@@ -37,10 +37,10 @@ Please see [Nihirash's excellent tools](https://github.com/nihirash/Agon-MOS-Too
 # recommended sites
 Any telnet site with a reasonably paced amount of traffic.
 For example:
-telehack.com
-freechess.org:5000 `*`
-mtrek.com:1701
-batmud.bat.org `**`
+* telehack.com
+* freechess.org:5000 `*`
+* mtrek.com:1701
+* batmud.bat.org `**`
 
 `**` use `-ck` to see your responses and use the enter key.
 
