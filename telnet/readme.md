@@ -48,7 +48,7 @@ batmud.bat.org `**`
 ![Freechess login](chess.jpg)
 
 And sometimes if the wind is blowing the right way, network traffic can allow BBS sites with ASCII art to load:
-![Vertrauen logo](vert_screenshot.png)
+![Vertrauen logo](vert_screenshot.jpg)
 
 # known issues
 * It is possible to overwhelm the system with too much text/data downloaded, and the VDP may crash as a result. If this happens, you can reboot your Agon and try the `telnet -r` feature to reconnect.
