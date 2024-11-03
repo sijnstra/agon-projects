@@ -21,7 +21,7 @@ into your `/mos` directory and enjoy!
 [fonttest.bas](https://github.com/sijnstra/agon-projects/tree/main/fonttest) is a tool to demonstrate the creation of reverse text and underlines text fonts, using more recent Agon/Console8 VDP features for manipulating fonts in buffers. Minimum version of VDP is 2.8.1. The code is heavily commented and written in BBC BASIC.
 
 # gunzip
-[gunzip.bin](https://github.com/sijnstra/agon-projects/tree/main/gunzip) allows you to uncompress gzip compressed files natively on Agon MOS. Note that this utility can NOT run as a MOSlet. Copy `gunzip.bin` into your `/` directory and use the `load` and `run` commands to execute. Documentation is included when you `run` without parameters.
+[gunzip.bin](https://github.com/sijnstra/agon-projects/tree/main/gunzip) allows you to uncompress gzip compressed files natively on Agon MOS. Note that this utility can NOT run as a MOSlet. Copy `gunzip.bin` into your `/bin` directory. Documentation is included when you run without parameters.
 
 # hexdump
 [hexdump.bin](https://github.com/sijnstra/agon-projects/tree/main/hexdump) is a mos tool to dump the hex and printable contents of a file for visual examination, allowing easy navigation through the file. Copy `hexdump.bin`
@@ -44,8 +44,11 @@ into your `/mos` directory and enjoy!
 [strings.bin](https://github.com/sijnstra/agon-projects/tree/main/strings) is a minimal implementation of the *nix strings utility, allowing the user to search through a binary file for strings of a minimum length (specified in the command line). It demonstrates the use of the MOScalls `mos_fgetc` and `mos_feof`.
 The binary is included in the strings/Release directory. Copy `strings.bin` into your `/mos` directory and enjoy!
 
+# telnet
+[telnet.bin](https://github.com/sijnstra/agon-projects/tree/main/telnet) is an early release telnet client running natively on Agon MOS with an ESP8266 wifi module. Copy `telnet.bin` into your `/mos` directory and enjoy. Some documbinentation is included when run without parameters.
+
 # TRSCOLR
 [TRSCOLR/CMD](https://github.com/sijnstra/agon-projects/tree/main/TRSCOLR) is a utility to change text colour from the command line under TRS-OS on the Agon Light computer.
 
 # unzip
-[unzip.bin](https://github.com/sijnstra/agon-projects/tree/main/unzip) allows you to uncompress zip compressed file libraries natively on Agon MOS. Note that this utility can NOT run as a MOSlet. Copy `unzip.bin` into your `/` directory and use the `load` and `run` commands to execute. Documentation is included when you `run` without parameters.
+[unzip.bin](https://github.com/sijnstra/agon-projects/tree/main/unzip) allows you to uncompress zip compressed file libraries natively on Agon MOS. Note that this utility can NOT run as a MOSlet. Copy `unzip.bin` into your `/bin` directory. Documentation is included when you run without parameters.
