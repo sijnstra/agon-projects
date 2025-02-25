@@ -52,4 +52,4 @@ The third optional parameter loads a virtual disk image into memory at `0x45300`
 # Making your own disk images
 TRS-OS supports in-memory loading of both DiskDISK and JV1 floppy disk images. The easiest way to generate your own floppy images is to use JV1 image files. Note that the memory map has changed a few times, and that the 512K memory map of the Agon Light limits the available disk image space. I recommend making a smallest feasible disk - a 35 track single sided single density.
 
-You can search for places to find JV1 manipulation tools. A good place to start is (Ira Goldklang's list of Virtual Disk Utilities)[https://www.trs-80.com/wordpress/emulators/disk-utilities/}
+You can search for places to find JV1 manipulation tools. A good place to start is (Ira Goldklang's list of Virtual Disk Utilities)[https://www.trs-80.com/wordpress/emulators/disk-utilities/]
