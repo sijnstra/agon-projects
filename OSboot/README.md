@@ -1,4 +1,11 @@
-# OSboot
+# Table of Contents
+* [OSboot Overview](#osboot-overview)
+* [Woodie edition](#woodie-edition)
+* [What can I run with it?](#what-can-i-run-with-it)
+* [What hardware is it equivalent to?](#what-hardware-is-it-equivalent-to)
+* [Usage](#usage)
+
+# OSboot Overview
 This tool is to boot up [TRS-OS](https://danielpaulmartin.com/home/research/). It only runs from the `/mos` directory. Only a binary is available at the moment. Source may be released in future. Booting TRS-OS allows well-behaved TRS-80 Model 4 software to run natively on Agon Light.
 
 TRS-OS was designed and built by Danial Paul Martin as a way to run LS-DOS on modern (eZ80) based hardware, and is made available on Agon by a combination of Daniel's work on TRS-OS development along with my development of this loader. You can download the [TRS-OS binary via here](https://danielpaulmartin.com/how%20do%20i%20get/).
@@ -23,7 +30,9 @@ Well behaved TRS-80 model 4 programs are able to run natively on Agon. This incl
 ![TRS-OS screenshot 4](DSCX0031_sm.jpg)
 
 # What hardware is it equivalent to?
-At the moment it is a fairly standard TRS-80 Model 4 without Model 3 mode. It has 2 virtual floppy drives, with the default being 2 x 180k disks - i.e. they are 40 track, single sided, double density. As communication is over the serial port internally, this means there is no hires and no lo-res graphics. 
+At the moment it is a fairly standard TRS-80 Model 4 without Model 3 mode. It has 2 virtual floppy drives, with the default being 2 x 180k disks - i.e. they are 40 track, single sided, double density. As communication is over the serial port internally, this means there is no hires and no lo-res graphics.
+
+As the Agon runs on an eZ80 at 18.432MHz, and the eZ80 supports instruction pipelining, it is equivalent to around 3x the speed of a regular z80.  This makes it equivalent to around a 54MHz model 4.
 
 If you use the terminal updates above, this enables features like clear screen and reverse character text to work.
 
