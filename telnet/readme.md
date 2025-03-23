@@ -1,9 +1,11 @@
 # telnet.bin
-This is a MOS utility to telnet straight from your Agon to remote networks using the ESP8266 wifi board, particularly the one built by Olimex. You can get more details on this here
+This is a MOS utility to telnet straight from your Agon to remote networks using the ESP8266 wifi board, particularly the one built by Olimex.
 
-Please note this is a BETA status - there are a number of stability issues which seem to depend on network throughput. See Known Issues below.
+Please note this is a BETA release as there are a number of stability issues which seem to depend on network throughput. See Known Issues below.
 
 It is designed to be compatible with Nihirash's snail gopher browser and setup utilities, minimising any changes needed on the part of the user.
+
+The software has been updated on 22-Mar-2025 to solve some cosmetic character re-sending issues.
 
 # usage
 built-in help text :
