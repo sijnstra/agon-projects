@@ -37,6 +37,8 @@ As the Agon runs on an eZ80 at 18.432MHz, and the eZ80 supports instruction pipe
 
 If you use the terminal updates above, this enables features like clear screen and reverse character text to work in ADDS25 terminal mode.
 
+While it is recommended to use the real Agon hardware, I am getting increasing success with running on the most recent versions of the [FAB Agon Emulator](https://github.com/tomm/fab-agon-emulator/releases/latest).
+
 # Usage
 `OSboot [-Xvf] <binaryfile> [diskfile]`
 
