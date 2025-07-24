@@ -168,10 +168,14 @@ asciiloop:
 	ld		c,0
 asciilp1:
 	ld		a,(hl)
-	call	unprintable
+;	call	unprintable
 asciilp2:
 	push	hl
 	push	bc
+	push	af
+	ld		a,27
+	rst		10h
+	pop		af
 	rst		10h
 	pop		bc
 	pop		hl
@@ -275,11 +279,11 @@ badusage:	call usage
 ; usage -- show syntax
 ; 
 usage:	call	inline_print
-	db	CR,LF,'hexdump utility for Agon by Shawn Sijnstra (c) 17-Jun-2023',CR,LF,CR,LF
+	db	CR,LF,'hexdump utility for Agon by Shawn Sijnstra (c) 23-Jul-2025',CR,LF,CR,LF
 	db	'Usage:',CR,LF
 	db	'   hexdump [-c] <file>',CR,LF,CR,LF
 	db	'	optional paramter c uses hexdump in continuous mode.',CR,LF
-	db 	'Store hexdump.bin in /mos directory. Minimum MOS version 1.03.',CR,LF,CR,LF,0
+	db 	'Store hexdump.bin in /mos directory. Minimum MOS version 2.3.0.',CR,LF,CR,LF,0
 	ret
 
 ;
@@ -455,10 +459,14 @@ $$:
 	jr		iasciilp3
 iasciilp2:
 	ld		a,(hl)
-	call	unprintable
+;	call	unprintable
 iasciilp3:
 	push	hl
 	push	bc
+	push	af
+	ld		a,27
+	rst		10h
+	pop		af
 	rst		10h
 	pop		bc
 	pop		hl
