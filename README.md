@@ -10,6 +10,9 @@ Multiple projects for the Agon light. Click through to each project for more det
 # bootlogo
 [bootlogo.bin](https://github.com/sijnstra/agon-projects/tree/main/bootlogo) is a mos tool that shows the Agon Light logo along with the current screen capabilties. Copy `bootlogo.bin` into your `/mos` then add `bootlogo` to the end of your `autoexec.txt` and enjoy!
 
+# ca1d
+[ca1dagon.bin](https://github.com/sijnstra/agon-projects/tree/main/ca1d) is a mos demonstration to take user input and run an elementary cellular automaton based on that input. It is a relatively easy to understand single z80 mode ez80asm source to compile yourself, or just run the `ca1dagon.bin` from your '/mos' directory (or anywhere really).
+
 # calc24
 [calc24.bin](https://github.com/sijnstra/agon-projects/tree/main/calc24) is a mos tool that is intended to provide both a simple 24 bit integer calculator in hex and decimal, working both as a command line or interactive tool. The integer routines may also be useful for other projects. Copy `calc24.bin` into your `/mos` directory ready to use.
 
