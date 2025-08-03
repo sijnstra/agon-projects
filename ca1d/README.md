@@ -9,5 +9,5 @@ Source code is provided to help people who are looking for an exercise in writin
 To compile on your Agon, transfer the source file `ca1dagon.asm` on to your Agon. Assuming you already have `ez80asm` installed, you can simply use `ez80asm ca1dagon.asm` to compile the binary.
 
 # Example
-To give you an idea of what the software cab produce, here is one example of the 255 possible outputs:
+To give you an idea of what the software cab produce, here is one example of the 256 possible outputs:
 ![ca1d output](CA1D_screenshot.png)
