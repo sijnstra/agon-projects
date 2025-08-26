@@ -20,6 +20,9 @@ Multiple projects for the Agon light. Click through to each project for more det
 [charioh.bin](https://github.com/sijnstra/agon-projects/tree/main/charIO-hex) is a mos tool to demonstrate terminal mode, and display the keyboard codes to screen in hex. It should make an easy template to understand terminal mode. Copy `charioh.bin`
 into your `/mos` directory and enjoy!
 
+# CPCpic
+[cpcpic.bin](https://github.com/sijnstra/agon-projects/tree/main/CPCpic) is a tool to display Amstrad CPC mode 0 colour images in .PAL + .SCR format
+
 # fonttest
 [fonttest.bas](https://github.com/sijnstra/agon-projects/tree/main/fonttest) is a tool to demonstrate the creation of reverse text and underlines text fonts, using more recent Agon/Console8 VDP features for manipulating fonts in buffers. Minimum version of VDP is 2.8.1. The code is heavily commented and written in BBC BASIC.
 
