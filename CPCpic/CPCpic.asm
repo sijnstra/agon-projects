@@ -305,6 +305,10 @@ scr_load:
 scr_no_ams:
 
 ;Setup steps
+	ld		a,22	;VDU 22, mode
+	rst		10h
+	ld		a,3		;mode 3 = 640 x 240 x 64
+	rst		10h
 	call	physical_layout	;set up the coordinate system to be physical layout
 ; get mode when we update this
 	xor	a	;ld	a,20	;row counter for total number of rows - count up to 200 + 20 oFfset and then end.
@@ -586,6 +590,10 @@ inner4_docolchange:
 
 scr_done:
 	MOSCALL	mos_getkey
+	ld		a,22	; VDU 22, mode - back to mode 0 on exit
+	rst		10h
+	xor		a
+	rst		10h
 
 	jp	close
 
