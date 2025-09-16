@@ -3,6 +3,8 @@ This is the classic. award-winning Sargon Chess program by Dan and Kathe Sprackl
 
 Note that during setup it asks how many moves to look ahead - I find that anything more than 2 and you really need to be patient.
 
+The latest update is tweaked to make it load on MOS 3 and above, resolving an issue with the new internal eZ80 settings.
+
 # Source code
 Source code is not provided yet - it's compiled using ZDS-II and I'm looking at converting it to be more user-friendly.
 

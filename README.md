@@ -50,6 +50,9 @@ into your `/mos` directory and enjoy!
 [strings.bin](https://github.com/sijnstra/agon-projects/tree/main/strings) is a minimal implementation of the *nix strings utility, allowing the user to search through a binary file for strings of a minimum length (specified in the command line). It demonstrates the use of the MOScalls `mos_fgetc` and `mos_feof`.
 The binary is included in the strings/Release directory. Copy `strings.bin` into your `/mos` directory and enjoy!
 
+# Sargon
+[sargon.bin](https://github.com/sijnstra/agon-projects/tree/main/sargon) is the 1978 classic Chess program by Dan and Kathe Spracklen, which was then ported to CP/M using VT100 terminal characters, which I have taken and ported to run natively on Agon.
+
 # telnet
 [telnet.bin](https://github.com/sijnstra/agon-projects/tree/main/telnet) is an early release telnet client running natively on Agon MOS with an ESP8266 wifi module. Copy `telnet.bin` into your `/mos` directory and enjoy. Some documbinentation is included when run without parameters.
 
