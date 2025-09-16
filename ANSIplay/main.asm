@@ -251,17 +251,19 @@ open_ok:
 ;TESTING CODE FOR CREDITS
 ;	jp	sauce
 ;END TESTING
-;Turn on terminal mode
-		ld		HL, init_80x25		; Address of text
-		ld		BC, 0			; Set to 0, so length ignored...
-		ld		A, '$'			; Use character in A as delimiter
-		RST.LIS	18h			; This calls a RST in the eZ80 address space
-;Disable interrupts from UART0
+
+;Disable interrupts from UART0 before switching (MOS 3 change to do this prior to terminal mode)
 		xor		a
 		out0 	(UART0_REG_IER), a ; Disable all interrupts on UART0.
 
 		ld		a, 6
 		out0	(UART0_REG_FCT), a ; Turn off flow control interrupt
+
+;Turn on terminal mode
+		ld		HL, init_80x25		; Address of text
+		ld		BC, 0			; Set to 0, so length ignored...
+		ld		A, '$'			; Use character in A as delimiter
+		RST.LIS	18h			; This calls a RST in the eZ80 address space
 
 ;Consume the terminal mode-change success packet from VDP
 $$:
@@ -410,7 +412,7 @@ badusage:
 ; usage -- show syntax
 ; 
 usage:	call	inline_print
-		db		CR,LF,'ANSI player for Agon (c) Shawn Sijnstra 05-Feb-2024 v0.7 - MIT license',CR,LF,CR,LF
+		db		CR,LF,'ANSI player for Agon (c) Shawn Sijnstra 16-Sep-2025 v0.8 - MIT license',CR,LF,CR,LF
 		db		'Usage:',CR,LF
 		db		'   ANSIplay [-x] <file>',CR,LF
 		db  	'By default ANSIplay waits for any key to exit once done.',CR,LF
