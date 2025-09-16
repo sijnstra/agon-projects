@@ -4,7 +4,7 @@ Copyright (C) 1999-2008 Zilog, Inc. All Rights Reserved
 
 LINK MAP:
 
-DATE:      Mon Jan 08 16:03:13 2024
+DATE:      Wed Sep 17 09:04:03 2025
 PROCESSOR: assembler
 FILES:     .\init.obj             .\main.obj             
 
@@ -72,10 +72,10 @@ SPACE ALLOCATION:
 
 Space                     Base         Top      Size      Used    Unused
 ------------------ ----------- ----------- --------- --------- ---------
-RAM                   D:040000    D:0402FF    80000H      300H    7FD00H
-                                          (   524288       768    523520)
-ROM                   C:000000    C:0002FF    20000H      300H    1FD00H
-                                          (   131072       768    130304)
+RAM                   D:040000    D:04034B    80000H      34CH    7FCB4H
+                                          (   524288       844    523444)
+ROM                   C:000000    C:00034B    20000H      34CH    1FCB4H
+                                          (   131072       844    130228)
 
 
 SEGMENTS WITHIN SPACE:
@@ -84,29 +84,29 @@ SEGMENTS WITHIN SPACE:
 RAM                               Type        Base         Top      Size
 ------------------ ------------------- ----------- ----------- ---------
 __VECTORS          * segment copy *       D:040000    D:040144      145h
-CODE               * segment copy *       D:040145    D:0402FF      1bbh
+CODE               * segment copy *       D:040145    D:04034B      207h
 
 
 ROM                               Type        Base         Top      Size
 ------------------ ------------------- ----------- ----------- ---------
 __VECTORS          normal data            C:000000    C:000144      145h
-CODE               normal data            C:000145    C:0002FF      1bbh
+CODE               normal data            C:000145    C:00034B      207h
 
 SEGMENTS WITHIN MODULES:
 ========================
 
-Module: D:\agon\agon-projects-main\ASM\CharHex-ASM\init.asm (File: init.obj) Version: 1:0 01/08/2024 16:03:13
+Module: D:\agon\agon-projects-main\ASM\CharHex-ASM\init.asm (File: init.obj) Version: 1:0 09/17/2025 09:04:03
 
     Name                                           Base         Top      Size
     --------------------------------------- ----------- ----------- ---------
     Segment: __VECTORS                         C:000000    C:000144      145h
 
 
-Module: D:\agon\agon-projects-main\ASM\CharHex-ASM\main.asm (File: main.obj) Version: 1:0 01/08/2024 16:03:13
+Module: D:\agon\agon-projects-main\ASM\CharHex-ASM\main.asm (File: main.obj) Version: 1:0 09/17/2025 09:04:03
 
     Name                                           Base         Top      Size
     --------------------------------------- ----------- ----------- ---------
-    Segment: CODE                              C:000145    C:0002FF      1bbh
+    Segment: CODE                              C:000145    C:00034B      207h
 
 EXTERNAL DEFINITIONS:
 =====================
@@ -170,8 +170,8 @@ _SYS_CLK_FREQ                     Defined     LINKER
 
 OUTPUT CHECKSUM
 ===============
-CharIOH.hex          012313
-CharIOH.lod          012313
+CharIOH.hex          013686
+CharIOH.lod          013686
 
 
 

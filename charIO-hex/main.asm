@@ -85,15 +85,8 @@ _main:
 
 	call	inline_print
 	db		cr,lf,'Simple Character I/O test for terminal mode',cr,lf	;Prints to screen in case switch below
-	db		'By Shawn Sijnstra 08-Jan-2024',cr,lf
+	db		'By Shawn Sijnstra 16-Sep-2025',cr,lf
 	db		'Switching to Terminal Mode',cr,lf,0
-
-	ld		a,17h	;outputting due to zero require mid-string.
-	RST		10h		;VDU 23,
-	xor		a
-	RST		10h		;0,
-	dec		a
-	RST		10h		;255
 
 ;Disable interrupts from UART0
 
@@ -104,7 +97,18 @@ _main:
 	ld a, 6
 	out0 (UART0_REG_FCT), a ; Turn off flow control interrupt
 
+	ld		a,17h	;outputting due to zero require mid-string.
+	RST		10h		;VDU 23,
+	xor		a
+	RST		10h		;0,
+	dec		a
+	RST		10h		;255
+
+
+
 	call	prt_msg
+	db		'Simple Character I/O test for terminal mode',cr,lf	;Reprint after screen clear
+	db		'By Shawn Sijnstra 16-Sep-2025',cr,lf
 	db		'Terminal mode enabled. Press CTRL-C to exit.',cr,lf,0
 
 io_loop:

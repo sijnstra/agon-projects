@@ -1,4 +1,4 @@
-Zilog eZ80 Macro Assembler Version 4.3 (19073001) RELISTED08-Jan-24     16:03:13     page:   1
+Zilog eZ80 Macro Assembler Version 4.3 (19073001) RELISTED17-Sep-25     09:04:03     page:   1
 
 
 PC     Object              I  Line    Source 
@@ -406,221 +406,233 @@ PC     Object              I  Line    Source
                            A    83    
 000145                     A    84    _main:
                            A    85    
-000145 CD 93 02            A    86    	call	inline_print
+000145 CD DF 02            A    86    	call	inline_print
 000148 0D0A5369 6D706C65   A    87    	db		cr,lf,'Simple Character I/O test fo
 000150 20436861 72616374 
 000158 65722049 2F4F2074 
 000160 65737420 666F7220 
 000168 7465726D 696E616C 
 000170 206D6F64 650D0A 
-000177 42792053 6861776E   A    88    	db		'By Shawn Sijnstra 08-Jan-2024',cr,
+000177 42792053 6861776E   A    88    	db		'By Shawn Sijnstra 16-Sep-2025',cr,
 00017F 2053696A 6E737472 
-000187 61203038 2D4A616E 
-00018F 2D323032 340D0A 
+000187 61203136 2D536570 
+00018F 2D323032 350D0A 
 000196 53776974 6368696E   A    89    	db		'Switching to Terminal Mode',cr,lf,
 00019E 6720746F 20546572 
 0001A6 6D696E61 6C204D6F 
 0001AE 64650D0A 00 
                            A    90    
-0001B3 3E17                A    91    	ld		a,17h	;outputting due to zero req
-0001B5 D7                  A    92    	RST		10h		;VDU 23,
-0001B6 AF                  A    93    	xor		a
-0001B7 D7                  A    94    	RST		10h		;0,
-0001B8 3D                  A    95    	dec		a
-0001B9 D7                  A    96    	RST		10h		;255
-                           A    97    
-                           A    98    ;Disable interrupts from UART0
+                           A    91    ;Disable interrupts from UART0
+                           A    92    
+                           A    93    
+0001B3 AF                  A    94    	xor	a
+0001B4 ED39C1              A    95    	out0 (UART0_REG_IER), a ; Disable all inter
+                           A    96    
+0001B7 3E06                A    97    	ld a, 6
+0001B9 ED39C2              A    98    	out0 (UART0_REG_FCT), a ; Turn off flow con
                            A    99    
-                           A   100    
-0001BA AF                  A   101    	xor	a
-0001BB ED39C1              A   102    	out0 (UART0_REG_IER), a ; Disable all inter
-                           A   103    
-0001BE 3E06                A   104    	ld a, 6
-0001C0 ED39C2              A   105    	out0 (UART0_REG_FCT), a ; Turn off flow con
+0001BC 3E17                A   100    	ld		a,17h	;outputting due to zero req
+0001BE D7                  A   101    	RST		10h		;VDU 23,
+0001BF AF                  A   102    	xor		a
+0001C0 D7                  A   103    	RST		10h		;0,
+0001C1 3D                  A   104    	dec		a
+0001C2 D7                  A   105    	RST		10h		;255
                            A   106    
-0001C3 CD 9F 02            A   107    	call	prt_msg
-0001C6 5465726D 696E616C   A   108    	db		'Terminal mode enabled. Press CTRL-
-0001CE 206D6F64 6520656E 
-0001D6 61626C65 642E2050 
-0001DE 72657373 20435452 
-0001E6 4C2D4320 746F2065 
-0001EE 7869742E 0D0A00 
-                           A   109    
-0001F5                     A   110    io_loop:
-                           A   111    ;get characters
-0001F5 CD F5 02            A   112    $$:			CALL 		UART0_serial_RX
-0001F8 30 FB               A   113    			JR		NC,$B
-0001FA B7                  A   114    			or		a
-0001FB 28 F8               A   115    			jr		z,$b
-0001FD FE03                A   116    			cp		3
-0001FF 28 0A               A   117    			jr		z,exit
-000201 FE1B                A   118    			cp		esc
-000203 CA 6B 02            A   119    			jp		z,esc_sequence
-000206 CD B4 02            A   120    			call	Print_Hex8
-000209 18 EA               A   121    			jr	io_loop
-                           A   122    
-00020B                     A   123    exit:
-00020B CD 93 02            A   124    	call	inline_print
-00020E 0D0A4354 524C2D43   A   125    	db	cr,lf,'CTRL-C detected. Exit to Termina
-000216 20646574 65637465 
-00021E 642E2045 78697420 
-000226 746F2054 65726D69 
-00022E 6E616C20 6D6F6465 
-000236 2E205072 65737320 
-00023E 72657365 74206966 
-000246 2070726F 6D707420 
-00024E 6661696C 732E0D0A 
-000256 1B5F2351 2124       A   126    	db	esc,'_#Q!$'		;QUIT out of terminal m
-00025C 00                  A   127    	db	0	;string terminator
-                           A   128    
-00025D 3E07                A   129    	ld 		a, 7
-00025F ED39C2              A   130    	out0 	(UART0_REG_FCT), a ; Turn on flow c
-                           A   131    
-000262 3E01                A   132    	ld		a,1				; Restore IER statu
-000264 ED39C1              A   133    	out0	(UART0_REG_IER),a
-                           A   134    
-000267 210000              A   135    	ld		hl,0	;for Agon = successful exit
-00026A C9                  A   136    	ret
-                           A   137    
-00026B                     A   138    esc_sequence:
-00026B 3E20                A   139    	ld	a,' '			;print ' e' instead of 
-00026D CD 88 02            A   140    	call	printA
-000270 3E65                A   141    	ld	a,'e'
-000272 CD 88 02            A   142    	call	printA
-000275 CD F5 02            A   143    $$:	CALL 		UART0_serial_RX	;Assumes 2 char
-000278 30 FB               A   144    	JR		NC,$B
-00027A CD 88 02            A   145    	call	printA
-00027D CD F5 02            A   146    $$:	CALL 		UART0_serial_RX
-000280 30 FB               A   147    	JR		NC,$B
-000282 CD 88 02            A   148    	call	printA
-000285 C3 F5 01            A   149    	jp		io_loop
-                           A   150    
-000288                     A   151    printA:
-000288 F5                  A   152    			PUSH	AF
-000289 C4 D0 02            A   153    			CALL	NZ, UART0_wait_CTS		; W
-00028C F1                  A   154    			POP	AF
-00028D CD D9 02            A   155    $$:			CALL	UART0_serial_TX			; S
-000290 30 FB               A   156    			JR	NC, $B				; Repeat un
-000292 C9                  A   157    			ret
-                           A   158    ;
-                           A   159    ;
-                           A   160    ; Prints string directly after the call
-                           A   161    ;
-000293 E1                  A   162    inline_print:	pop	hl
-000294 CD 9A 02            A   163    	call	print_string
-000297 E9                  A   164    	jp	(hl)
+                           A   107    
+                           A   108    
+0001C3 CD EB 02            A   109    	call	prt_msg
+0001C6 53696D70 6C652043   A   110    	db		'Simple Character I/O test for term
+0001CE 68617261 63746572 
+0001D6 20492F4F 20746573 
+0001DE 7420666F 72207465 
+0001E6 726D696E 616C206D 
+0001EE 6F64650D 0A 
+0001F3 42792053 6861776E   A   111    	db		'By Shawn Sijnstra 16-Sep-2025',cr,
+0001FB 2053696A 6E737472 
+000203 61203136 2D536570 
+00020B 2D323032 350D0A 
+000212 5465726D 696E616C   A   112    	db		'Terminal mode enabled. Press CTRL-
+00021A 206D6F64 6520656E 
+000222 61626C65 642E2050 
+00022A 72657373 20435452 
+000232 4C2D4320 746F2065 
+00023A 7869742E 0D0A00 
+                           A   113    
+000241                     A   114    io_loop:
+                           A   115    ;get characters
+000241 CD 41 03            A   116    $$:			CALL 		UART0_serial_RX
+000244 30 FB               A   117    			JR		NC,$B
+000246 B7                  A   118    			or		a
+000247 28 F8               A   119    			jr		z,$b
+000249 FE03                A   120    			cp		3
+00024B 28 0A               A   121    			jr		z,exit
+00024D FE1B                A   122    			cp		esc
+00024F CA B7 02            A   123    			jp		z,esc_sequence
+000252 CD 00 03            A   124    			call	Print_Hex8
+000255 18 EA               A   125    			jr	io_loop
+                           A   126    
+000257                     A   127    exit:
+000257 CD DF 02            A   128    	call	inline_print
+00025A 0D0A4354 524C2D43   A   129    	db	cr,lf,'CTRL-C detected. Exit to Termina
+000262 20646574 65637465 
+00026A 642E2045 78697420 
+000272 746F2054 65726D69 
+00027A 6E616C20 6D6F6465 
+000282 2E205072 65737320 
+00028A 72657365 74206966 
+000292 2070726F 6D707420 
+00029A 6661696C 732E0D0A 
+0002A2 1B5F2351 2124       A   130    	db	esc,'_#Q!$'		;QUIT out of terminal m
+0002A8 00                  A   131    	db	0	;string terminator
+                           A   132    
+0002A9 3E07                A   133    	ld 		a, 7
+0002AB ED39C2              A   134    	out0 	(UART0_REG_FCT), a ; Turn on flow c
+                           A   135    
+0002AE 3E01                A   136    	ld		a,1				; Restore IER statu
+0002B0 ED39C1              A   137    	out0	(UART0_REG_IER),a
+                           A   138    
+0002B3 210000              A   139    	ld		hl,0	;for Agon = successful exit
+0002B6 C9                  A   140    	ret
+                           A   141    
+0002B7                     A   142    esc_sequence:
+0002B7 3E20                A   143    	ld	a,' '			;print ' e' instead of 
+0002B9 CD D4 02            A   144    	call	printA
+0002BC 3E65                A   145    	ld	a,'e'
+0002BE CD D4 02            A   146    	call	printA
+0002C1 CD 41 03            A   147    $$:	CALL 		UART0_serial_RX	;Assumes 2 char
+0002C4 30 FB               A   148    	JR		NC,$B
+0002C6 CD D4 02            A   149    	call	printA
+0002C9 CD 41 03            A   150    $$:	CALL 		UART0_serial_RX
+0002CC 30 FB               A   151    	JR		NC,$B
+0002CE CD D4 02            A   152    	call	printA
+0002D1 C3 41 02            A   153    	jp		io_loop
+                           A   154    
+0002D4                     A   155    printA:
+0002D4 F5                  A   156    			PUSH	AF
+0002D5 C4 1C 03            A   157    			CALL	NZ, UART0_wait_CTS		; W
+0002D8 F1                  A   158    			POP	AF
+0002D9 CD 25 03            A   159    $$:			CALL	UART0_serial_TX			; S
+0002DC 30 FB               A   160    			JR	NC, $B				; Repeat un
+0002DE C9                  A   161    			ret
+                           A   162    ;
+                           A   163    ;
+                           A   164    ; Prints string directly after the call
                            A   165    ;
-                           A   166    ; more efficient print string for strings > 1 c
-000298                     A   167    $$:
-000298 D7                  A   168    	rst	10h	;Agon uses this to print the charac
-000299 23                  A   169    	inc	hl
-00029A 7E                  A   170    print_string:	ld	a,(hl)
-00029B B7                  A   171    	or	a
-00029C 20 FA               A   172    	jr	nz,$b
-00029E C9                  A   173    	ret
-                           A   174    ;
-00029F E1                  A   175    prt_msg:	pop	hl
-0002A0 CD AF 02            A   176    	call	uart0_string
-0002A3 E9                  A   177    	jp	(hl)
-                           A   178    ; more efficient print string for strings > 1 c
-0002A4                     A   179    $$:
-0002A4 F5                  A   180    			PUSH	AF
-0002A5 CD D0 02            A   181    			CALL	UART0_wait_CTS		; Wait 
-0002A8 F1                  A   182    			POP	AF
-0002A9 CD D9 02            A   183    inlp:			CALL	UART0_serial_TX			
-0002AC 30 FB               A   184    			JR	NC, inlp				; Repea
-0002AE 23                  A   185    	inc	hl
-0002AF 7E                  A   186    uart0_string:	ld	a,(hl)
-0002B0 B7                  A   187    	or	a
-0002B1 20 F1               A   188    	jr	nz,$b
-0002B3 C9                  A   189    	ret
-                           A   190    
-0002B4 4F                  A   191    Print_Hex8:		LD	C,A
-0002B5 1F                  A   192    			RRA 
-0002B6 1F                  A   193    			RRA 
-0002B7 1F                  A   194    			RRA 
-0002B8 1F                  A   195    			RRA 
-0002B9 CD BD 02            A   196    			CALL	$F 
-0002BC 79                  A   197    			LD	A,C 
-0002BD E60F                A   198    $$:			AND	0Fh
-0002BF C690                A   199    			ADD	A,90h
-0002C1 27                  A   200    			DAA
-0002C2 CE40                A   201    			ADC	A,40h
-0002C4 27                  A   202    			DAA
-0002C5 F5                  A   203    			PUSH	AF
-0002C6 CD D0 02            A   204    			CALL	UART0_wait_CTS		; Wait 
-0002C9 F1                  A   205    			POP	AF
-0002CA CD D9 02            A   206    $$:			CALL	UART0_serial_TX			; S
-0002CD 30 FB               A   207    			JR	NC, $B				; Repeat un
-0002CF C9                  A   208    			RET
-                           A   209    ;
-                           A   210    ; Check whether we're clear to send (UART0 only
-                           A   211    ;
-                           A   212    
-0002D0                     A   213    UART0_wait_CTS:		GET_GPIO	PD_DR, 8		
-0002D6 20 F8               A   214    			JR		NZ, UART0_wait_CTS
-0002D8 C9                  A   215    			RET
+0002DF E1                  A   166    inline_print:	pop	hl
+0002E0 CD E6 02            A   167    	call	print_string
+0002E3 E9                  A   168    	jp	(hl)
+                           A   169    ;
+                           A   170    ; more efficient print string for strings > 1 c
+0002E4                     A   171    $$:
+0002E4 D7                  A   172    	rst	10h	;Agon uses this to print the charac
+0002E5 23                  A   173    	inc	hl
+0002E6 7E                  A   174    print_string:	ld	a,(hl)
+0002E7 B7                  A   175    	or	a
+0002E8 20 FA               A   176    	jr	nz,$b
+0002EA C9                  A   177    	ret
+                           A   178    ;
+0002EB E1                  A   179    prt_msg:	pop	hl
+0002EC CD FB 02            A   180    	call	uart0_string
+0002EF E9                  A   181    	jp	(hl)
+                           A   182    ; more efficient print string for strings > 1 c
+0002F0                     A   183    $$:
+0002F0 F5                  A   184    			PUSH	AF
+0002F1 CD 1C 03            A   185    			CALL	UART0_wait_CTS		; Wait 
+0002F4 F1                  A   186    			POP	AF
+0002F5 CD 25 03            A   187    inlp:			CALL	UART0_serial_TX			
+0002F8 30 FB               A   188    			JR	NC, inlp				; Repea
+0002FA 23                  A   189    	inc	hl
+0002FB 7E                  A   190    uart0_string:	ld	a,(hl)
+0002FC B7                  A   191    	or	a
+0002FD 20 F1               A   192    	jr	nz,$b
+0002FF C9                  A   193    	ret
+                           A   194    
+000300 4F                  A   195    Print_Hex8:		LD	C,A
+000301 1F                  A   196    			RRA 
+000302 1F                  A   197    			RRA 
+000303 1F                  A   198    			RRA 
+000304 1F                  A   199    			RRA 
+000305 CD 09 03            A   200    			CALL	$F 
+000308 79                  A   201    			LD	A,C 
+000309 E60F                A   202    $$:			AND	0Fh
+00030B C690                A   203    			ADD	A,90h
+00030D 27                  A   204    			DAA
+00030E CE40                A   205    			ADC	A,40h
+000310 27                  A   206    			DAA
+000311 F5                  A   207    			PUSH	AF
+000312 CD 1C 03            A   208    			CALL	UART0_wait_CTS		; Wait 
+000315 F1                  A   209    			POP	AF
+000316 CD 25 03            A   210    $$:			CALL	UART0_serial_TX			; S
+000319 30 FB               A   211    			JR	NC, $B				; Repeat un
+00031B C9                  A   212    			RET
+                           A   213    ;
+                           A   214    ; Check whether we're clear to send (UART0 only
+                           A   215    ;
                            A   216    
-                           A   217    ; Write a character to UART0
-                           A   218    ; Parameters:
-                           A   219    ; - A: Data to write
-                           A   220    ; Returns:
-                           A   221    ; - F: C if written
-                           A   222    ; - F: NC if timed out
-                           A   223    ;
-0002D9 C5                  A   224    UART0_serial_TX:	PUSH		BC			; S
-0002DA F5                  A   225    			PUSH		AF 			; Stack AF
-0002DB 010040              A   226    			LD		BC,TX_WAIT		; Set CB to
-0002DE ED38C5              A   227    UART0_serial_TX1:	IN0		A,(UART0_REG_LSR)	
-0002E1 E640                A   228    			AND 		UART_LSR_ETX		; C
-0002E3 20 09               A   229    			JR		NZ, UART0_serial_TX2	; I
-0002E5 0B                  A   230    			DEC		BC
-0002E6 78                  A   231    			LD		A, B
-0002E7 B1                  A   232    			OR		C
-0002E8 20 F4               A   233    			JR		NZ, UART0_serial_TX1
-0002EA F1                  A   234    			POP		AF			; We've timed o
-0002EB C1                  A   235    			POP		BC			; Restore the s
-0002EC B7                  A   236    			OR		A			; Clear the car
-0002ED C9                  A   237    			RET	
-0002EE F1                  A   238    UART0_serial_TX2:	POP		AF			; Good 
-0002EF ED39C0              A   239    			OUT0		(UART0_REG_THR),A	; W
-0002F2 C1                  A   240    			POP		BC			; Restore BC
-0002F3 37                  A   241    			SCF					; Set the carry
-0002F4 C9                  A   242    			RET 
-                           A   243    ; Read a character from UART0
-                           A   244    ; Returns:
-                           A   245    ; - A: Data read
-                           A   246    ; - F: C if character read
-                           A   247    ; - F: NC if no character read
-                           A   248    ;
-0002F5 ED38C5              A   249    UART0_serial_RX:	IN0		A,(UART0_REG_LSR)	
-0002F8 E601                A   250    			AND 		UART_LSR_RDY		; C
-0002FA C8                  A   251    			RET		Z			; Just ret (wit
-0002FB                     A   252    UART0_serial_RX2:
-0002FB ED38C0              A   253    			IN0		A,(UART0_REG_RBR)	; Read 
-0002FE 37                  A   254    			SCF 					; Set the c
-0002FF C9                  A   255    			RET
-                           A   256    
-                           A   257    
-                           A   258    
-                           A   259    ;
-                           A   260    ; data storage . . .
-                           A   261    ;	
+00031C                     A   217    UART0_wait_CTS:		GET_GPIO	PD_DR, 8		
+000322 20 F8               A   218    			JR		NZ, UART0_wait_CTS
+000324 C9                  A   219    			RET
+                           A   220    
+                           A   221    ; Write a character to UART0
+                           A   222    ; Parameters:
+                           A   223    ; - A: Data to write
+                           A   224    ; Returns:
+                           A   225    ; - F: C if written
+                           A   226    ; - F: NC if timed out
+                           A   227    ;
+000325 C5                  A   228    UART0_serial_TX:	PUSH		BC			; S
+000326 F5                  A   229    			PUSH		AF 			; Stack AF
+000327 010040              A   230    			LD		BC,TX_WAIT		; Set CB to
+00032A ED38C5              A   231    UART0_serial_TX1:	IN0		A,(UART0_REG_LSR)	
+00032D E640                A   232    			AND 		UART_LSR_ETX		; C
+00032F 20 09               A   233    			JR		NZ, UART0_serial_TX2	; I
+000331 0B                  A   234    			DEC		BC
+000332 78                  A   235    			LD		A, B
+000333 B1                  A   236    			OR		C
+000334 20 F4               A   237    			JR		NZ, UART0_serial_TX1
+000336 F1                  A   238    			POP		AF			; We've timed o
+000337 C1                  A   239    			POP		BC			; Restore the s
+000338 B7                  A   240    			OR		A			; Clear the car
+000339 C9                  A   241    			RET	
+00033A F1                  A   242    UART0_serial_TX2:	POP		AF			; Good 
+00033B ED39C0              A   243    			OUT0		(UART0_REG_THR),A	; W
+00033E C1                  A   244    			POP		BC			; Restore BC
+00033F 37                  A   245    			SCF					; Set the carry
+000340 C9                  A   246    			RET 
+                           A   247    ; Read a character from UART0
+                           A   248    ; Returns:
+                           A   249    ; - A: Data read
+                           A   250    ; - F: C if character read
+                           A   251    ; - F: NC if no character read
+                           A   252    ;
+000341 ED38C5              A   253    UART0_serial_RX:	IN0		A,(UART0_REG_LSR)	
+000344 E601                A   254    			AND 		UART_LSR_RDY		; C
+000346 C8                  A   255    			RET		Z			; Just ret (wit
+000347                     A   256    UART0_serial_RX2:
+000347 ED38C0              A   257    			IN0		A,(UART0_REG_RBR)	; Read 
+00034A 37                  A   258    			SCF 					; Set the c
+00034B C9                  A   259    			RET
+                           A   260    
+                           A   261    
                            A   262    
-                           A   263    ; uninitialized storage/BSS but can't use that 
-                           A   264    ;
-                           A   265    ; RAM
-                           A   266    ; 
-                           A   267    			DEFINE	LORAM, SPACE = ROM
-                           A   268    ;			ORDER	__VECTORS, CODE, LORAM
-                           A   269    			SEGMENT LORAM
-                           A   270    		
-                           A   271    ;			SEGMENT	BSS
-                           A   272    ;			SEGMENT CODE
-                           A   273    
-                           A   274    	end
+                           A   263    ;
+                           A   264    ; data storage . . .
+                           A   265    ;	
+                           A   266    
+                           A   267    ; uninitialized storage/BSS but can't use that 
+                           A   268    ;
+                           A   269    ; RAM
+                           A   270    ; 
+                           A   271    			DEFINE	LORAM, SPACE = ROM
+                           A   272    ;			ORDER	__VECTORS, CODE, LORAM
+                           A   273    			SEGMENT LORAM
+                           A   274    		
+                           A   275    ;			SEGMENT	BSS
+                           A   276    ;			SEGMENT CODE
+                           A   277    
+                           A   278    	end
 
 
 Errors: 0
 Warnings: 0
-Lines Assembled: 597
+Lines Assembled: 601
