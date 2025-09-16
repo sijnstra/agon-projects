@@ -4,7 +4,7 @@ Copyright (C) 1999-2008 Zilog, Inc. All Rights Reserved
 
 LINK MAP:
 
-DATE:      Tue Jul 02 23:06:04 2024
+DATE:      Tue Sep 16 22:43:57 2025
 PROCESSOR: assembler
 FILES:     .\init.obj             .\main.obj             
 
@@ -72,10 +72,10 @@ SPACE ALLOCATION:
 
 Space                     Base         Top      Size      Used    Unused
 ------------------ ----------- ----------- --------- --------- ---------
-RAM                   D:040000    D:040954    80000H      955H    7F6ABH
-                                          (   524288      2389    521899)
-ROM                   C:000000    C:000954    20000H      955H    1F6ABH
-                                          (   131072      2389    128683)
+RAM                   D:040000    D:040967    80000H      968H    7F698H
+                                          (   524288      2408    521880)
+ROM                   C:000000    C:000967    20000H      968H    1F698H
+                                          (   131072      2408    128664)
 
 
 SEGMENTS WITHIN SPACE:
@@ -84,18 +84,18 @@ SEGMENTS WITHIN SPACE:
 RAM                               Type        Base         Top      Size
 ------------------ ------------------- ----------- ----------- ---------
 __VECTORS          * segment copy *       D:040000    D:04004D       4eh
-CODE               * segment copy *       D:04004E    D:040954      907h
+CODE               * segment copy *       D:04004E    D:040967      91ah
 
 
 ROM                               Type        Base         Top      Size
 ------------------ ------------------- ----------- ----------- ---------
 __VECTORS          normal data            C:000000    C:00004D       4eh
-CODE               normal data            C:00004E    C:000954      907h
+CODE               normal data            C:00004E    C:000967      91ah
 
 SEGMENTS WITHIN MODULES:
 ========================
 
-Module: D:\agon\agon-projects-main\ASM\2048\init.asm (File: init.obj) Version: 1:0 07/02/2024 23:06:04
+Module: D:\agon\agon-projects-main\ASM\2048\init.asm (File: init.obj) Version: 1:0 09/16/2025 22:43:57
 
     Name                                           Base         Top      Size
     --------------------------------------- ----------- ----------- ---------
@@ -103,11 +103,11 @@ Module: D:\agon\agon-projects-main\ASM\2048\init.asm (File: init.obj) Version: 1
     Segment: CODE                              C:00004E    C:000141       f4h
 
 
-Module: D:\agon\agon-projects-main\ASM\2048\main.asm (File: main.obj) Version: 1:0 07/02/2024 23:06:04
+Module: D:\agon\agon-projects-main\ASM\2048\main.asm (File: main.obj) Version: 1:0 09/16/2025 22:43:57
 
     Name                                           Base         Top      Size
     --------------------------------------- ----------- ----------- ---------
-    Segment: CODE                              C:000142    C:000954      813h
+    Segment: CODE                              C:000142    C:000967      826h
 
 EXTERNAL DEFINITIONS:
 =====================
@@ -171,8 +171,8 @@ _SYS_CLK_FREQ                     Defined     LINKER
 
 OUTPUT CHECKSUM
 ===============
-2048.hex             031C05
-2048.lod             031C05
+2048.hex             030EEA
+2048.lod             030EEA
 
 
 

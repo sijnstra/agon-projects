@@ -2,6 +2,7 @@
 ;
 ;
 ; Converted to Agon native by Shawn Sijnstra <shawn@sijnstra.com>
+; Updated 16-Aug-2025 for terminal mode changes.
 ;   Based on 2048 created by Gabriele Cirulli.
 ;   Based on the console version for GNU/Linux by Maurits van der Schee
 ;   Ported to Z80 and CP/M by Marco Maccaferri <macca@maccasoft.com>
@@ -209,6 +210,13 @@ _main:
             LD      A,R
             LD      (RAND16+2),A
 
+;Disable interrupts from UART0 before switching (MOS 3 change to do this prior to terminal mode)
+    xor   a
+    out0  (UART0_REG_IER), a ; Disable all interrupts on UART0.
+
+    ld    a, 6
+    out0  (UART0_REG_FCT), a ; Turn off flow control interrupt
+
             LD      DE,INIT
 ;            LD      C,09H
 	CALL	show_string_de
@@ -408,6 +416,11 @@ EXIT:
             CALL    show_string_de
             ld		a,'$'
             call	UART0_serial_TX
+;turn interrupts back on
+    ld    a, 7
+    out0  (UART0_REG_FCT), a ; Enable and clear fifo
+    ld a, 1
+    out0 (UART0_REG_IER), a ; Enable receive interrupt  
             RET
 
 ISOVER:

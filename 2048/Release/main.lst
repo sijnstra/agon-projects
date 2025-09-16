@@ -1,4 +1,4 @@
-Zilog eZ80 Macro Assembler Version 4.3 (19073001) RELISTED                                      02-Jul-24     23:06:05     page:   1
+Zilog eZ80 Macro Assembler Version 4.3 (19073001) RELISTED                                      16-Sep-25     22:43:57     page:   1
 
 
 PC     Object              I  Line    Source 
@@ -6,26 +6,27 @@ PC     Object              I  Line    Source
                            A     2    ;
                            A     3    ;
                            A     4    ; Converted to Agon native by Shawn Sijnstra <shawn@sijnstra.com>
-                           A     5    ;   Based on 2048 created by Gabriele Cirulli.
-                           A     6    ;   Based on the console version for GNU/Linux by Maurits van der Schee
-                           A     7    ;   Ported to Z80 and CP/M by Marco Maccaferri <macca@maccasoft.com>
-                           A     8    ;   Slight VT100 compatibility changes by acn128 <acn@acn.wtf>
-                           A     9    ;
-                           A    10    ; Notable changes for reference:
-                           A    11    ; required colons on all labels
-                           A    12    ; labels are case sensitive
-                           A    13    ; code is a reserved word and can't be used as a label
-                           A    14    ; numeric evaluations are done differently - check results carefully
-                           A    15    ; no dot in front of DB, DW or END
-                           A    16    ; assembly source MUST be .asm, can't use e.g. .zsm
-                           A    17    ; supports defb as a synonym for db, but NOT defw. Must use dw. defs also missing - use ds.
-                           A    18    ; labels can't start with @
-                           A    19    ; Can't finish a line with a backslash
-                           A    20    ; dollar signs don't work for specifying hex
-                           A    21    
+                           A     5    ; Updated 16-Aug-2025 for terminal mode changes.
+                           A     6    ;   Based on 2048 created by Gabriele Cirulli.
+                           A     7    ;   Based on the console version for GNU/Linux by Maurits van der Schee
+                           A     8    ;   Ported to Z80 and CP/M by Marco Maccaferri <macca@maccasoft.com>
+                           A     9    ;   Slight VT100 compatibility changes by acn128 <acn@acn.wtf>
+                           A    10    ;
+                           A    11    ; Notable changes for reference:
+                           A    12    ; required colons on all labels
+                           A    13    ; labels are case sensitive
+                           A    14    ; code is a reserved word and can't be used as a label
+                           A    15    ; numeric evaluations are done differently - check results carefully
+                           A    16    ; no dot in front of DB, DW or END
+                           A    17    ; assembly source MUST be .asm, can't use e.g. .zsm
+                           A    18    ; supports defb as a synonym for db, but NOT defw. Must use dw. defs also missing - use ds.
+                           A    19    ; labels can't start with @
+                           A    20    ; Can't finish a line with a backslash
+                           A    21    ; dollar signs don't work for specifying hex
                            A    22    
-                           A    23    			.ASSUME	ADL = 0
-                           A    24    
+                           A    23    
+                           A    24    			.ASSUME	ADL = 0
+                           A    25    
                            B     0    			INCLUDE	"equs.inc"
                            B     1    ;
                            B     2    ; Title:	Memory Dump - Equs
@@ -380,1271 +381,1283 @@ PC     Object              I  Line    Source
                            B   257    			LD	a,Dchar
                            B   258    			RST.LIL	10h
                            B   259    			ENDMACRO
-                           A    27    
                            A    28    
-                           A    29    			SEGMENT CODE
-                           A    30    
-                           A    31    			XDEF	_main
-                           A    32    	
-                           A    33    ; Error: Invalid parameter
-                           A    34    ;
-000142 211300              A    35    _err_invalid_param:	LD		HL, 19			; The return code: Invalid parameters
-000145 C9                  A    36    			RET
-       000000C0            A    37    UART0_PORT		EQU	%C0		; UART0
-                           A    38    				
-       000000C0            A    39    UART0_REG_RBR:		EQU	UART0_PORT+0	; Receive buffer
-       000000C0            A    40    UART0_REG_THR:		EQU	UART0_PORT+0	; Transmitter holding
-       000000C0            A    41    UART0_REG_DLL:		EQU	UART0_PORT+0	; Divisor latch low
-       000000C1            A    42    UART0_REG_IER:		EQU	UART0_PORT+1	; Interrupt enable
-       000000C1            A    43    UART0_REG_DLH:		EQU	UART0_PORT+1	; Divisor latch high
-       000000C2            A    44    UART0_REG_IIR:		EQU	UART0_PORT+2	; Interrupt identification
-       000000C2            A    45    UART0_REG_FCT:		EQU	UART0_PORT+2;	; Flow control
-       000000C3            A    46    UART0_REG_LCR:		EQU	UART0_PORT+3	; Line control
-       000000C4            A    47    UART0_REG_MCR:		EQU	UART0_PORT+4	; Modem control
-       000000C5            A    48    UART0_REG_LSR:		EQU	UART0_PORT+5	; Line status
-       000000C6            A    49    UART0_REG_MSR:		EQU	UART0_PORT+6	; Modem status
-       000000C7            A    50    UART0_REG_SCR:		EQU 	UART0_PORT+7	; Scratch
-                           A    51    
-       00004000            A    52    TX_WAIT			EQU	16384 		; Count before a TX times out
-                           A    53    
-       00000080            A    54    UART_LSR_ERR		EQU 	%80		; Error
-       00000040            A    55    UART_LSR_ETX		EQU 	%40		; Transmit empty
-       00000020            A    56    UART_LSR_ETH		EQU	%20		; Transmit holding register empty
-       00000001            A    57    UART_LSR_RDY		EQU	%01		; Data ready
-                           A    58    ; Get a GPIO register
-                           A    59    ; Parameters:
-                           A    60    ; - REG: Register to test
-                           A    61    ; - VAL: Bit(s) to test
-                           A    62    ;	
-                           A    63    GET_GPIO:		MACRO	REG, VAL
-                           A    64    			IN0	A,(REG)
-                           A    65    			TST	A, VAL
-                           A    66    			ENDMACRO
-                           A    67    
-       0000000D            A    68    cr:			EQU	0Dh
-       0000000A            A    69    lf:			EQU	0Ah
-                           A    70    
-                           A    71    ; ASCII
-                           A    72    ;
-       00000003            A    73    CtrlC:	equ	03h
-                           A    74    CR:	equ	0Dh
-                           A    75    LF:	equ	0Ah
-       0000001A            A    76    CtrlZ:	equ	1Ah
-                           A    77    ;
-                           A    78    
-                           A    79    ;_main:
-                           A    80    ; RAM
-                           A    81    ; 
-                           A    82    			DEFINE	LORAM, SPACE = ROM
-                           A    83    ;			ORDER	__VECTORS, CODE, LORAM
-                           A    84    ;			SEGMENT LORAM
-                           A    85    		
-                           A    86    ;			SEGMENT	BSS
-                           A    87    			SEGMENT CODE
-                           A    88    
-                           A    89    ;***********************************************************
-                           A    90    ; Terminal mode Serial I/O
-                           A    91    
-                           A    92    ;
-                           A    93    ; Check whether we're clear to send (UART0 only)
-                           A    94    ;
-                           A    95    
-000146                     A    96    UART0_wait_CTS:		GET_GPIO	PD_DR, 8		; Check Port D, bit 3 (CTS)
-00014C 20 F8               A    97    			JR		NZ, UART0_wait_CTS
-00014E C9                  A    98    			RET
-                           A    99    
-                           A   100    ; Write a character to UART0
-                           A   101    ; Parameters:
-                           A   102    ; - A: Data to write
-                           A   103    ; Returns:
-                           A   104    ; - F: C if written
-                           A   105    ; - F: NC if timed out
-                           A   106    ;
-00014F C5                  A   107    UART0_serial_TX:	PUSH		BC			; Stack BC
-000150 F5                  A   108    			PUSH		AF 			; Stack AF
-000151 CD 46 01            A   109    			CALL	UART0_wait_CTS
-000154 010040              A   110    			LD		BC,TX_WAIT		; Set CB to the transmit timeout
-000157 ED38C5              A   111    UART0_serial_TX1:	IN0		A,(UART0_REG_LSR)	; Get the line status register
-00015A E640                A   112    			AND 		UART_LSR_ETX		; Check for TX empty
-00015C 20 09               A   113    			JR		NZ, UART0_serial_TX2	; If set, then TX is empty, goto transmit
-00015E 0B                  A   114    			DEC		BC
-00015F 78                  A   115    			LD		A, B
-000160 B1                  A   116    			OR		C
-000161 20 F4               A   117    			JR		NZ, UART0_serial_TX1
-000163 F1                  A   118    			POP		AF			; We've timed out at this point so
-000164 C1                  A   119    			POP		BC			; Restore the stack
-000165 B7                  A   120    			OR		A			; Clear the carry flag and preserve A
-000166 C9                  A   121    			RET	
-000167 F1                  A   122    UART0_serial_TX2:	POP		AF			; Good to send at this point, so
-000168 ED39C0              A   123    			OUT0		(UART0_REG_THR),A	; Write the character to the UART transmit buffer
-00016B C1                  A   124    			POP		BC			; Restore BC
-00016C 37                  A   125    			SCF					; Set the carry flag
-00016D C9                  A   126    			RET 
-                           A   127    ; Read a character from UART0
-                           A   128    ; Returns:
-                           A   129    ; - A: Data read
-                           A   130    ; - F: C if character read
-                           A   131    ; - F: NC if no character read
-                           A   132    ;
-00016E ED38C5              A   133    UART0_serial_RX:	IN0		A,(UART0_REG_LSR)	; Get the line status register
-000171 E601                A   134    			AND 		UART_LSR_RDY		; Check for characters in buffer
-000173 C8                  A   135    			RET		Z			; Just ret (with carry clear) if no characters
-000174                     A   136    UART0_serial_RX2:
-000174 ED38C0              A   137    			IN0		A,(UART0_REG_RBR)	; Read the character from the UART receive buffer
-000177 37                  A   138    			SCF 					; Set the carry flag
-000178 C9                  A   139    			RET
-                           A   140    
-                           A   141    ; 2048
-                           A   142    ;
-                           A   143    ; Join the numbers and get to the 2048 tile.
-                           A   144    ;
-                           A   145    ; Commands:
-                           A   146    ;
-                           A   147    ;   Use the arrow keys to move the tiles.
-                           A   148    ;   When two tiles with the same number touch, they merge into one.
-                           A   149    ;
-                           A   150    ;   w, s, a, d - Alternate keys (up, down, left, right)
-                           A   151    ;   CTRL-E, CTRL-X, CTRL-S, CTRL-D - Wordstar-compatible control keys
-                           A   152    ;
-                           A   153    ; Compile:
-                           A   154    ;
-                           A   155    ;   TASM -80 -b 2048.ASM 2048.COM
-                           A   156    ;   -or-
-                           A   157    ;   uz80as 2048.ASM 2048.COM
-                           A   158    ;
-                           A   159    ; Credits:
-                           A   160    ;
-                           A   161    ;   Based on 2048 created by Gabriele Cirulli.
-                           A   162    ;   Based on the console version for GNU/Linux by Maurits van der Schee
-                           A   163    ;   Ported to Z80 and CP/M by Marco Maccaferri <macca@maccasoft.com>
-                           A   164    ;   Slight VT100 compatibility changes by acn128 <acn@acn.wtf>
-                           A   165    
+                           A    29    
+                           A    30    			SEGMENT CODE
+                           A    31    
+                           A    32    			XDEF	_main
+                           A    33    	
+                           A    34    ; Error: Invalid parameter
+                           A    35    ;
+000142 211300              A    36    _err_invalid_param:	LD		HL, 19			; The return code: Invalid parameters
+000145 C9                  A    37    			RET
+       000000C0            A    38    UART0_PORT		EQU	%C0		; UART0
+                           A    39    				
+       000000C0            A    40    UART0_REG_RBR:		EQU	UART0_PORT+0	; Receive buffer
+       000000C0            A    41    UART0_REG_THR:		EQU	UART0_PORT+0	; Transmitter holding
+       000000C0            A    42    UART0_REG_DLL:		EQU	UART0_PORT+0	; Divisor latch low
+       000000C1            A    43    UART0_REG_IER:		EQU	UART0_PORT+1	; Interrupt enable
+       000000C1            A    44    UART0_REG_DLH:		EQU	UART0_PORT+1	; Divisor latch high
+       000000C2            A    45    UART0_REG_IIR:		EQU	UART0_PORT+2	; Interrupt identification
+       000000C2            A    46    UART0_REG_FCT:		EQU	UART0_PORT+2;	; Flow control
+       000000C3            A    47    UART0_REG_LCR:		EQU	UART0_PORT+3	; Line control
+       000000C4            A    48    UART0_REG_MCR:		EQU	UART0_PORT+4	; Modem control
+       000000C5            A    49    UART0_REG_LSR:		EQU	UART0_PORT+5	; Line status
+       000000C6            A    50    UART0_REG_MSR:		EQU	UART0_PORT+6	; Modem status
+       000000C7            A    51    UART0_REG_SCR:		EQU 	UART0_PORT+7	; Scratch
+                           A    52    
+       00004000            A    53    TX_WAIT			EQU	16384 		; Count before a TX times out
+                           A    54    
+       00000080            A    55    UART_LSR_ERR		EQU 	%80		; Error
+       00000040            A    56    UART_LSR_ETX		EQU 	%40		; Transmit empty
+       00000020            A    57    UART_LSR_ETH		EQU	%20		; Transmit holding register empty
+       00000001            A    58    UART_LSR_RDY		EQU	%01		; Data ready
+                           A    59    ; Get a GPIO register
+                           A    60    ; Parameters:
+                           A    61    ; - REG: Register to test
+                           A    62    ; - VAL: Bit(s) to test
+                           A    63    ;	
+                           A    64    GET_GPIO:		MACRO	REG, VAL
+                           A    65    			IN0	A,(REG)
+                           A    66    			TST	A, VAL
+                           A    67    			ENDMACRO
+                           A    68    
+       0000000D            A    69    cr:			EQU	0Dh
+       0000000A            A    70    lf:			EQU	0Ah
+                           A    71    
+                           A    72    ; ASCII
+                           A    73    ;
+       00000003            A    74    CtrlC:	equ	03h
+                           A    75    CR:	equ	0Dh
+                           A    76    LF:	equ	0Ah
+       0000001A            A    77    CtrlZ:	equ	1Ah
+                           A    78    ;
+                           A    79    
+                           A    80    ;_main:
+                           A    81    ; RAM
+                           A    82    ; 
+                           A    83    			DEFINE	LORAM, SPACE = ROM
+                           A    84    ;			ORDER	__VECTORS, CODE, LORAM
+                           A    85    ;			SEGMENT LORAM
+                           A    86    		
+                           A    87    ;			SEGMENT	BSS
+                           A    88    			SEGMENT CODE
+                           A    89    
+                           A    90    ;***********************************************************
+                           A    91    ; Terminal mode Serial I/O
+                           A    92    
+                           A    93    ;
+                           A    94    ; Check whether we're clear to send (UART0 only)
+                           A    95    ;
+                           A    96    
+000146                     A    97    UART0_wait_CTS:		GET_GPIO	PD_DR, 8		; Check Port D, bit 3 (CTS)
+00014C 20 F8               A    98    			JR		NZ, UART0_wait_CTS
+00014E C9                  A    99    			RET
+                           A   100    
+                           A   101    ; Write a character to UART0
+                           A   102    ; Parameters:
+                           A   103    ; - A: Data to write
+                           A   104    ; Returns:
+                           A   105    ; - F: C if written
+                           A   106    ; - F: NC if timed out
+                           A   107    ;
+00014F C5                  A   108    UART0_serial_TX:	PUSH		BC			; Stack BC
+000150 F5                  A   109    			PUSH		AF 			; Stack AF
+000151 CD 46 01            A   110    			CALL	UART0_wait_CTS
+000154 010040              A   111    			LD		BC,TX_WAIT		; Set CB to the transmit timeout
+000157 ED38C5              A   112    UART0_serial_TX1:	IN0		A,(UART0_REG_LSR)	; Get the line status register
+00015A E640                A   113    			AND 		UART_LSR_ETX		; Check for TX empty
+00015C 20 09               A   114    			JR		NZ, UART0_serial_TX2	; If set, then TX is empty, goto transmit
+00015E 0B                  A   115    			DEC		BC
+00015F 78                  A   116    			LD		A, B
+000160 B1                  A   117    			OR		C
+000161 20 F4               A   118    			JR		NZ, UART0_serial_TX1
+000163 F1                  A   119    			POP		AF			; We've timed out at this point so
+000164 C1                  A   120    			POP		BC			; Restore the stack
+000165 B7                  A   121    			OR		A			; Clear the carry flag and preserve A
+000166 C9                  A   122    			RET	
+000167 F1                  A   123    UART0_serial_TX2:	POP		AF			; Good to send at this point, so
+000168 ED39C0              A   124    			OUT0		(UART0_REG_THR),A	; Write the character to the UART transmit buffer
+00016B C1                  A   125    			POP		BC			; Restore BC
+00016C 37                  A   126    			SCF					; Set the carry flag
+00016D C9                  A   127    			RET 
+                           A   128    ; Read a character from UART0
+                           A   129    ; Returns:
+                           A   130    ; - A: Data read
+                           A   131    ; - F: C if character read
+                           A   132    ; - F: NC if no character read
+                           A   133    ;
+00016E ED38C5              A   134    UART0_serial_RX:	IN0		A,(UART0_REG_LSR)	; Get the line status register
+000171 E601                A   135    			AND 		UART_LSR_RDY		; Check for characters in buffer
+000173 C8                  A   136    			RET		Z			; Just ret (with carry clear) if no characters
+000174                     A   137    UART0_serial_RX2:
+000174 ED38C0              A   138    			IN0		A,(UART0_REG_RBR)	; Read the character from the UART receive buffer
+000177 37                  A   139    			SCF 					; Set the carry flag
+000178 C9                  A   140    			RET
+                           A   141    
+                           A   142    ; 2048
+                           A   143    ;
+                           A   144    ; Join the numbers and get to the 2048 tile.
+                           A   145    ;
+                           A   146    ; Commands:
+                           A   147    ;
+                           A   148    ;   Use the arrow keys to move the tiles.
+                           A   149    ;   When two tiles with the same number touch, they merge into one.
+                           A   150    ;
+                           A   151    ;   w, s, a, d - Alternate keys (up, down, left, right)
+                           A   152    ;   CTRL-E, CTRL-X, CTRL-S, CTRL-D - Wordstar-compatible control keys
+                           A   153    ;
+                           A   154    ; Compile:
+                           A   155    ;
+                           A   156    ;   TASM -80 -b 2048.ASM 2048.COM
+                           A   157    ;   -or-
+                           A   158    ;   uz80as 2048.ASM 2048.COM
+                           A   159    ;
+                           A   160    ; Credits:
+                           A   161    ;
+                           A   162    ;   Based on 2048 created by Gabriele Cirulli.
+                           A   163    ;   Based on the console version for GNU/Linux by Maurits van der Schee
+                           A   164    ;   Ported to Z80 and CP/M by Marco Maccaferri <macca@maccasoft.com>
+                           A   165    ;   Slight VT100 compatibility changes by acn128 <acn@acn.wtf>
                            A   166    
-       00000001            A   167    CTRL_A      .EQU    1
-       00000002            A   168    CTRL_B      .EQU    2
-       00000003            A   169    CTRL_C      .EQU    3
-       00000004            A   170    CTRL_D      .EQU    4
-       00000005            A   171    CTRL_E      .EQU    5
-       00000006            A   172    CTRL_F      .EQU    6
-       00000007            A   173    CTRL_G      .EQU    7
-       00000008            A   174    CTRL_H      .EQU    8
-       00000009            A   175    CTRL_I      .EQU    9
-       0000000A            A   176    CTRL_J      .EQU    10
-       0000000B            A   177    CTRL_K      .EQU    11
-       0000000C            A   178    CTRL_L      .EQU    12
-       0000000D            A   179    CTRL_M      .EQU    13
-       0000000E            A   180    CTRL_N      .EQU    14
-       0000000F            A   181    CTRL_O      .EQU    15
-       00000010            A   182    CTRL_P      .EQU    16
-       00000011            A   183    CTRL_Q      .EQU    17
-       00000012            A   184    CTRL_R      .EQU    18
-       00000013            A   185    CTRL_S      .EQU    19
-       00000014            A   186    CTRL_T      .EQU    20
-       00000015            A   187    CTRL_U      .EQU    21
-       00000016            A   188    CTRL_V      .EQU    22
-       00000017            A   189    CTRL_W      .EQU    23
-       00000018            A   190    CTRL_X      .EQU    24
-       00000019            A   191    CTRL_Y      .EQU    25
-       0000001A            A   192    CTRL_Z      .EQU    26
-                           A   193    
-       00000007            A   194    BEL         .EQU    07H
-       0000000C            A   195    FF          .EQU    0CH
-                           A   196    CR          .EQU    0DH
-                           A   197    LF          .EQU    0AH
-       00000024            A   198    EOS         .EQU    '$'	;24H
-                           A   199    
-                           A   200    ;BDOS        .EQU    0005H
-                           A   201    
-       00000025            A   202    BOARD_X     .EQU    25H
-       00000006            A   203    BOARD_Y     .EQU    06H
-                           A   204    
-                           A   205    ;            .ORG    0100H
-000179                     A   206    _main:            
-000179 ED5F                A   207                LD      A,R
-00017B 32 BC 06            A   208                LD      (RAND16+1),A
-00017E ED5F                A   209                LD      A,R
-000180 32 BD 06            A   210                LD      (RAND16+2),A
-                           A   211    
-000183 11 52 08            A   212                LD      DE,INIT
-                           A   213    ;            LD      C,09H
-000186 CD EE 06            A   214    	CALL	show_string_de
-                           A   215    
-000189 CD 9D 03            A   216                CALL    ADDRANDOM
-00018C CD 9D 03            A   217                CALL    ADDRANDOM
-                           A   218    
-00018F CD 21 05            A   219                CALL    DRAWBORDER
-000192 CD 87 05            A   220                CALL    DRAWBOARD
-                           A   221    
-000195 3E25                A   222    LOOP2       LD      A,BOARD_X
-000197 32 3E 09            A   223                LD      (XPOS),A
-00019A 3E06                A   224                LD      A,BOARD_Y
-00019C C613                A   225                ADD     A,13H
-00019E 27                  A   226                DAA
-00019F 32 3F 09            A   227                LD      (YPOS),A
-0001A2 CD 61 06            A   228                CALL    GOTOXY
-0001A5 11 B7 08            A   229                LD      DE,MSG1
-                           A   230    ;            LD      C,09H
-0001A8 CD EE 06            A   231                CALL    show_string_de
-                           A   232    
-0001AB                     A   233    LOOP:
-                           A   234    ;            LD      C,06H
-                           A   235    ;            LD      E,0FFH
-                           A   236    ;            CALL    BDOS
-                           A   237    ;            CP      0
-                           A   238    ;            JP      Z,LOOP
-0001AB CD 6E 01            A   239    		call	UART0_serial_RX
-0001AE 30 FB               A   240    		jr		nc,LOOP
-                           A   241                
-0001B0 FE61                A   242                CP      'a'
-0001B2 DA BC 01            A   243                JP      C,K3
-0001B5 FE7B                A   244                CP      '{'
-0001B7 D2 BC 01            A   245                JP      NC,K3
-0001BA E65F                A   246                AND     5FH		;force upper case
-                           A   247    
-0001BC FE03                A   248    K3:          CP      CTRL_C
-0001BE CA C9 02            A   249                JP      Z,EXIT
-                           A   250    
-0001C1 FE05                A   251                CP      CTRL_E
-0001C3 CA 42 02            A   252                JP      Z,TOP
-0001C6 FE18                A   253                CP      CTRL_X
-0001C8 CA 54 02            A   254                JP      Z,BOTTOM
-0001CB FE04                A   255                CP      CTRL_D
-0001CD CA 66 02            A   256                JP      Z,RIGHT
-0001D0 FE13                A   257                CP      CTRL_S
-0001D2 CA 78 02            A   258                JP      Z,LEFT
-                           A   259    
-0001D5 FE57                A   260                CP      'W'
-0001D7 CA 42 02            A   261                JP      Z,TOP
-0001DA FE53                A   262                CP      'S'
-0001DC CA 54 02            A   263                JP      Z,BOTTOM
-0001DF FE44                A   264                CP      'D'
-0001E1 CA 66 02            A   265                JP      Z,RIGHT
-0001E4 FE41                A   266                CP      'A'
-0001E6 CA 78 02            A   267                JP      Z,LEFT
-                           A   268    
-0001E9 FE51                A   269                CP      'Q'
-0001EB CA 7E 02            A   270                JP      Z,QUIT
-                           A   271                
-0001EE FE1B                A   272                CP      1BH
-0001F0 CA FB 01            A   273                JP      Z,K1
-                           A   274    
-                           A   275    ;            LD      C,02H
-0001F3 3E07                A   276                LD      A,BEL
-0001F5 CD 4F 01            A   277                CALL    UART0_serial_TX
-                           A   278    
-0001F8 C3 AB 01            A   279                JP      LOOP
-                           A   280    
-0001FB                     A   281    K1:
-                           A   282    ;          LD      C,06H
-                           A   283    ;            LD      E,0FFH
-                           A   284    ;            CALL    BDOS
-                           A   285    ;            CP      0
-                           A   286    ;            JP      Z,K1
-0001FB CD 6E 01            A   287    		call	UART0_serial_RX
-0001FE 30 FB               A   288    		jr		nc,K1            
-000200 FE4F                A   289                CP      'O'
-000202 C2 0A 02            A   290                JP      NZ,K2
-                           A   291    
-000205                     A   292    K4:
-                           A   293    ;          LD      C,06H
-                           A   294    ;            LD      E,0FFH
-                           A   295    ;            CALL    BDOS
-                           A   296    ;            CP      0
-                           A   297    ;            JP      Z,K4
-000205 CD 6E 01            A   298    		call	UART0_serial_RX
-000208 30 FB               A   299    		jr		nc,K4
-                           A   300    
-00020A FE41                A   301    K2:          CP      'A'
-00020C CA 42 02            A   302                JP      Z,TOP
-00020F FE42                A   303                CP      'B'
-000211 CA 54 02            A   304                JP      Z,BOTTOM
-000214 FE43                A   305                CP      'C'
-000216 CA 66 02            A   306                JP      Z,RIGHT
-000219 FE44                A   307                CP      'D'
-00021B CA 78 02            A   308                JP      Z,LEFT
-                           A   309    
-                           A   310    ;            LD      C,02H
-00021E 3E07                A   311                LD      A,BEL
-000220 CD 4F 01            A   312                CALL    UART0_serial_TX
-                           A   313    
-000223 C3 AB 01            A   314                JP      LOOP
-                           A   315    
-000226 3A 42 09            A   316    LOOP1       LD      A,(MOVED)
-000229 FE00                A   317                CP      0
-00022B CA AB 01            A   318                JP      Z,LOOP
-                           A   319    
-00022E CD 87 05            A   320                CALL    DRAWBOARD
+                           A   167    
+       00000001            A   168    CTRL_A      .EQU    1
+       00000002            A   169    CTRL_B      .EQU    2
+       00000003            A   170    CTRL_C      .EQU    3
+       00000004            A   171    CTRL_D      .EQU    4
+       00000005            A   172    CTRL_E      .EQU    5
+       00000006            A   173    CTRL_F      .EQU    6
+       00000007            A   174    CTRL_G      .EQU    7
+       00000008            A   175    CTRL_H      .EQU    8
+       00000009            A   176    CTRL_I      .EQU    9
+       0000000A            A   177    CTRL_J      .EQU    10
+       0000000B            A   178    CTRL_K      .EQU    11
+       0000000C            A   179    CTRL_L      .EQU    12
+       0000000D            A   180    CTRL_M      .EQU    13
+       0000000E            A   181    CTRL_N      .EQU    14
+       0000000F            A   182    CTRL_O      .EQU    15
+       00000010            A   183    CTRL_P      .EQU    16
+       00000011            A   184    CTRL_Q      .EQU    17
+       00000012            A   185    CTRL_R      .EQU    18
+       00000013            A   186    CTRL_S      .EQU    19
+       00000014            A   187    CTRL_T      .EQU    20
+       00000015            A   188    CTRL_U      .EQU    21
+       00000016            A   189    CTRL_V      .EQU    22
+       00000017            A   190    CTRL_W      .EQU    23
+       00000018            A   191    CTRL_X      .EQU    24
+       00000019            A   192    CTRL_Y      .EQU    25
+       0000001A            A   193    CTRL_Z      .EQU    26
+                           A   194    
+       00000007            A   195    BEL         .EQU    07H
+       0000000C            A   196    FF          .EQU    0CH
+                           A   197    CR          .EQU    0DH
+                           A   198    LF          .EQU    0AH
+       00000024            A   199    EOS         .EQU    '$'	;24H
+                           A   200    
+                           A   201    ;BDOS        .EQU    0005H
+                           A   202    
+       00000025            A   203    BOARD_X     .EQU    25H
+       00000006            A   204    BOARD_Y     .EQU    06H
+                           A   205    
+                           A   206    ;            .ORG    0100H
+000179                     A   207    _main:            
+000179 ED5F                A   208                LD      A,R
+00017B 32 CF 06            A   209                LD      (RAND16+1),A
+00017E ED5F                A   210                LD      A,R
+000180 32 D0 06            A   211                LD      (RAND16+2),A
+                           A   212    
+                           A   213    ;Disable interrupts from UART0 before switching (MOS 3 change to do this prior to terminal mode)
+000183 AF                  A   214        xor   a
+000184 ED39C1              A   215        out0  (UART0_REG_IER), a ; Disable all interrupts on UART0.
+                           A   216    
+000187 3E06                A   217        ld    a, 6
+000189 ED39C2              A   218        out0  (UART0_REG_FCT), a ; Turn off flow control interrupt
+                           A   219    
+00018C 11 65 08            A   220                LD      DE,INIT
+                           A   221    ;            LD      C,09H
+00018F CD 01 07            A   222    	CALL	show_string_de
+                           A   223    
+000192 CD B0 03            A   224                CALL    ADDRANDOM
+000195 CD B0 03            A   225                CALL    ADDRANDOM
+                           A   226    
+000198 CD 34 05            A   227                CALL    DRAWBORDER
+00019B CD 9A 05            A   228                CALL    DRAWBOARD
+                           A   229    
+00019E 3E25                A   230    LOOP2       LD      A,BOARD_X
+0001A0 32 51 09            A   231                LD      (XPOS),A
+0001A3 3E06                A   232                LD      A,BOARD_Y
+0001A5 C613                A   233                ADD     A,13H
+0001A7 27                  A   234                DAA
+0001A8 32 52 09            A   235                LD      (YPOS),A
+0001AB CD 74 06            A   236                CALL    GOTOXY
+0001AE 11 CA 08            A   237                LD      DE,MSG1
+                           A   238    ;            LD      C,09H
+0001B1 CD 01 07            A   239                CALL    show_string_de
+                           A   240    
+0001B4                     A   241    LOOP:
+                           A   242    ;            LD      C,06H
+                           A   243    ;            LD      E,0FFH
+                           A   244    ;            CALL    BDOS
+                           A   245    ;            CP      0
+                           A   246    ;            JP      Z,LOOP
+0001B4 CD 6E 01            A   247    		call	UART0_serial_RX
+0001B7 30 FB               A   248    		jr		nc,LOOP
+                           A   249                
+0001B9 FE61                A   250                CP      'a'
+0001BB DA C5 01            A   251                JP      C,K3
+0001BE FE7B                A   252                CP      '{'
+0001C0 D2 C5 01            A   253                JP      NC,K3
+0001C3 E65F                A   254                AND     5FH		;force upper case
+                           A   255    
+0001C5 FE03                A   256    K3:          CP      CTRL_C
+0001C7 CA D2 02            A   257                JP      Z,EXIT
+                           A   258    
+0001CA FE05                A   259                CP      CTRL_E
+0001CC CA 4B 02            A   260                JP      Z,TOP
+0001CF FE18                A   261                CP      CTRL_X
+0001D1 CA 5D 02            A   262                JP      Z,BOTTOM
+0001D4 FE04                A   263                CP      CTRL_D
+0001D6 CA 6F 02            A   264                JP      Z,RIGHT
+0001D9 FE13                A   265                CP      CTRL_S
+0001DB CA 81 02            A   266                JP      Z,LEFT
+                           A   267    
+0001DE FE57                A   268                CP      'W'
+0001E0 CA 4B 02            A   269                JP      Z,TOP
+0001E3 FE53                A   270                CP      'S'
+0001E5 CA 5D 02            A   271                JP      Z,BOTTOM
+0001E8 FE44                A   272                CP      'D'
+0001EA CA 6F 02            A   273                JP      Z,RIGHT
+0001ED FE41                A   274                CP      'A'
+0001EF CA 81 02            A   275                JP      Z,LEFT
+                           A   276    
+0001F2 FE51                A   277                CP      'Q'
+0001F4 CA 87 02            A   278                JP      Z,QUIT
+                           A   279                
+0001F7 FE1B                A   280                CP      1BH
+0001F9 CA 04 02            A   281                JP      Z,K1
+                           A   282    
+                           A   283    ;            LD      C,02H
+0001FC 3E07                A   284                LD      A,BEL
+0001FE CD 4F 01            A   285                CALL    UART0_serial_TX
+                           A   286    
+000201 C3 B4 01            A   287                JP      LOOP
+                           A   288    
+000204                     A   289    K1:
+                           A   290    ;          LD      C,06H
+                           A   291    ;            LD      E,0FFH
+                           A   292    ;            CALL    BDOS
+                           A   293    ;            CP      0
+                           A   294    ;            JP      Z,K1
+000204 CD 6E 01            A   295    		call	UART0_serial_RX
+000207 30 FB               A   296    		jr		nc,K1            
+000209 FE4F                A   297                CP      'O'
+00020B C2 13 02            A   298                JP      NZ,K2
+                           A   299    
+00020E                     A   300    K4:
+                           A   301    ;          LD      C,06H
+                           A   302    ;            LD      E,0FFH
+                           A   303    ;            CALL    BDOS
+                           A   304    ;            CP      0
+                           A   305    ;            JP      Z,K4
+00020E CD 6E 01            A   306    		call	UART0_serial_RX
+000211 30 FB               A   307    		jr		nc,K4
+                           A   308    
+000213 FE41                A   309    K2:          CP      'A'
+000215 CA 4B 02            A   310                JP      Z,TOP
+000218 FE42                A   311                CP      'B'
+00021A CA 5D 02            A   312                JP      Z,BOTTOM
+00021D FE43                A   313                CP      'C'
+00021F CA 6F 02            A   314                JP      Z,RIGHT
+000222 FE44                A   315                CP      'D'
+000224 CA 81 02            A   316                JP      Z,LEFT
+                           A   317    
+                           A   318    ;            LD      C,02H
+000227 3E07                A   319                LD      A,BEL
+000229 CD 4F 01            A   320                CALL    UART0_serial_TX
                            A   321    
-000231 CD 9D 03            A   322                CALL    ADDRANDOM
-000234 CD 87 05            A   323                CALL    DRAWBOARD
-                           A   324    
-000237 CD D5 02            A   325                CALL    ISOVER
-00023A FE01                A   326                CP      1
-00023C CA B5 02            A   327                JP      Z,GAMEOVER
-                           A   328    
-00023F C3 AB 01            A   329                JP      LOOP
-                           A   330    
-000242                     A   331    TOP:
-000242 CD 3E 04            A   332                CALL    ROTATE
-000245 CD 3E 04            A   333                CALL    ROTATE
-000248 CD 3E 04            A   334                CALL    ROTATE
-00024B CD 74 03            A   335                CALL    MOVEMERGE
-00024E CD 3E 04            A   336                CALL    ROTATE
-000251 C3 26 02            A   337                JP      LOOP1
+00022C C3 B4 01            A   322                JP      LOOP
+                           A   323    
+00022F 3A 55 09            A   324    LOOP1       LD      A,(MOVED)
+000232 FE00                A   325                CP      0
+000234 CA B4 01            A   326                JP      Z,LOOP
+                           A   327    
+000237 CD 9A 05            A   328                CALL    DRAWBOARD
+                           A   329    
+00023A CD B0 03            A   330                CALL    ADDRANDOM
+00023D CD 9A 05            A   331                CALL    DRAWBOARD
+                           A   332    
+000240 CD E8 02            A   333                CALL    ISOVER
+000243 FE01                A   334                CP      1
+000245 CA BE 02            A   335                JP      Z,GAMEOVER
+                           A   336    
+000248 C3 B4 01            A   337                JP      LOOP
                            A   338    
-000254                     A   339    BOTTOM:
-000254 CD 3E 04            A   340                CALL    ROTATE
-000257 CD 74 03            A   341                CALL    MOVEMERGE
-00025A CD 3E 04            A   342                CALL    ROTATE
-00025D CD 3E 04            A   343                CALL    ROTATE
-000260 CD 3E 04            A   344                CALL    ROTATE
-000263 C3 26 02            A   345                JP      LOOP1
+00024B                     A   339    TOP:
+00024B CD 51 04            A   340                CALL    ROTATE
+00024E CD 51 04            A   341                CALL    ROTATE
+000251 CD 51 04            A   342                CALL    ROTATE
+000254 CD 87 03            A   343                CALL    MOVEMERGE
+000257 CD 51 04            A   344                CALL    ROTATE
+00025A C3 2F 02            A   345                JP      LOOP1
                            A   346    
-000266                     A   347    RIGHT:
-000266 CD 3E 04            A   348                CALL    ROTATE
-000269 CD 3E 04            A   349                CALL    ROTATE
-00026C CD 74 03            A   350                CALL    MOVEMERGE
-00026F CD 3E 04            A   351                CALL    ROTATE
-000272 CD 3E 04            A   352                CALL    ROTATE
-000275 C3 26 02            A   353                JP      LOOP1
+00025D                     A   347    BOTTOM:
+00025D CD 51 04            A   348                CALL    ROTATE
+000260 CD 87 03            A   349                CALL    MOVEMERGE
+000263 CD 51 04            A   350                CALL    ROTATE
+000266 CD 51 04            A   351                CALL    ROTATE
+000269 CD 51 04            A   352                CALL    ROTATE
+00026C C3 2F 02            A   353                JP      LOOP1
                            A   354    
-000278                     A   355    LEFT:
-000278 CD 74 03            A   356                CALL    MOVEMERGE
-00027B C3 26 02            A   357                JP      LOOP1
-                           A   358    
-00027E                     A   359    QUIT:
-00027E 3E25                A   360                LD      A,BOARD_X
-000280 32 3E 09            A   361                LD      (XPOS),A
-000283 3E06                A   362                LD      A,BOARD_Y
-000285 C613                A   363                ADD     A,13H
-000287 27                  A   364                DAA
-000288 32 3F 09            A   365                LD      (YPOS),A
-00028B CD 61 06            A   366                CALL    GOTOXY
-00028E 11 D8 08            A   367                LD      DE,MSG2
-                           A   368     ;           LD      C,09H
-000291 CD EE 06            A   369                CALL    show_string_de
-                           A   370    
-000294                     A   371    Q1:
-                           A   372    ;          LD      C,06H
-                           A   373    ;            LD      E,0FFH
-                           A   374    
-                           A   375    ;            CP      0
-000294 CD 6E 01            A   376    		call	UART0_serial_RX
-000297 30 FB               A   377    		jr		nc,Q1	
-                           A   378    ;            JP      Z,Q1
-                           A   379    
-000299 FE79                A   380                CP      'y'
-00029B CA C9 02            A   381                JP      Z,EXIT
-00029E FE59                A   382                CP      'Y'
-0002A0 CA C9 02            A   383                JP      Z,EXIT
-0002A3 FE6E                A   384                CP      'n'
-0002A5 CA 95 01            A   385                JP      Z,LOOP2
-0002A8 FE4E                A   386                CP      'N'
-0002AA CA 95 01            A   387                JP      Z,LOOP2
-                           A   388    
-                           A   389    ;            LD      C,02H
-0002AD 3E07                A   390                LD      A,BEL
-0002AF CD 4F 01            A   391                CALL    UART0_serial_TX
-0002B2 C3 94 02            A   392                JP      Q1
-                           A   393    
-0002B5                     A   394    GAMEOVER:
-0002B5 3E25                A   395                LD      A,BOARD_X
-0002B7 32 3E 09            A   396                LD      (XPOS),A
-0002BA 3E19                A   397                LD      A,BOARD_Y+13H
-0002BC 27                  A   398                DAA
-0002BD 32 3F 09            A   399                LD      (YPOS),A
-0002C0 CD 61 06            A   400                CALL    GOTOXY
-0002C3 11 F9 08            A   401                LD      DE,MSG3
-                           A   402      ;          LD      C,09H
-0002C6 CD EE 06            A   403                CALL    show_string_de
-                           A   404    
-0002C9                     A   405    EXIT:
-0002C9 11 66 08            A   406                LD      DE,TERM
-                           A   407     ;           LD      C,09H
-0002CC CD EE 06            A   408                CALL    show_string_de
-0002CF 3E24                A   409                ld		a,'$'
-0002D1 CD 4F 01            A   410                call	UART0_serial_TX
-0002D4 C9                  A   411                RET
+00026F                     A   355    RIGHT:
+00026F CD 51 04            A   356                CALL    ROTATE
+000272 CD 51 04            A   357                CALL    ROTATE
+000275 CD 87 03            A   358                CALL    MOVEMERGE
+000278 CD 51 04            A   359                CALL    ROTATE
+00027B CD 51 04            A   360                CALL    ROTATE
+00027E C3 2F 02            A   361                JP      LOOP1
+                           A   362    
+000281                     A   363    LEFT:
+000281 CD 87 03            A   364                CALL    MOVEMERGE
+000284 C3 2F 02            A   365                JP      LOOP1
+                           A   366    
+000287                     A   367    QUIT:
+000287 3E25                A   368                LD      A,BOARD_X
+000289 32 51 09            A   369                LD      (XPOS),A
+00028C 3E06                A   370                LD      A,BOARD_Y
+00028E C613                A   371                ADD     A,13H
+000290 27                  A   372                DAA
+000291 32 52 09            A   373                LD      (YPOS),A
+000294 CD 74 06            A   374                CALL    GOTOXY
+000297 11 EB 08            A   375                LD      DE,MSG2
+                           A   376     ;           LD      C,09H
+00029A CD 01 07            A   377                CALL    show_string_de
+                           A   378    
+00029D                     A   379    Q1:
+                           A   380    ;          LD      C,06H
+                           A   381    ;            LD      E,0FFH
+                           A   382    
+                           A   383    ;            CP      0
+00029D CD 6E 01            A   384    		call	UART0_serial_RX
+0002A0 30 FB               A   385    		jr		nc,Q1	
+                           A   386    ;            JP      Z,Q1
+                           A   387    
+0002A2 FE79                A   388                CP      'y'
+0002A4 CA D2 02            A   389                JP      Z,EXIT
+0002A7 FE59                A   390                CP      'Y'
+0002A9 CA D2 02            A   391                JP      Z,EXIT
+0002AC FE6E                A   392                CP      'n'
+0002AE CA 9E 01            A   393                JP      Z,LOOP2
+0002B1 FE4E                A   394                CP      'N'
+0002B3 CA 9E 01            A   395                JP      Z,LOOP2
+                           A   396    
+                           A   397    ;            LD      C,02H
+0002B6 3E07                A   398                LD      A,BEL
+0002B8 CD 4F 01            A   399                CALL    UART0_serial_TX
+0002BB C3 9D 02            A   400                JP      Q1
+                           A   401    
+0002BE                     A   402    GAMEOVER:
+0002BE 3E25                A   403                LD      A,BOARD_X
+0002C0 32 51 09            A   404                LD      (XPOS),A
+0002C3 3E19                A   405                LD      A,BOARD_Y+13H
+0002C5 27                  A   406                DAA
+0002C6 32 52 09            A   407                LD      (YPOS),A
+0002C9 CD 74 06            A   408                CALL    GOTOXY
+0002CC 11 0C 09            A   409                LD      DE,MSG3
+                           A   410      ;          LD      C,09H
+0002CF CD 01 07            A   411                CALL    show_string_de
                            A   412    
-0002D5                     A   413    ISOVER:
-0002D5 3E01                A   414                LD      A,1
-0002D7 32 43 09            A   415                LD      (RESULT),A
-                           A   416    
-0002DA 0610                A   417                LD      B,16
-0002DC 21 F8 06            A   418                LD      HL,BOARD
-0002DF 7E                  A   419    G1:         LD      A,(HL)
-0002E0 FE0D                A   420                CP      13
-0002E2 CA 24 03            A   421                JP      Z,GR
-0002E5 23                  A   422                INC     HL
-0002E6 10 F7               A   423                DJNZ    G1
-                           A   424    
-0002E8 CD 28 03            A   425                CALL    CANMERGE
-0002EB FE00                A   426                CP      0
-0002ED CA F4 02            A   427                JP      Z,G2
-0002F0 AF                  A   428                XOR     A
-0002F1 32 43 09            A   429                LD      (RESULT),A
-                           A   430    
-0002F4 CD 3E 04            A   431    G2:         CALL    ROTATE
-0002F7 CD 28 03            A   432                CALL    CANMERGE
-0002FA FE00                A   433                CP      0
-0002FC CA 03 03            A   434                JP      Z,G3
-0002FF AF                  A   435                XOR     A
-000300 32 43 09            A   436                LD      (RESULT),A
+0002D2                     A   413    EXIT:
+0002D2 11 79 08            A   414                LD      DE,TERM
+                           A   415     ;           LD      C,09H
+0002D5 CD 01 07            A   416                CALL    show_string_de
+0002D8 3E24                A   417                ld		a,'$'
+0002DA CD 4F 01            A   418                call	UART0_serial_TX
+                           A   419    ;turn interrupts back on
+0002DD 3E07                A   420        ld    a, 7
+0002DF ED39C2              A   421        out0  (UART0_REG_FCT), a ; Enable and clear fifo
+0002E2 3E01                A   422        ld a, 1
+0002E4 ED39C1              A   423        out0 (UART0_REG_IER), a ; Enable receive interrupt  
+0002E7 C9                  A   424                RET
+                           A   425    
+0002E8                     A   426    ISOVER:
+0002E8 3E01                A   427                LD      A,1
+0002EA 32 56 09            A   428                LD      (RESULT),A
+                           A   429    
+0002ED 0610                A   430                LD      B,16
+0002EF 21 0B 07            A   431                LD      HL,BOARD
+0002F2 7E                  A   432    G1:         LD      A,(HL)
+0002F3 FE0D                A   433                CP      13
+0002F5 CA 37 03            A   434                JP      Z,GR
+0002F8 23                  A   435                INC     HL
+0002F9 10 F7               A   436                DJNZ    G1
                            A   437    
-000303 CD 3E 04            A   438    G3:         CALL    ROTATE
-000306 CD 28 03            A   439                CALL    CANMERGE
-000309 FE00                A   440                CP      0
-00030B CA 12 03            A   441                JP      Z,G4
-00030E AF                  A   442                XOR     A
-00030F 32 43 09            A   443                LD      (RESULT),A
-                           A   444    
-000312 CD 3E 04            A   445    G4:         CALL    ROTATE
-000315 CD 28 03            A   446                CALL    CANMERGE
-000318 FE00                A   447                CP      0
-00031A CA 21 03            A   448                JP      Z,G5
-00031D AF                  A   449                XOR     A
-00031E 32 43 09            A   450                LD      (RESULT),A
-                           A   451    
-000321 CD 3E 04            A   452    G5:         CALL    ROTATE
-                           A   453    
-000324 3A 43 09            A   454    GR:         LD      A,(RESULT)
-000327 C9                  A   455                RET
-                           A   456    
-000328                     A   457    CANMERGE:
-000328 21 F8 06            A   458                LD      HL,BOARD
-00032B 22 40 09            A   459                LD      (BOARDPTR),HL
-00032E CD 56 03            A   460                CALL    TESTMERGE
-000331 FE01                A   461                CP      1
-000333 C8                  A   462                RET     Z
-000334 21 FC 06            A   463                LD      HL,BOARD+4
-000337 22 40 09            A   464                LD      (BOARDPTR),HL
-00033A CD 56 03            A   465                CALL    TESTMERGE
-00033D FE01                A   466                CP      1
-00033F C8                  A   467                RET     Z
-000340 21 00 07            A   468                LD      HL,BOARD+8
-000343 22 40 09            A   469                LD      (BOARDPTR),HL
-000346 CD 56 03            A   470                CALL    TESTMERGE
-000349 FE01                A   471                CP      1
-00034B C8                  A   472                RET     Z
-00034C 21 04 07            A   473                LD      HL,BOARD+12
-00034F 22 40 09            A   474                LD      (BOARDPTR),HL
-000352 CD 56 03            A   475                CALL    TESTMERGE
-000355 C9                  A   476                RET
-                           A   477    
-000356                     A   478    TESTMERGE:
-000356 ED5B 40 09          A   479                LD      DE,(BOARDPTR)
-00035A 2A 40 09            A   480                LD      HL,(BOARDPTR)
-00035D 23                  A   481                INC     HL
-                           A   482    
-00035E 0603                A   483                LD      B,3
-000360 1A                  A   484    M8          LD      A,(DE)
-000361 FE00                A   485                CP      0
-000363 CA 71 03            A   486                JP      Z,M7
-000366 4E                  A   487                LD      C,(HL)
-000367 B9                  A   488                CP      C
-000368 CA 71 03            A   489                JP      Z,M7
-00036B 23                  A   490                INC     HL
-00036C 13                  A   491                INC     DE
-00036D 10 F1               A   492                DJNZ    M8
-00036F AF                  A   493                XOR     A
-000370 C9                  A   494                RET
-000371 3E01                A   495    M7          LD      A,1
-000373 C9                  A   496                RET
-                           A   497    
-000374                     A   498    MOVEMERGE:
-000374 AF                  A   499                XOR     A
-000375 32 42 09            A   500                LD      (MOVED),A
-                           A   501    
-000378 21 F8 06            A   502                LD      HL,BOARD
-00037B 22 40 09            A   503                LD      (BOARDPTR),HL
-00037E CD E8 03            A   504                CALL    MERGE
-000381 21 FC 06            A   505                LD      HL,BOARD+4
-000384 22 40 09            A   506                LD      (BOARDPTR),HL
-000387 CD E8 03            A   507                CALL    MERGE
-00038A 21 00 07            A   508                LD      HL,BOARD+8
-00038D 22 40 09            A   509                LD      (BOARDPTR),HL
-000390 CD E8 03            A   510                CALL    MERGE
-000393 21 04 07            A   511                LD      HL,BOARD+12
-000396 22 40 09            A   512                LD      (BOARDPTR),HL
-000399 CD E8 03            A   513                CALL    MERGE
+0002FB CD 3B 03            A   438                CALL    CANMERGE
+0002FE FE00                A   439                CP      0
+000300 CA 07 03            A   440                JP      Z,G2
+000303 AF                  A   441                XOR     A
+000304 32 56 09            A   442                LD      (RESULT),A
+                           A   443    
+000307 CD 51 04            A   444    G2:         CALL    ROTATE
+00030A CD 3B 03            A   445                CALL    CANMERGE
+00030D FE00                A   446                CP      0
+00030F CA 16 03            A   447                JP      Z,G3
+000312 AF                  A   448                XOR     A
+000313 32 56 09            A   449                LD      (RESULT),A
+                           A   450    
+000316 CD 51 04            A   451    G3:         CALL    ROTATE
+000319 CD 3B 03            A   452                CALL    CANMERGE
+00031C FE00                A   453                CP      0
+00031E CA 25 03            A   454                JP      Z,G4
+000321 AF                  A   455                XOR     A
+000322 32 56 09            A   456                LD      (RESULT),A
+                           A   457    
+000325 CD 51 04            A   458    G4:         CALL    ROTATE
+000328 CD 3B 03            A   459                CALL    CANMERGE
+00032B FE00                A   460                CP      0
+00032D CA 34 03            A   461                JP      Z,G5
+000330 AF                  A   462                XOR     A
+000331 32 56 09            A   463                LD      (RESULT),A
+                           A   464    
+000334 CD 51 04            A   465    G5:         CALL    ROTATE
+                           A   466    
+000337 3A 56 09            A   467    GR:         LD      A,(RESULT)
+00033A C9                  A   468                RET
+                           A   469    
+00033B                     A   470    CANMERGE:
+00033B 21 0B 07            A   471                LD      HL,BOARD
+00033E 22 53 09            A   472                LD      (BOARDPTR),HL
+000341 CD 69 03            A   473                CALL    TESTMERGE
+000344 FE01                A   474                CP      1
+000346 C8                  A   475                RET     Z
+000347 21 0F 07            A   476                LD      HL,BOARD+4
+00034A 22 53 09            A   477                LD      (BOARDPTR),HL
+00034D CD 69 03            A   478                CALL    TESTMERGE
+000350 FE01                A   479                CP      1
+000352 C8                  A   480                RET     Z
+000353 21 13 07            A   481                LD      HL,BOARD+8
+000356 22 53 09            A   482                LD      (BOARDPTR),HL
+000359 CD 69 03            A   483                CALL    TESTMERGE
+00035C FE01                A   484                CP      1
+00035E C8                  A   485                RET     Z
+00035F 21 17 07            A   486                LD      HL,BOARD+12
+000362 22 53 09            A   487                LD      (BOARDPTR),HL
+000365 CD 69 03            A   488                CALL    TESTMERGE
+000368 C9                  A   489                RET
+                           A   490    
+000369                     A   491    TESTMERGE:
+000369 ED5B 53 09          A   492                LD      DE,(BOARDPTR)
+00036D 2A 53 09            A   493                LD      HL,(BOARDPTR)
+000370 23                  A   494                INC     HL
+                           A   495    
+000371 0603                A   496                LD      B,3
+000373 1A                  A   497    M8          LD      A,(DE)
+000374 FE00                A   498                CP      0
+000376 CA 84 03            A   499                JP      Z,M7
+000379 4E                  A   500                LD      C,(HL)
+00037A B9                  A   501                CP      C
+00037B CA 84 03            A   502                JP      Z,M7
+00037E 23                  A   503                INC     HL
+00037F 13                  A   504                INC     DE
+000380 10 F1               A   505                DJNZ    M8
+000382 AF                  A   506                XOR     A
+000383 C9                  A   507                RET
+000384 3E01                A   508    M7          LD      A,1
+000386 C9                  A   509                RET
+                           A   510    
+000387                     A   511    MOVEMERGE:
+000387 AF                  A   512                XOR     A
+000388 32 55 09            A   513                LD      (MOVED),A
                            A   514    
-00039C C9                  A   515                RET
-                           A   516    
-00039D                     A   517    ADDRANDOM:
-00039D 110000              A   518                LD      DE,0
-0003A0 0610                A   519                LD      B,16
-0003A2 21 F8 06            A   520                LD      HL,BOARD
-0003A5 7E                  A   521    N2          LD      A,(HL)
-0003A6 FE00                A   522                CP      0
-0003A8 C2 AC 03            A   523                JP      NZ,N1
-0003AB 1C                  A   524                INC     E
-0003AC 23                  A   525    N1          INC     HL
-0003AD 10 F6               A   526                DJNZ    N2
-                           A   527                
-0003AF 7B                  A   528                LD      A,E
-0003B0 FE00                A   529                CP      0
-0003B2 C8                  A   530                RET     Z
-                           A   531    
-0003B3 D5                  A   532                PUSH    DE
-0003B4 CD BB 06            A   533                CALL    RAND16
-0003B7 D1                  A   534                POP     DE
-0003B8 CD D6 06            A   535                CALL    DIV16
-                           A   536    
-0003BB 45                  A   537                LD      B,L
-0003BC 0E10                A   538    N4:         LD      C,16
-0003BE 21 F8 06            A   539                LD      HL,BOARD
-0003C1 7E                  A   540    N5:         LD      A,(HL)
-0003C2 FE00                A   541                CP      0
-0003C4 C2 CB 03            A   542                JP      NZ,N3
-0003C7 05                  A   543                DEC     B
-0003C8 CA D3 03            A   544                JP      Z,N6
-0003CB 23                  A   545    N3:         INC     HL
-0003CC 0D                  A   546                DEC     C
-0003CD C2 C1 03            A   547                JP      NZ,N5
-0003D0 C3 BC 03            A   548                JP      N4
+00038B 21 0B 07            A   515                LD      HL,BOARD
+00038E 22 53 09            A   516                LD      (BOARDPTR),HL
+000391 CD FB 03            A   517                CALL    MERGE
+000394 21 0F 07            A   518                LD      HL,BOARD+4
+000397 22 53 09            A   519                LD      (BOARDPTR),HL
+00039A CD FB 03            A   520                CALL    MERGE
+00039D 21 13 07            A   521                LD      HL,BOARD+8
+0003A0 22 53 09            A   522                LD      (BOARDPTR),HL
+0003A3 CD FB 03            A   523                CALL    MERGE
+0003A6 21 17 07            A   524                LD      HL,BOARD+12
+0003A9 22 53 09            A   525                LD      (BOARDPTR),HL
+0003AC CD FB 03            A   526                CALL    MERGE
+                           A   527    
+0003AF C9                  A   528                RET
+                           A   529    
+0003B0                     A   530    ADDRANDOM:
+0003B0 110000              A   531                LD      DE,0
+0003B3 0610                A   532                LD      B,16
+0003B5 21 0B 07            A   533                LD      HL,BOARD
+0003B8 7E                  A   534    N2          LD      A,(HL)
+0003B9 FE00                A   535                CP      0
+0003BB C2 BF 03            A   536                JP      NZ,N1
+0003BE 1C                  A   537                INC     E
+0003BF 23                  A   538    N1          INC     HL
+0003C0 10 F6               A   539                DJNZ    N2
+                           A   540                
+0003C2 7B                  A   541                LD      A,E
+0003C3 FE00                A   542                CP      0
+0003C5 C8                  A   543                RET     Z
+                           A   544    
+0003C6 D5                  A   545                PUSH    DE
+0003C7 CD CE 06            A   546                CALL    RAND16
+0003CA D1                  A   547                POP     DE
+0003CB CD E9 06            A   548                CALL    DIV16
                            A   549    
-0003D3 E5                  A   550    N6          PUSH    HL
-                           A   551    
-0003D4 CD BB 06            A   552                CALL    RAND16
-0003D7 110A00              A   553                LD      DE,10
-0003DA CD D6 06            A   554                CALL    DIV16
-0003DD 110900              A   555                LD      DE,9
-0003E0 CD D6 06            A   556                CALL    DIV16
-0003E3 7B                  A   557                LD      A,E
-0003E4 3C                  A   558                INC     A
-                           A   559                
-0003E5 E1                  A   560                POP     HL
-0003E6 77                  A   561                LD      (HL),A
+0003CE 45                  A   550                LD      B,L
+0003CF 0E10                A   551    N4:         LD      C,16
+0003D1 21 0B 07            A   552                LD      HL,BOARD
+0003D4 7E                  A   553    N5:         LD      A,(HL)
+0003D5 FE00                A   554                CP      0
+0003D7 C2 DE 03            A   555                JP      NZ,N3
+0003DA 05                  A   556                DEC     B
+0003DB CA E6 03            A   557                JP      Z,N6
+0003DE 23                  A   558    N3:         INC     HL
+0003DF 0D                  A   559                DEC     C
+0003E0 C2 D4 03            A   560                JP      NZ,N5
+0003E3 C3 CF 03            A   561                JP      N4
                            A   562    
-0003E7 C9                  A   563                RET
+0003E6 E5                  A   563    N6          PUSH    HL
                            A   564    
-0003E8                     A   565    MERGE:
-0003E8 CD 18 04            A   566                CALL    COLLAPSE
-                           A   567    
-                           A   568                ; merge tiles with same value
-                           A   569    
-0003EB ED5B 40 09          A   570                LD      DE,(BOARDPTR)
-0003EF 2A 40 09            A   571                LD      HL,(BOARDPTR)
-0003F2 23                  A   572                INC     HL
-                           A   573    
-0003F3 0603                A   574                LD      B,3
-0003F5 1A                  A   575    M6:         LD      A,(DE)
-0003F6 FE00                A   576                CP      0
-0003F8 C8                  A   577                RET     Z
-0003F9 4E                  A   578                LD      C,(HL)
-0003FA B9                  A   579                CP      C
-0003FB C2 13 04            A   580                JP      NZ,M5
-                           A   581    
-0003FE 3C                  A   582                INC     A
-0003FF 12                  A   583                LD      (DE),A
-000400 CD A7 04            A   584                CALL    ADDPOINTS
-000403 AF                  A   585                XOR     A
-000404 77                  A   586                LD      (HL),A
-                           A   587    
-000405 3A 42 09            A   588                LD      A,(MOVED)
-000408 3C                  A   589                INC     A
-000409 32 42 09            A   590                LD      (MOVED),A
-                           A   591    
-00040C D5                  A   592                PUSH    DE
-00040D E5                  A   593                PUSH    HL
-00040E CD 18 04            A   594                CALL    COLLAPSE
-000411 E1                  A   595                POP     HL
-000412 D1                  A   596                POP     DE
-                           A   597    
-000413 23                  A   598    M5:         INC     HL
-000414 13                  A   599                INC     DE
-000415 10 DE               A   600                DJNZ    M6
-                           A   601    
-000417 C9                  A   602                RET
-                           A   603    
-000418                     A   604    COLLAPSE:
-                           A   605                ; collapse all tiles
-                           A   606    
-000418 2A 40 09            A   607                LD      HL,(BOARDPTR)
-                           A   608    
-00041B 0604                A   609                LD      B,4             ; find first zero
-00041D 7E                  A   610    M1:         LD      A,(HL)
-00041E FE00                A   611                CP      0
-000420 CA 27 04            A   612                JP      Z,M2
-000423 23                  A   613                INC     HL
-000424 10 F7               A   614                DJNZ    M1
-000426 C9                  A   615                RET
+0003E7 CD CE 06            A   565                CALL    RAND16
+0003EA 110A00              A   566                LD      DE,10
+0003ED CD E9 06            A   567                CALL    DIV16
+0003F0 110900              A   568                LD      DE,9
+0003F3 CD E9 06            A   569                CALL    DIV16
+0003F6 7B                  A   570                LD      A,E
+0003F7 3C                  A   571                INC     A
+                           A   572                
+0003F8 E1                  A   573                POP     HL
+0003F9 77                  A   574                LD      (HL),A
+                           A   575    
+0003FA C9                  A   576                RET
+                           A   577    
+0003FB                     A   578    MERGE:
+0003FB CD 2B 04            A   579                CALL    COLLAPSE
+                           A   580    
+                           A   581                ; merge tiles with same value
+                           A   582    
+0003FE ED5B 53 09          A   583                LD      DE,(BOARDPTR)
+000402 2A 53 09            A   584                LD      HL,(BOARDPTR)
+000405 23                  A   585                INC     HL
+                           A   586    
+000406 0603                A   587                LD      B,3
+000408 1A                  A   588    M6:         LD      A,(DE)
+000409 FE00                A   589                CP      0
+00040B C8                  A   590                RET     Z
+00040C 4E                  A   591                LD      C,(HL)
+00040D B9                  A   592                CP      C
+00040E C2 26 04            A   593                JP      NZ,M5
+                           A   594    
+000411 3C                  A   595                INC     A
+000412 12                  A   596                LD      (DE),A
+000413 CD BA 04            A   597                CALL    ADDPOINTS
+000416 AF                  A   598                XOR     A
+000417 77                  A   599                LD      (HL),A
+                           A   600    
+000418 3A 55 09            A   601                LD      A,(MOVED)
+00041B 3C                  A   602                INC     A
+00041C 32 55 09            A   603                LD      (MOVED),A
+                           A   604    
+00041F D5                  A   605                PUSH    DE
+000420 E5                  A   606                PUSH    HL
+000421 CD 2B 04            A   607                CALL    COLLAPSE
+000424 E1                  A   608                POP     HL
+000425 D1                  A   609                POP     DE
+                           A   610    
+000426 23                  A   611    M5:         INC     HL
+000427 13                  A   612                INC     DE
+000428 10 DE               A   613                DJNZ    M6
+                           A   614    
+00042A C9                  A   615                RET
                            A   616    
-000427 5D                  A   617    M2:         LD      E,L             ; DE=fist zero position
-000428 54                  A   618                LD      D,H
+00042B                     A   617    COLLAPSE:
+                           A   618                ; collapse all tiles
                            A   619    
-000429 7E                  A   620    M4:         LD      A,(HL)          ; move all non-zero tiles
-00042A FE00                A   621                CP      0
-00042C CA 3A 04            A   622                JP      Z,M3
-                           A   623    
-00042F 12                  A   624                LD      (DE),A
-000430 13                  A   625                INC     DE
-000431 AF                  A   626                XOR     A
-000432 77                  A   627                LD      (HL),A
-                           A   628    
-000433 3A 42 09            A   629                LD      A,(MOVED)
-000436 3C                  A   630                INC     A
-000437 32 42 09            A   631                LD      (MOVED),A
+00042B 2A 53 09            A   620                LD      HL,(BOARDPTR)
+                           A   621    
+00042E 0604                A   622                LD      B,4             ; find first zero
+000430 7E                  A   623    M1:         LD      A,(HL)
+000431 FE00                A   624                CP      0
+000433 CA 3A 04            A   625                JP      Z,M2
+000436 23                  A   626                INC     HL
+000437 10 F7               A   627                DJNZ    M1
+000439 C9                  A   628                RET
+                           A   629    
+00043A 5D                  A   630    M2:         LD      E,L             ; DE=fist zero position
+00043B 54                  A   631                LD      D,H
                            A   632    
-00043A 23                  A   633    M3:         INC     HL
-00043B 10 EC               A   634                DJNZ    M4
-                           A   635    
-00043D C9                  A   636                RET
-                           A   637    
-00043E                     A   638    ROTATE:
-                           A   639                ; outer ring
-                           A   640    
-00043E 0603                A   641                LD      B,3
-                           A   642    
-000440 3A FB 06            A   643    R1:         LD      A,(BOARD+3)
-000443 4F                  A   644                LD      C,A
+00043C 7E                  A   633    M4:         LD      A,(HL)          ; move all non-zero tiles
+00043D FE00                A   634                CP      0
+00043F CA 4D 04            A   635                JP      Z,M3
+                           A   636    
+000442 12                  A   637                LD      (DE),A
+000443 13                  A   638                INC     DE
+000444 AF                  A   639                XOR     A
+000445 77                  A   640                LD      (HL),A
+                           A   641    
+000446 3A 55 09            A   642                LD      A,(MOVED)
+000449 3C                  A   643                INC     A
+00044A 32 55 09            A   644                LD      (MOVED),A
                            A   645    
-000444 3A FA 06            A   646                LD      A,(BOARD+2)
-000447 32 FB 06            A   647                LD      (BOARD+3),A
-00044A 3A F9 06            A   648                LD      A,(BOARD+1)
-00044D 32 FA 06            A   649                LD      (BOARD+2),A
-000450 3A F8 06            A   650                LD      A,(BOARD+0)
-000453 32 F9 06            A   651                LD      (BOARD+1),A
-                           A   652    
-000456 3A FC 06            A   653                LD      A,(BOARD+4)
-000459 32 F8 06            A   654                LD      (BOARD+0),A
-00045C 3A 00 07            A   655                LD      A,(BOARD+8)
-00045F 32 FC 06            A   656                LD      (BOARD+4),A
-000462 3A 04 07            A   657                LD      A,(BOARD+12)
-000465 32 00 07            A   658                LD      (BOARD+8),A
-                           A   659    
-000468 3A 05 07            A   660                LD      A,(BOARD+13)
-00046B 32 04 07            A   661                LD      (BOARD+12),A
-00046E 3A 06 07            A   662                LD      A,(BOARD+14)
-000471 32 05 07            A   663                LD      (BOARD+13),A
-000474 3A 07 07            A   664                LD      A,(BOARD+15)
-000477 32 06 07            A   665                LD      (BOARD+14),A
-                           A   666    
-00047A 3A 03 07            A   667                LD      A,(BOARD+11)
-00047D 32 07 07            A   668                LD      (BOARD+15),A
-000480 3A FF 06            A   669                LD      A,(BOARD+7)
-000483 32 03 07            A   670                LD      (BOARD+11),A
-000486 79                  A   671                LD      A,C
-000487 32 FF 06            A   672                LD      (BOARD+7),A
-                           A   673    
-00048A 10 B4               A   674                DJNZ    R1
-                           A   675    
-                           A   676                ; inner ring
-                           A   677    
-00048C 3A FE 06            A   678                LD      A,(BOARD+6)
-00048F 4F                  A   679                LD      C,A
-                           A   680    
-000490 3A FD 06            A   681                LD      A,(BOARD+5)
-000493 32 FE 06            A   682                LD      (BOARD+6),A
-000496 3A 01 07            A   683                LD      A,(BOARD+9)
-000499 32 FD 06            A   684                LD      (BOARD+5),A
-00049C 3A 02 07            A   685                LD      A,(BOARD+10)
-00049F 32 01 07            A   686                LD      (BOARD+9),A
-                           A   687    
-0004A2 79                  A   688                LD      A,C
-0004A3 32 02 07            A   689                LD      (BOARD+10),A
+00044D 23                  A   646    M3:         INC     HL
+00044E 10 EC               A   647                DJNZ    M4
+                           A   648    
+000450 C9                  A   649                RET
+                           A   650    
+000451                     A   651    ROTATE:
+                           A   652                ; outer ring
+                           A   653    
+000451 0603                A   654                LD      B,3
+                           A   655    
+000453 3A 0E 07            A   656    R1:         LD      A,(BOARD+3)
+000456 4F                  A   657                LD      C,A
+                           A   658    
+000457 3A 0D 07            A   659                LD      A,(BOARD+2)
+00045A 32 0E 07            A   660                LD      (BOARD+3),A
+00045D 3A 0C 07            A   661                LD      A,(BOARD+1)
+000460 32 0D 07            A   662                LD      (BOARD+2),A
+000463 3A 0B 07            A   663                LD      A,(BOARD+0)
+000466 32 0C 07            A   664                LD      (BOARD+1),A
+                           A   665    
+000469 3A 0F 07            A   666                LD      A,(BOARD+4)
+00046C 32 0B 07            A   667                LD      (BOARD+0),A
+00046F 3A 13 07            A   668                LD      A,(BOARD+8)
+000472 32 0F 07            A   669                LD      (BOARD+4),A
+000475 3A 17 07            A   670                LD      A,(BOARD+12)
+000478 32 13 07            A   671                LD      (BOARD+8),A
+                           A   672    
+00047B 3A 18 07            A   673                LD      A,(BOARD+13)
+00047E 32 17 07            A   674                LD      (BOARD+12),A
+000481 3A 19 07            A   675                LD      A,(BOARD+14)
+000484 32 18 07            A   676                LD      (BOARD+13),A
+000487 3A 1A 07            A   677                LD      A,(BOARD+15)
+00048A 32 19 07            A   678                LD      (BOARD+14),A
+                           A   679    
+00048D 3A 16 07            A   680                LD      A,(BOARD+11)
+000490 32 1A 07            A   681                LD      (BOARD+15),A
+000493 3A 12 07            A   682                LD      A,(BOARD+7)
+000496 32 16 07            A   683                LD      (BOARD+11),A
+000499 79                  A   684                LD      A,C
+00049A 32 12 07            A   685                LD      (BOARD+7),A
+                           A   686    
+00049D 10 B4               A   687                DJNZ    R1
+                           A   688    
+                           A   689                ; inner ring
                            A   690    
-0004A6 C9                  A   691                RET
-                           A   692    
-0004A7                     A   693    ADDPOINTS:
-0004A7 D5                  A   694                PUSH    DE
-0004A8 E5                  A   695                PUSH    HL
-                           A   696    
-0004A9 5F                  A   697                LD      E,A
-0004AA 1600                A   698                LD      D,0
-0004AC 21 36 08            A   699                LD      HL,POINTS
-0004AF 19                  A   700                ADD     HL,DE
-0004B0 19                  A   701                ADD     HL,DE
-0004B1 5E                  A   702                LD      E,(HL)
-0004B2 23                  A   703                INC     HL
-0004B3 56                  A   704                LD      D,(HL)
+00049F 3A 11 07            A   691                LD      A,(BOARD+6)
+0004A2 4F                  A   692                LD      C,A
+                           A   693    
+0004A3 3A 10 07            A   694                LD      A,(BOARD+5)
+0004A6 32 11 07            A   695                LD      (BOARD+6),A
+0004A9 3A 14 07            A   696                LD      A,(BOARD+9)
+0004AC 32 10 07            A   697                LD      (BOARD+5),A
+0004AF 3A 15 07            A   698                LD      A,(BOARD+10)
+0004B2 32 14 07            A   699                LD      (BOARD+9),A
+                           A   700    
+0004B5 79                  A   701                LD      A,C
+0004B6 32 15 07            A   702                LD      (BOARD+10),A
+                           A   703    
+0004B9 C9                  A   704                RET
                            A   705    
-0004B4 3A 47 09            A   706                LD      A,(SCORE+3)
-0004B7 83                  A   707                ADD     A,E
-0004B8 27                  A   708                DAA
-0004B9 32 47 09            A   709                LD      (SCORE+3),A
-                           A   710    
-0004BC 3A 46 09            A   711                LD      A,(SCORE+2)
-0004BF 8A                  A   712                ADC     A,D
-0004C0 27                  A   713                DAA
-0004C1 32 46 09            A   714                LD      (SCORE+2),A
-                           A   715    
-0004C4 3A 45 09            A   716                LD      A,(SCORE+1)
-0004C7 CE00                A   717                ADC     A,00H
-0004C9 27                  A   718                DAA
-0004CA 32 45 09            A   719                LD      (SCORE+1),A
-                           A   720    
-0004CD 3A 44 09            A   721                LD      A,(SCORE)
-0004D0 CE00                A   722                ADC     A,00H
-0004D2 27                  A   723                DAA
-0004D3 32 44 09            A   724                LD      (SCORE),A
-                           A   725    
-0004D6 E1                  A   726                POP     HL
-0004D7 D1                  A   727                POP     DE
-0004D8 C9                  A   728                RET
-                           A   729    
-0004D9                     A   730    PRINTSCORE:
-0004D9 21 44 09            A   731                LD      HL,SCORE
-0004DC 11 4C 09            A   732                LD      DE,SCORESTR+4
-0004DF 0604                A   733                LD      B,4
-                           A   734    
-0004E1 7E                  A   735    P1:         LD      A,(HL)
-0004E2 1F                  A   736                RRA
-0004E3 1F                  A   737                RRA
-0004E4 1F                  A   738                RRA
-0004E5 1F                  A   739                RRA
-0004E6 E60F                A   740                AND     0FH
-0004E8 C630                A   741                ADD     A,30H
-0004EA 12                  A   742                LD      (DE),A
-0004EB 13                  A   743                INC     DE
-                           A   744    
-0004EC 7E                  A   745                LD      A,(HL)
-0004ED E60F                A   746                AND     0FH
-0004EF C630                A   747                ADD     A,30H
-0004F1 12                  A   748                LD      (DE),A
-0004F2 13                  A   749                INC     DE
-                           A   750    
-0004F3 23                  A   751                INC     HL
-0004F4 10 EB               A   752                DJNZ    P1
-                           A   753    
-0004F6 21 4C 09            A   754                LD      HL,SCORESTR+4
-0004F9 0607                A   755                LD      B,7
-0004FB 7E                  A   756    P3:         LD      A,(HL)
-0004FC FE30                A   757                CP      30H
-0004FE C2 07 05            A   758                JP      NZ,P2
-000501 3E20                A   759                LD      A,20H
-000503 77                  A   760                LD      (HL),A
-000504 23                  A   761                INC     HL
-000505 10 F4               A   762                DJNZ    P3
+0004BA                     A   706    ADDPOINTS:
+0004BA D5                  A   707                PUSH    DE
+0004BB E5                  A   708                PUSH    HL
+                           A   709    
+0004BC 5F                  A   710                LD      E,A
+0004BD 1600                A   711                LD      D,0
+0004BF 21 49 08            A   712                LD      HL,POINTS
+0004C2 19                  A   713                ADD     HL,DE
+0004C3 19                  A   714                ADD     HL,DE
+0004C4 5E                  A   715                LD      E,(HL)
+0004C5 23                  A   716                INC     HL
+0004C6 56                  A   717                LD      D,(HL)
+                           A   718    
+0004C7 3A 5A 09            A   719                LD      A,(SCORE+3)
+0004CA 83                  A   720                ADD     A,E
+0004CB 27                  A   721                DAA
+0004CC 32 5A 09            A   722                LD      (SCORE+3),A
+                           A   723    
+0004CF 3A 59 09            A   724                LD      A,(SCORE+2)
+0004D2 8A                  A   725                ADC     A,D
+0004D3 27                  A   726                DAA
+0004D4 32 59 09            A   727                LD      (SCORE+2),A
+                           A   728    
+0004D7 3A 58 09            A   729                LD      A,(SCORE+1)
+0004DA CE00                A   730                ADC     A,00H
+0004DC 27                  A   731                DAA
+0004DD 32 58 09            A   732                LD      (SCORE+1),A
+                           A   733    
+0004E0 3A 57 09            A   734                LD      A,(SCORE)
+0004E3 CE00                A   735                ADC     A,00H
+0004E5 27                  A   736                DAA
+0004E6 32 57 09            A   737                LD      (SCORE),A
+                           A   738    
+0004E9 E1                  A   739                POP     HL
+0004EA D1                  A   740                POP     DE
+0004EB C9                  A   741                RET
+                           A   742    
+0004EC                     A   743    PRINTSCORE:
+0004EC 21 57 09            A   744                LD      HL,SCORE
+0004EF 11 5F 09            A   745                LD      DE,SCORESTR+4
+0004F2 0604                A   746                LD      B,4
+                           A   747    
+0004F4 7E                  A   748    P1:         LD      A,(HL)
+0004F5 1F                  A   749                RRA
+0004F6 1F                  A   750                RRA
+0004F7 1F                  A   751                RRA
+0004F8 1F                  A   752                RRA
+0004F9 E60F                A   753                AND     0FH
+0004FB C630                A   754                ADD     A,30H
+0004FD 12                  A   755                LD      (DE),A
+0004FE 13                  A   756                INC     DE
+                           A   757    
+0004FF 7E                  A   758                LD      A,(HL)
+000500 E60F                A   759                AND     0FH
+000502 C630                A   760                ADD     A,30H
+000504 12                  A   761                LD      (DE),A
+000505 13                  A   762                INC     DE
                            A   763    
-000507 3E25                A   764    P2:         LD      A,BOARD_X
-000509 C616                A   765                ADD     A,16H
-00050B 27                  A   766                DAA
-00050C 32 3E 09            A   767                LD      (XPOS),A
-00050F 3E06                A   768                LD      A,BOARD_Y
-000511 D602                A   769                SUB     02H
-000513 27                  A   770                DAA
-000514 32 3F 09            A   771                LD      (YPOS),A
-000517 CD 61 06            A   772                CALL    GOTOXY
-                           A   773    
-00051A 11 48 09            A   774                LD      DE,SCORESTR
-                           A   775     ;           LD      C,09H
-00051D CD EE 06            A   776                CALL    show_string_de
-000520 C9                  A   777                RET
-                           A   778    
-000521                     A   779    DRAWBORDER:
-000521 3E25                A   780                LD      A,BOARD_X
-000523 32 3E 09            A   781                LD      (XPOS),A
-000526 3E06                A   782                LD      A,BOARD_Y
-000528 D602                A   783                SUB     02H
-00052A 27                  A   784                DAA
-00052B 32 3F 09            A   785                LD      (YPOS),A
-00052E CD 61 06            A   786                CALL    GOTOXY
-                           A   787    
-000531 11 1D 09            A   788                LD      DE,MSG4
-                           A   789     ;           LD      C,09H
-000534 CD EE 06            A   790                CALL    show_string_de
+000506 23                  A   764                INC     HL
+000507 10 EB               A   765                DJNZ    P1
+                           A   766    
+000509 21 5F 09            A   767                LD      HL,SCORESTR+4
+00050C 0607                A   768                LD      B,7
+00050E 7E                  A   769    P3:         LD      A,(HL)
+00050F FE30                A   770                CP      30H
+000511 C2 1A 05            A   771                JP      NZ,P2
+000514 3E20                A   772                LD      A,20H
+000516 77                  A   773                LD      (HL),A
+000517 23                  A   774                INC     HL
+000518 10 F4               A   775                DJNZ    P3
+                           A   776    
+00051A 3E25                A   777    P2:         LD      A,BOARD_X
+00051C C616                A   778                ADD     A,16H
+00051E 27                  A   779                DAA
+00051F 32 51 09            A   780                LD      (XPOS),A
+000522 3E06                A   781                LD      A,BOARD_Y
+000524 D602                A   782                SUB     02H
+000526 27                  A   783                DAA
+000527 32 52 09            A   784                LD      (YPOS),A
+00052A CD 74 06            A   785                CALL    GOTOXY
+                           A   786    
+00052D 11 5B 09            A   787                LD      DE,SCORESTR
+                           A   788     ;           LD      C,09H
+000530 CD 01 07            A   789                CALL    show_string_de
+000533 C9                  A   790                RET
                            A   791    
-                           A   792    
-000537 3E25                A   793                LD      A,BOARD_X
-000539 D601                A   794                SUB     01H
-00053B 27                  A   795                DAA
-00053C 32 3E 09            A   796                LD      (XPOS),A
-00053F 3E06                A   797                LD      A,BOARD_Y
-000541 D601                A   798                SUB     01H
-000543 27                  A   799                DAA
-000544 32 3F 09            A   800                LD      (YPOS),A
-000547 CD 61 06            A   801                CALL    GOTOXY
-                           A   802    
-00054A 11 79 08            A   803                LD      DE,TOPBORDER
-                           A   804     ;           LD      C,09H
-00054D CD EE 06            A   805                CALL    show_string_de
-                           A   806    
-000550 060C                A   807                LD      B,12
-000552 C5                  A   808    L4:         PUSH    BC
-000553 3A 3F 09            A   809                LD      A,(YPOS)
-000556 C601                A   810                ADD     A,1
-000558 27                  A   811                DAA
-000559 32 3F 09            A   812                LD      (YPOS),A
-00055C CD 61 06            A   813                CALL    GOTOXY
-                           A   814     ;           LD      C,02H
-00055F 3EDB                A   815                LD      A,0DBH
-000561 CD 4F 01            A   816                CALL    UART0_serial_TX
-000564 11 73 08            A   817                LD      DE,ADVANCE
-                           A   818     ;           LD      C,09H
-000567 CD EE 06            A   819                CALL    show_string_de
-                           A   820     ;           LD      C,02H
-00056A 3EDB                A   821                LD      A,0DBH
-00056C CD 4F 01            A   822                CALL    UART0_serial_TX
-00056F C1                  A   823                POP     BC
-000570 05                  A   824                DEC     B
-000571 C2 52 05            A   825                JP      NZ,L4
-                           A   826    
-000574 3A 3F 09            A   827                LD      A,(YPOS)
-000577 C601                A   828                ADD     A,1
-000579 27                  A   829                DAA
-00057A 32 3F 09            A   830                LD      (YPOS),A
-00057D CD 61 06            A   831                CALL    GOTOXY
-000580 11 98 08            A   832                LD      DE,BTMBORDER
-                           A   833     ;           LD      C,09H
-000583 CD EE 06            A   834                CALL    show_string_de
-                           A   835    
-000586 C9                  A   836                RET
-                           A   837    
-000587                     A   838    DRAWBOARD:
-000587 CD D9 04            A   839                CALL    PRINTSCORE
-                           A   840    
-00058A 3E25                A   841                LD      A,BOARD_X
-00058C 32 3E 09            A   842                LD      (XPOS),A
-00058F 3E06                A   843                LD      A,BOARD_Y
-000591 D601                A   844                SUB     01H
-000593 27                  A   845                DAA
-000594 32 3F 09            A   846                LD      (YPOS),A
-                           A   847    
-000597 21 F8 06            A   848                LD      HL,BOARD
-00059A 0604                A   849                LD      B,4
-00059C C5                  A   850    L1:         PUSH    BC
-                           A   851    
-00059D E5                  A   852                PUSH    HL
-00059E 3A 3F 09            A   853                LD      A,(YPOS)
-0005A1 C601                A   854                ADD     A,1
-0005A3 27                  A   855                DAA
-0005A4 32 3F 09            A   856                LD      (YPOS),A
-0005A7 CD 61 06            A   857                CALL    GOTOXY
-0005AA E1                  A   858                POP     HL
-                           A   859    
-0005AB E5                  A   860                PUSH    HL
-0005AC 5E                  A   861                LD      E,(HL)
-0005AD CD 2E 06            A   862                CALL    PRINTSPACE
-0005B0 E1                  A   863                POP     HL
-0005B1 23                  A   864                INC     HL
-0005B2 E5                  A   865                PUSH    HL
-0005B3 5E                  A   866                LD      E,(HL)
-0005B4 CD 2E 06            A   867                CALL    PRINTSPACE
-0005B7 E1                  A   868                POP     HL
-0005B8 23                  A   869                INC     HL
-0005B9 E5                  A   870                PUSH    HL
-0005BA 5E                  A   871                LD      E,(HL)
-0005BB CD 2E 06            A   872                CALL    PRINTSPACE
-0005BE E1                  A   873                POP     HL
-0005BF 23                  A   874                INC     HL
-0005C0 E5                  A   875                PUSH    HL
-0005C1 5E                  A   876                LD      E,(HL)
-0005C2 CD 2E 06            A   877                CALL    PRINTSPACE
-0005C5 CD B0 06            A   878                CALL    NEWLINE
-0005C8 E1                  A   879                POP     HL
-                           A   880    
-0005C9 2B                  A   881                DEC     HL
-0005CA 2B                  A   882                DEC     HL
-0005CB 2B                  A   883                DEC     HL
-                           A   884    
-0005CC E5                  A   885                PUSH    HL
-0005CD 3A 3F 09            A   886                LD      A,(YPOS)
-0005D0 C601                A   887                ADD     A,1
-0005D2 27                  A   888                DAA
-0005D3 32 3F 09            A   889                LD      (YPOS),A
-0005D6 CD 61 06            A   890                CALL    GOTOXY
-0005D9 E1                  A   891                POP     HL
-                           A   892    
-0005DA E5                  A   893                PUSH    HL
-0005DB 5E                  A   894                LD      E,(HL)
-0005DC CD 44 06            A   895                CALL    PRINTLABEL
-0005DF E1                  A   896                POP     HL
-0005E0 23                  A   897                INC     HL
-0005E1 E5                  A   898                PUSH    HL
-0005E2 5E                  A   899                LD      E,(HL)
-0005E3 CD 44 06            A   900                CALL    PRINTLABEL
-0005E6 E1                  A   901                POP     HL
-0005E7 23                  A   902                INC     HL
-0005E8 E5                  A   903                PUSH    HL
-0005E9 5E                  A   904                LD      E,(HL)
-0005EA CD 44 06            A   905                CALL    PRINTLABEL
-0005ED E1                  A   906                POP     HL
-0005EE 23                  A   907                INC     HL
-0005EF E5                  A   908                PUSH    HL
-0005F0 5E                  A   909                LD      E,(HL)
-0005F1 CD 44 06            A   910                CALL    PRINTLABEL
-0005F4 CD B0 06            A   911                CALL    NEWLINE
-0005F7 E1                  A   912                POP     HL
-                           A   913    
-0005F8 2B                  A   914                DEC     HL
-0005F9 2B                  A   915                DEC     HL
-0005FA 2B                  A   916                DEC     HL
-                           A   917    
-0005FB E5                  A   918                PUSH    HL
-0005FC 3A 3F 09            A   919                LD      A,(YPOS)
-0005FF C601                A   920                ADD     A,1
-000601 27                  A   921                DAA
-000602 32 3F 09            A   922                LD      (YPOS),A
-000605 CD 61 06            A   923                CALL    GOTOXY
-000608 E1                  A   924                POP     HL
-                           A   925    
-000609 E5                  A   926                PUSH    HL
-00060A 5E                  A   927                LD      E,(HL)
-00060B CD 2E 06            A   928                CALL    PRINTSPACE
-00060E E1                  A   929                POP     HL
-00060F 23                  A   930                INC     HL
-000610 E5                  A   931                PUSH    HL
-000611 5E                  A   932                LD      E,(HL)
-000612 CD 2E 06            A   933                CALL    PRINTSPACE
-000615 E1                  A   934                POP     HL
-000616 23                  A   935                INC     HL
-000617 E5                  A   936                PUSH    HL
-000618 5E                  A   937                LD      E,(HL)
-000619 CD 2E 06            A   938                CALL    PRINTSPACE
-00061C E1                  A   939                POP     HL
-00061D 23                  A   940                INC     HL
-00061E E5                  A   941                PUSH    HL
-00061F 5E                  A   942                LD      E,(HL)
-000620 CD 2E 06            A   943                CALL    PRINTSPACE
-000623 CD B0 06            A   944                CALL    NEWLINE
-000626 E1                  A   945                POP     HL
-                           A   946    
-000627 23                  A   947                INC     HL
-                           A   948    
-000628 C1                  A   949                POP     BC
-000629 05                  A   950                DEC     B
-00062A C2 9C 05            A   951                JP      NZ,L1
-                           A   952    
-00062D C9                  A   953                RET
-                           A   954    
-00062E                     A   955    PRINTSPACE:
-00062E 1600                A   956                LD      D,0
-                           A   957    
-000630 D5                  A   958                PUSH    DE
-000631 21 9C 07            A   959                LD      HL,COLORPTR
-000634 19                  A   960                ADD     HL,DE
-000635 19                  A   961                ADD     HL,DE
-000636 5E                  A   962                LD      E,(HL)
-000637 23                  A   963                INC     HL
-000638 56                  A   964                LD      D,(HL)
-                           A   965     ;           LD      C,09H
-000639 CD EE 06            A   966                CALL    show_string_de
-00063C D1                  A   967                POP     DE
-                           A   968    
-00063D 11 08 07            A   969                LD      DE,SPACER
-                           A   970     ;           LD      C,09H
-000640 CD EE 06            A   971                CALL    show_string_de
-                           A   972    
-000643 C9                  A   973                RET
-                           A   974    
-000644                     A   975    PRINTLABEL:
-000644 1600                A   976                LD      D,0
-                           A   977    
-000646 D5                  A   978                PUSH    DE
-000647 21 9C 07            A   979                LD      HL,COLORPTR
-00064A 19                  A   980                ADD     HL,DE
-00064B 19                  A   981                ADD     HL,DE
-00064C 5E                  A   982                LD      E,(HL)
-00064D 23                  A   983                INC     HL
-00064E 56                  A   984                LD      D,(HL)
-                           A   985     ;           LD      C,09H
-00064F CD EE 06            A   986                CALL    show_string_de
-000652 D1                  A   987                POP     DE
-                           A   988    
-000653 D5                  A   989                PUSH    DE
-000654 21 10 07            A   990                LD      HL,LABELPTR
-000657 19                  A   991                ADD     HL,DE
-000658 19                  A   992                ADD     HL,DE
-000659 5E                  A   993                LD      E,(HL)
-00065A 23                  A   994                INC     HL
-00065B 56                  A   995                LD      D,(HL)
-                           A   996    ;            LD      C,09H
-00065C CD EE 06            A   997    	CALL	show_string_de
-00065F D1                  A   998                POP     DE
-                           A   999    
-000660 C9                  A  1000                RET
+000534                     A   792    DRAWBORDER:
+000534 3E25                A   793                LD      A,BOARD_X
+000536 32 51 09            A   794                LD      (XPOS),A
+000539 3E06                A   795                LD      A,BOARD_Y
+00053B D602                A   796                SUB     02H
+00053D 27                  A   797                DAA
+00053E 32 52 09            A   798                LD      (YPOS),A
+000541 CD 74 06            A   799                CALL    GOTOXY
+                           A   800    
+000544 11 30 09            A   801                LD      DE,MSG4
+                           A   802     ;           LD      C,09H
+000547 CD 01 07            A   803                CALL    show_string_de
+                           A   804    
+                           A   805    
+00054A 3E25                A   806                LD      A,BOARD_X
+00054C D601                A   807                SUB     01H
+00054E 27                  A   808                DAA
+00054F 32 51 09            A   809                LD      (XPOS),A
+000552 3E06                A   810                LD      A,BOARD_Y
+000554 D601                A   811                SUB     01H
+000556 27                  A   812                DAA
+000557 32 52 09            A   813                LD      (YPOS),A
+00055A CD 74 06            A   814                CALL    GOTOXY
+                           A   815    
+00055D 11 8C 08            A   816                LD      DE,TOPBORDER
+                           A   817     ;           LD      C,09H
+000560 CD 01 07            A   818                CALL    show_string_de
+                           A   819    
+000563 060C                A   820                LD      B,12
+000565 C5                  A   821    L4:         PUSH    BC
+000566 3A 52 09            A   822                LD      A,(YPOS)
+000569 C601                A   823                ADD     A,1
+00056B 27                  A   824                DAA
+00056C 32 52 09            A   825                LD      (YPOS),A
+00056F CD 74 06            A   826                CALL    GOTOXY
+                           A   827     ;           LD      C,02H
+000572 3EDB                A   828                LD      A,0DBH
+000574 CD 4F 01            A   829                CALL    UART0_serial_TX
+000577 11 86 08            A   830                LD      DE,ADVANCE
+                           A   831     ;           LD      C,09H
+00057A CD 01 07            A   832                CALL    show_string_de
+                           A   833     ;           LD      C,02H
+00057D 3EDB                A   834                LD      A,0DBH
+00057F CD 4F 01            A   835                CALL    UART0_serial_TX
+000582 C1                  A   836                POP     BC
+000583 05                  A   837                DEC     B
+000584 C2 65 05            A   838                JP      NZ,L4
+                           A   839    
+000587 3A 52 09            A   840                LD      A,(YPOS)
+00058A C601                A   841                ADD     A,1
+00058C 27                  A   842                DAA
+00058D 32 52 09            A   843                LD      (YPOS),A
+000590 CD 74 06            A   844                CALL    GOTOXY
+000593 11 AB 08            A   845                LD      DE,BTMBORDER
+                           A   846     ;           LD      C,09H
+000596 CD 01 07            A   847                CALL    show_string_de
+                           A   848    
+000599 C9                  A   849                RET
+                           A   850    
+00059A                     A   851    DRAWBOARD:
+00059A CD EC 04            A   852                CALL    PRINTSCORE
+                           A   853    
+00059D 3E25                A   854                LD      A,BOARD_X
+00059F 32 51 09            A   855                LD      (XPOS),A
+0005A2 3E06                A   856                LD      A,BOARD_Y
+0005A4 D601                A   857                SUB     01H
+0005A6 27                  A   858                DAA
+0005A7 32 52 09            A   859                LD      (YPOS),A
+                           A   860    
+0005AA 21 0B 07            A   861                LD      HL,BOARD
+0005AD 0604                A   862                LD      B,4
+0005AF C5                  A   863    L1:         PUSH    BC
+                           A   864    
+0005B0 E5                  A   865                PUSH    HL
+0005B1 3A 52 09            A   866                LD      A,(YPOS)
+0005B4 C601                A   867                ADD     A,1
+0005B6 27                  A   868                DAA
+0005B7 32 52 09            A   869                LD      (YPOS),A
+0005BA CD 74 06            A   870                CALL    GOTOXY
+0005BD E1                  A   871                POP     HL
+                           A   872    
+0005BE E5                  A   873                PUSH    HL
+0005BF 5E                  A   874                LD      E,(HL)
+0005C0 CD 41 06            A   875                CALL    PRINTSPACE
+0005C3 E1                  A   876                POP     HL
+0005C4 23                  A   877                INC     HL
+0005C5 E5                  A   878                PUSH    HL
+0005C6 5E                  A   879                LD      E,(HL)
+0005C7 CD 41 06            A   880                CALL    PRINTSPACE
+0005CA E1                  A   881                POP     HL
+0005CB 23                  A   882                INC     HL
+0005CC E5                  A   883                PUSH    HL
+0005CD 5E                  A   884                LD      E,(HL)
+0005CE CD 41 06            A   885                CALL    PRINTSPACE
+0005D1 E1                  A   886                POP     HL
+0005D2 23                  A   887                INC     HL
+0005D3 E5                  A   888                PUSH    HL
+0005D4 5E                  A   889                LD      E,(HL)
+0005D5 CD 41 06            A   890                CALL    PRINTSPACE
+0005D8 CD C3 06            A   891                CALL    NEWLINE
+0005DB E1                  A   892                POP     HL
+                           A   893    
+0005DC 2B                  A   894                DEC     HL
+0005DD 2B                  A   895                DEC     HL
+0005DE 2B                  A   896                DEC     HL
+                           A   897    
+0005DF E5                  A   898                PUSH    HL
+0005E0 3A 52 09            A   899                LD      A,(YPOS)
+0005E3 C601                A   900                ADD     A,1
+0005E5 27                  A   901                DAA
+0005E6 32 52 09            A   902                LD      (YPOS),A
+0005E9 CD 74 06            A   903                CALL    GOTOXY
+0005EC E1                  A   904                POP     HL
+                           A   905    
+0005ED E5                  A   906                PUSH    HL
+0005EE 5E                  A   907                LD      E,(HL)
+0005EF CD 57 06            A   908                CALL    PRINTLABEL
+0005F2 E1                  A   909                POP     HL
+0005F3 23                  A   910                INC     HL
+0005F4 E5                  A   911                PUSH    HL
+0005F5 5E                  A   912                LD      E,(HL)
+0005F6 CD 57 06            A   913                CALL    PRINTLABEL
+0005F9 E1                  A   914                POP     HL
+0005FA 23                  A   915                INC     HL
+0005FB E5                  A   916                PUSH    HL
+0005FC 5E                  A   917                LD      E,(HL)
+0005FD CD 57 06            A   918                CALL    PRINTLABEL
+000600 E1                  A   919                POP     HL
+000601 23                  A   920                INC     HL
+000602 E5                  A   921                PUSH    HL
+000603 5E                  A   922                LD      E,(HL)
+000604 CD 57 06            A   923                CALL    PRINTLABEL
+000607 CD C3 06            A   924                CALL    NEWLINE
+00060A E1                  A   925                POP     HL
+                           A   926    
+00060B 2B                  A   927                DEC     HL
+00060C 2B                  A   928                DEC     HL
+00060D 2B                  A   929                DEC     HL
+                           A   930    
+00060E E5                  A   931                PUSH    HL
+00060F 3A 52 09            A   932                LD      A,(YPOS)
+000612 C601                A   933                ADD     A,1
+000614 27                  A   934                DAA
+000615 32 52 09            A   935                LD      (YPOS),A
+000618 CD 74 06            A   936                CALL    GOTOXY
+00061B E1                  A   937                POP     HL
+                           A   938    
+00061C E5                  A   939                PUSH    HL
+00061D 5E                  A   940                LD      E,(HL)
+00061E CD 41 06            A   941                CALL    PRINTSPACE
+000621 E1                  A   942                POP     HL
+000622 23                  A   943                INC     HL
+000623 E5                  A   944                PUSH    HL
+000624 5E                  A   945                LD      E,(HL)
+000625 CD 41 06            A   946                CALL    PRINTSPACE
+000628 E1                  A   947                POP     HL
+000629 23                  A   948                INC     HL
+00062A E5                  A   949                PUSH    HL
+00062B 5E                  A   950                LD      E,(HL)
+00062C CD 41 06            A   951                CALL    PRINTSPACE
+00062F E1                  A   952                POP     HL
+000630 23                  A   953                INC     HL
+000631 E5                  A   954                PUSH    HL
+000632 5E                  A   955                LD      E,(HL)
+000633 CD 41 06            A   956                CALL    PRINTSPACE
+000636 CD C3 06            A   957                CALL    NEWLINE
+000639 E1                  A   958                POP     HL
+                           A   959    
+00063A 23                  A   960                INC     HL
+                           A   961    
+00063B C1                  A   962                POP     BC
+00063C 05                  A   963                DEC     B
+00063D C2 AF 05            A   964                JP      NZ,L1
+                           A   965    
+000640 C9                  A   966                RET
+                           A   967    
+000641                     A   968    PRINTSPACE:
+000641 1600                A   969                LD      D,0
+                           A   970    
+000643 D5                  A   971                PUSH    DE
+000644 21 AF 07            A   972                LD      HL,COLORPTR
+000647 19                  A   973                ADD     HL,DE
+000648 19                  A   974                ADD     HL,DE
+000649 5E                  A   975                LD      E,(HL)
+00064A 23                  A   976                INC     HL
+00064B 56                  A   977                LD      D,(HL)
+                           A   978     ;           LD      C,09H
+00064C CD 01 07            A   979                CALL    show_string_de
+00064F D1                  A   980                POP     DE
+                           A   981    
+000650 11 1B 07            A   982                LD      DE,SPACER
+                           A   983     ;           LD      C,09H
+000653 CD 01 07            A   984                CALL    show_string_de
+                           A   985    
+000656 C9                  A   986                RET
+                           A   987    
+000657                     A   988    PRINTLABEL:
+000657 1600                A   989                LD      D,0
+                           A   990    
+000659 D5                  A   991                PUSH    DE
+00065A 21 AF 07            A   992                LD      HL,COLORPTR
+00065D 19                  A   993                ADD     HL,DE
+00065E 19                  A   994                ADD     HL,DE
+00065F 5E                  A   995                LD      E,(HL)
+000660 23                  A   996                INC     HL
+000661 56                  A   997                LD      D,(HL)
+                           A   998     ;           LD      C,09H
+000662 CD 01 07            A   999                CALL    show_string_de
+000665 D1                  A  1000                POP     DE
                            A  1001    
-000661                     A  1002    GOTOXY:
-                           A  1003    ;            LD      C,02H
-000661 3E1B                A  1004                LD      a,1BH
-000663 CD 4F 01            A  1005                CALL    UART0_serial_TX
-                           A  1006    ;            LD      C,02H
-000666 3E5B                A  1007                LD      a,'['
-000668 CD 4F 01            A  1008                CALL    UART0_serial_TX
-                           A  1009    
-00066B 3A 3F 09            A  1010                LD      A,(YPOS)
-00066E FE10                A  1011                CP      10H
-000670 DA 81 06            A  1012                JP      C,L2
-                           A  1013    
-000673 1F                  A  1014                RRA
-000674 1F                  A  1015                RRA
-000675 1F                  A  1016                RRA
-000676 1F                  A  1017                RRA
-000677 E60F                A  1018                AND     0FH
-000679 C630                A  1019                ADD     A,'0'
-                           A  1020    
-                           A  1021    ;            LD      C,02H
-                           A  1022    ;            LD      E,A
-00067B CD 4F 01            A  1023                CALL    UART0_serial_TX
-                           A  1024    
-00067E 3A 3F 09            A  1025                LD      A,(YPOS)
+000666 D5                  A  1002                PUSH    DE
+000667 21 23 07            A  1003                LD      HL,LABELPTR
+00066A 19                  A  1004                ADD     HL,DE
+00066B 19                  A  1005                ADD     HL,DE
+00066C 5E                  A  1006                LD      E,(HL)
+00066D 23                  A  1007                INC     HL
+00066E 56                  A  1008                LD      D,(HL)
+                           A  1009    ;            LD      C,09H
+00066F CD 01 07            A  1010    	CALL	show_string_de
+000672 D1                  A  1011                POP     DE
+                           A  1012    
+000673 C9                  A  1013                RET
+                           A  1014    
+000674                     A  1015    GOTOXY:
+                           A  1016    ;            LD      C,02H
+000674 3E1B                A  1017                LD      a,1BH
+000676 CD 4F 01            A  1018                CALL    UART0_serial_TX
+                           A  1019    ;            LD      C,02H
+000679 3E5B                A  1020                LD      a,'['
+00067B CD 4F 01            A  1021                CALL    UART0_serial_TX
+                           A  1022    
+00067E 3A 52 09            A  1023                LD      A,(YPOS)
+000681 FE10                A  1024                CP      10H
+000683 DA 94 06            A  1025                JP      C,L2
                            A  1026    
-000681 E60F                A  1027    L2:         AND     0FH
-000683 C630                A  1028                ADD     A,'0'
-                           A  1029    
-                           A  1030    ;            LD      C,02H
-                           A  1031    ;            LD      E,A
-000685 CD 4F 01            A  1032                CALL    UART0_serial_TX
+000686 1F                  A  1027                RRA
+000687 1F                  A  1028                RRA
+000688 1F                  A  1029                RRA
+000689 1F                  A  1030                RRA
+00068A E60F                A  1031                AND     0FH
+00068C C630                A  1032                ADD     A,'0'
                            A  1033    
                            A  1034    ;            LD      C,02H
-000688 3E3B                A  1035                LD      A,3BH
-00068A CD 4F 01            A  1036                CALL    UART0_serial_TX
+                           A  1035    ;            LD      E,A
+00068E CD 4F 01            A  1036                CALL    UART0_serial_TX
                            A  1037    
-00068D 3A 3E 09            A  1038                LD      A,(XPOS)
-000690 FE10                A  1039                CP      10H
-000692 DA A3 06            A  1040                JP      C,L3
-                           A  1041    
-000695 1F                  A  1042                RRA
-000696 1F                  A  1043                RRA
-000697 1F                  A  1044                RRA
-000698 1F                  A  1045                RRA
-000699 E60F                A  1046                AND     0FH
-00069B C630                A  1047                ADD     A,'0'
-                           A  1048    
-                           A  1049    ;            LD      C,02H
-                           A  1050    ;            LD      E,A
-00069D CD 4F 01            A  1051                CALL    UART0_serial_TX
-                           A  1052    
-0006A0 3A 3E 09            A  1053                LD      A,(XPOS)
+000691 3A 52 09            A  1038                LD      A,(YPOS)
+                           A  1039    
+000694 E60F                A  1040    L2:         AND     0FH
+000696 C630                A  1041                ADD     A,'0'
+                           A  1042    
+                           A  1043    ;            LD      C,02H
+                           A  1044    ;            LD      E,A
+000698 CD 4F 01            A  1045                CALL    UART0_serial_TX
+                           A  1046    
+                           A  1047    ;            LD      C,02H
+00069B 3E3B                A  1048                LD      A,3BH
+00069D CD 4F 01            A  1049                CALL    UART0_serial_TX
+                           A  1050    
+0006A0 3A 51 09            A  1051                LD      A,(XPOS)
+0006A3 FE10                A  1052                CP      10H
+0006A5 DA B6 06            A  1053                JP      C,L3
                            A  1054    
-0006A3 E60F                A  1055    L3:         AND     0FH
-0006A5 C630                A  1056                ADD     A,'0'
-                           A  1057    
-                           A  1058    ;            LD      C,02H
-                           A  1059    ;            LD      E,A
-0006A7 CD 4F 01            A  1060                CALL    UART0_serial_TX
+0006A8 1F                  A  1055                RRA
+0006A9 1F                  A  1056                RRA
+0006AA 1F                  A  1057                RRA
+0006AB 1F                  A  1058                RRA
+0006AC E60F                A  1059                AND     0FH
+0006AE C630                A  1060                ADD     A,'0'
                            A  1061    
                            A  1062    ;            LD      C,02H
-0006AA 3E48                A  1063                LD      a,'H'
-0006AC CD 4F 01            A  1064                CALL    UART0_serial_TX
+                           A  1063    ;            LD      E,A
+0006B0 CD 4F 01            A  1064                CALL    UART0_serial_TX
                            A  1065    
-0006AF C9                  A  1066                RET
+0006B3 3A 51 09            A  1066                LD      A,(XPOS)
                            A  1067    
-0006B0                     A  1068    NEWLINE:
-                           A  1069    
-                           A  1070    ;            LD      C,02H
-0006B0 3E0D                A  1071                LD      A,CR
-0006B2 CD 4F 01            A  1072                CALL    UART0_serial_TX
-                           A  1073    
-                           A  1074    ;            LD      C,02H
-0006B5 3E0A                A  1075                LD      A,LF
-0006B7 CD 4F 01            A  1076                CALL    UART0_serial_TX
-                           A  1077    
-0006BA C9                  A  1078                RET
-                           A  1079    
-0006BB 110000              A  1080    RAND16:     LD      DE,0
-0006BE 7A                  A  1081                LD      A,D
-0006BF 63                  A  1082                LD      H,E
-0006C0 2EFD                A  1083                LD      L,253
-0006C2 B7                  A  1084                OR      A
-0006C3 ED52                A  1085                SBC     HL,DE
-0006C5 DE00                A  1086                SBC     A,0
-0006C7 ED52                A  1087                SBC     HL,DE
-0006C9 1600                A  1088                LD      D,0
-0006CB 9A                  A  1089                SBC     A,D
-0006CC 5F                  A  1090                LD      E,A
-0006CD ED52                A  1091                SBC     HL,DE
-0006CF 30 01               A  1092                JR      NC,RAND
-0006D1 23                  A  1093                INC     HL
-0006D2 22 BC 06            A  1094    RAND:       LD      (RAND16+1),HL
-0006D5 C9                  A  1095                RET
-                           A  1096    
-0006D6                     A  1097    DIV16:
-0006D6 7C                  A  1098                LD      A,H         ; HL = HL % DE
-0006D7 4D                  A  1099                LD      C,L
-0006D8 210000              A  1100                LD      HL,0
-0006DB 0610                A  1101                LD      B,16
-                           A  1102    
-0006DD 37                  A  1103    DL1:        SCF
-0006DE CB11                A  1104                RL      C
-0006E0 17                  A  1105                RLA
-0006E1 ED6A                A  1106                ADC     HL,HL
-0006E3 ED52                A  1107                SBC     HL,DE
-0006E5 30 02               A  1108                JR      NC,$+4
-0006E7 19                  A  1109                ADD     HL,DE
-0006E8 0D                  A  1110                DEC     C
-0006E9 10 F2               A  1111                DJNZ    DL1
-                           A  1112    
-0006EB 57                  A  1113                LD      D,A         ; DE = HL / DE
-0006EC 59                  A  1114                LD      E,C
-0006ED C9                  A  1115                RET
-                           A  1116    
-0006EE                     A  1117    show_string_de:
-                           A  1118    ;        ld c, BDOS_Print_String = 9
-0006EE 1A                  A  1119            ld      a,(de)
-0006EF FE24                A  1120            cp      '$'
-0006F1 C8                  A  1121            ret     z
-                           A  1122    ;        push    de
-                           A  1123    ;        rst     10h
-0006F2 CD 4F 01            A  1124    		call	UART0_serial_TX
-                           A  1125    ;        pop     de
-0006F5 13                  A  1126            inc     de
-0006F6 18 F6               A  1127            jr      show_string_de
-                           A  1128    
-0006F8                     A  1129    BOARD:
-0006F8 00000000            A  1130                DB     00, 00, 00, 00
-0006FC 00000000            A  1131                DB     00, 00, 00, 00
-000700 00000000            A  1132                DB     00, 00, 00, 00
-000704 00000000            A  1133                DB     00, 00, 00, 00
-                           A  1134    
-000708 20202020 20202024   A  1135    SPACER:     DB     "       ", '$'
-                           A  1136    
-000710 2C07                A  1137    LABELPTR:   DW     LABELS
-000712 3407                A  1138                DW     LABELS + 8
-000714 3C07                A  1139                DW     LABELS + 16
-000716 4407                A  1140                DW     LABELS + 24
-000718 4C07                A  1141                DW     LABELS + 32
-00071A 5407                A  1142                DW     LABELS + 40
-00071C 5C07                A  1143                DW     LABELS + 48
-00071E 6407                A  1144                DW     LABELS + 56
-000720 6C07                A  1145                DW     LABELS + 64
-000722 7407                A  1146                DW     LABELS + 72
-000724 7C07                A  1147                DW     LABELS + 80
-000726 8407                A  1148                DW     LABELS + 88
-000728 8C07                A  1149                DW     LABELS + 96
-00072A 9407                A  1150                DW     LABELS + 104
-                           A  1151    
-00072C 202020F9 20202024   A  1152    LABELS:     DB     "   ", 0F9H, "   ", EOS
-000734 20202032 20202024   A  1153                DB     "   2   ", EOS
-00073C 20202034 20202024   A  1154                DB     "   4   ", EOS
-000744 20202038 20202024   A  1155                DB     "   8   ", EOS
-00074C 20202031 36202024   A  1156                DB     "   16  ", EOS
-000754 20202033 32202024   A  1157                DB     "   32  ", EOS
-00075C 20202036 34202024   A  1158                DB     "   64  ", EOS
-000764 20203132 38202024   A  1159                DB     "  128  ", EOS
-00076C 20203235 36202024   A  1160                DB     "  256  ", EOS
-000774 20203531 32202024   A  1161                DB     "  512  ", EOS
-00077C 20313032 34202024   A  1162                DB     " 1024  ", EOS
-000784 20323034 38202024   A  1163                DB     " 2048  ", EOS
-00078C 20343039 36202024   A  1164                DB     " 4096  ", EOS
-000794 20383139 32202024   A  1165                DB     " 8192  ", EOS
-                           A  1166    
-00079C B807                A  1167    COLORPTR:   DW     COLORS
-00079E C107                A  1168                DW     COLORS + 9
-0007A0 CA07                A  1169                DW     COLORS + 18
-0007A2 D307                A  1170                DW     COLORS + 27
-0007A4 DC07                A  1171                DW     COLORS + 36
-0007A6 E507                A  1172                DW     COLORS + 45
-0007A8 EE07                A  1173                DW     COLORS + 54
-0007AA F707                A  1174                DW     COLORS + 63
-0007AC 0008                A  1175                DW     COLORS + 72
-0007AE 0908                A  1176                DW     COLORS + 81
-0007B0 1208                A  1177                DW     COLORS + 90
-0007B2 1B08                A  1178                DW     COLORS + 99
-0007B4 2408                A  1179                DW     COLORS + 108
-0007B6 2D08                A  1180                DW     COLORS + 117
-                           A  1181    
-0007B8 1B5B3430 3B33376D   A  1182    COLORS:     DB     1BH, "[40;37m", EOS  ; 0
-0007C0 24 
-0007C1 1B5B3434 3B33376D   A  1183                DB     1BH, "[44;37m", EOS  ; 2
-0007C9 24 
-0007CA 1B5B3436 3B33376D   A  1184                DB     1BH, "[46;37m", EOS  ; 4
-0007D2 24 
-0007D3 1B5B3432 3B33376D   A  1185                DB     1BH, "[42;37m", EOS  ; 8
-0007DB 24 
-0007DC 1B5B3433 3B33306D   A  1186                DB     1BH, "[43;30m", EOS  ; 16
-0007E4 24 
-0007E5 1B5B3435 3B33376D   A  1187                DB     1BH, "[45;37m", EOS  ; 32
-0007ED 24 
-0007EE 1B5B3431 3B33376D   A  1188                DB     1BH, "[41;37m", EOS  ; 64
-0007F6 24 
-0007F7 1B5B3437 3B33306D   A  1189                DB     1BH, "[47;30m", EOS  ; 128
-0007FF 24 
-000800 1B5B3434 3B33376D   A  1190                DB     1BH, "[44;37m", EOS  ; 256
-000808 24 
-000809 1B5B3436 3B33376D   A  1191                DB     1BH, "[46;37m", EOS  ; 512
-000811 24 
-000812 1B5B3432 3B33376D   A  1192                DB     1BH, "[42;37m", EOS  ; 1024
-00081A 24 
-00081B 1B5B3433 3B33306D   A  1193                DB     1BH, "[43;30m", EOS  ; 2048
-000823 24 
-000824 1B5B3435 3B33376D   A  1194                DB     1BH, "[45;37m", EOS  ; 4096
-00082C 24 
-00082D 1B5B3431 3B33376D   A  1195                DB     1BH, "[41;37m", EOS  ; 8192
-000835 24 
-                           A  1196    
-000836 0000                A  1197    POINTS:     DW     0000H
-000838 0000                A  1198                DW     0000H
-00083A 0400                A  1199                DW     0004H
-00083C 0800                A  1200                DW     0008H
-00083E 1600                A  1201                DW     0016H
-000840 3200                A  1202                DW     0032H
-000842 6400                A  1203                DW     0064H
-000844 2801                A  1204                DW     0128H
-000846 5602                A  1205                DW     0256H
-000848 1205                A  1206                DW     0512H
-00084A 2410                A  1207                DW     1024H
-00084C 4820                A  1208                DW     2048H
-00084E 9640                A  1209                DW     4096H
-000850 9281                A  1210                DW     8192H
-                           A  1211    
-000852                     A  1212    INIT:
-000852 1700C100            A  1213    	db	23,0,193,0	;turn off legacy mode so that mode 1 makes sense
-000856 1600                A  1214    	db	22,0		;VDU 22 0 = set mode 0
-000858 1700FF              A  1215    	db	23,0,255	;VDU 23 0 0xFF = set terminal mode       
-00085B 1B5B3F32 356C1B5B   A  1216    		DB     1BH, "[?25l", 1BH, "[2J", EOS
-000863 324A24 
-000866 7F7F1B5F 23512124   A  1217    TERM:      db		7fh,7fh,ESC,'_#Q!$'	 
-                           A  1218    ;	DB     1BH, "[?25h"
-00086E 1B5B306D 24         A  1219    RESET:      DB     1BH, "[0m", EOS
-                           A  1220    
-000873 1B5B3238 4324       A  1221    ADVANCE:    DB     1BH, "[28C", EOS
-                           A  1222    
-000879 DC                  A  1223    TOPBORDER:  DB     0DCH
-00087A DCDCDCDC DCDCDC     A  1224                DB     0DCH, 0DCH, 0DCH, 0DCH, 0DCH, 0DCH, 0DCH
-000881 DCDCDCDC DCDCDC     A  1225                DB     0DCH, 0DCH, 0DCH, 0DCH, 0DCH, 0DCH, 0DCH
-000888 DCDCDCDC DCDCDC     A  1226                DB     0DCH, 0DCH, 0DCH, 0DCH, 0DCH, 0DCH, 0DCH
-00088F DCDCDCDC DCDCDC     A  1227                DB     0DCH, 0DCH, 0DCH, 0DCH, 0DCH, 0DCH, 0DCH
-000896 DC24                A  1228                DB     0DCH, EOS
-                           A  1229    
-000898 DF                  A  1230    BTMBORDER:  DB     0DFH
-000899 DFDFDFDF DFDFDF     A  1231                DB     0DFH, 0DFH, 0DFH, 0DFH, 0DFH, 0DFH, 0DFH
-0008A0 DFDFDFDF DFDFDF     A  1232                DB     0DFH, 0DFH, 0DFH, 0DFH, 0DFH, 0DFH, 0DFH
-0008A7 DFDFDFDF DFDFDF     A  1233                DB     0DFH, 0DFH, 0DFH, 0DFH, 0DFH, 0DFH, 0DFH
-0008AE DFDFDFDF DFDFDF     A  1234                DB     0DFH, 0DFH, 0DFH, 0DFH, 0DFH, 0DFH, 0DFH
-0008B5 DF24                A  1235                DB     0DFH, EOS
-                           A  1236    
-0008B7 1B5B306D            A  1237    MSG1:       DB     1BH, "[0m"
-0008BB 20202020 20202020   A  1238                DB     "        w/a/s/d or q        "
-0008C3 772F612F 732F6420 
-0008CB 6F722071 20202020 
-0008D3 20202020 
-0008D7 24                  A  1239                DB     EOS
-0008D8 1B5B306D            A  1240    MSG2:       DB     1BH, "[0m"
-0008DC 20202020 20202020   A  1241                DB     "        QUIT? (y/n)         "
-0008E4 51554954 3F202879 
-0008EC 2F6E2920 20202020 
-0008F4 20202020 
-0008F8 24                  A  1242                DB     EOS
-0008F9 1B5B306D            A  1243    MSG3:       DB     1BH, "[0m"
-0008FD 20202020 20202020   A  1244                DB     "         GAME OVER!         "
-000905 2047414D 45204F56 
-00090D 45522120 20202020 
-000915 20202020 
-000919 070D0A24            A  1245                DB     BEL, CR, LF, EOS
-00091D 1B5B306D            A  1246    MSG4:       DB     1BH, "[0m"
-000921 32303438 20202020   A  1247                DB     "2048                     pts"
-000929 20202020 20202020 
-000931 20202020 20202020 
-000939 20707473 
-00093D 24                  A  1248                DB     EOS
+0006B6 E60F                A  1068    L3:         AND     0FH
+0006B8 C630                A  1069                ADD     A,'0'
+                           A  1070    
+                           A  1071    ;            LD      C,02H
+                           A  1072    ;            LD      E,A
+0006BA CD 4F 01            A  1073                CALL    UART0_serial_TX
+                           A  1074    
+                           A  1075    ;            LD      C,02H
+0006BD 3E48                A  1076                LD      a,'H'
+0006BF CD 4F 01            A  1077                CALL    UART0_serial_TX
+                           A  1078    
+0006C2 C9                  A  1079                RET
+                           A  1080    
+0006C3                     A  1081    NEWLINE:
+                           A  1082    
+                           A  1083    ;            LD      C,02H
+0006C3 3E0D                A  1084                LD      A,CR
+0006C5 CD 4F 01            A  1085                CALL    UART0_serial_TX
+                           A  1086    
+                           A  1087    ;            LD      C,02H
+0006C8 3E0A                A  1088                LD      A,LF
+0006CA CD 4F 01            A  1089                CALL    UART0_serial_TX
+                           A  1090    
+0006CD C9                  A  1091                RET
+                           A  1092    
+0006CE 110000              A  1093    RAND16:     LD      DE,0
+0006D1 7A                  A  1094                LD      A,D
+0006D2 63                  A  1095                LD      H,E
+0006D3 2EFD                A  1096                LD      L,253
+0006D5 B7                  A  1097                OR      A
+0006D6 ED52                A  1098                SBC     HL,DE
+0006D8 DE00                A  1099                SBC     A,0
+0006DA ED52                A  1100                SBC     HL,DE
+0006DC 1600                A  1101                LD      D,0
+0006DE 9A                  A  1102                SBC     A,D
+0006DF 5F                  A  1103                LD      E,A
+0006E0 ED52                A  1104                SBC     HL,DE
+0006E2 30 01               A  1105                JR      NC,RAND
+0006E4 23                  A  1106                INC     HL
+0006E5 22 CF 06            A  1107    RAND:       LD      (RAND16+1),HL
+0006E8 C9                  A  1108                RET
+                           A  1109    
+0006E9                     A  1110    DIV16:
+0006E9 7C                  A  1111                LD      A,H         ; HL = HL % DE
+0006EA 4D                  A  1112                LD      C,L
+0006EB 210000              A  1113                LD      HL,0
+0006EE 0610                A  1114                LD      B,16
+                           A  1115    
+0006F0 37                  A  1116    DL1:        SCF
+0006F1 CB11                A  1117                RL      C
+0006F3 17                  A  1118                RLA
+0006F4 ED6A                A  1119                ADC     HL,HL
+0006F6 ED52                A  1120                SBC     HL,DE
+0006F8 30 02               A  1121                JR      NC,$+4
+0006FA 19                  A  1122                ADD     HL,DE
+0006FB 0D                  A  1123                DEC     C
+0006FC 10 F2               A  1124                DJNZ    DL1
+                           A  1125    
+0006FE 57                  A  1126                LD      D,A         ; DE = HL / DE
+0006FF 59                  A  1127                LD      E,C
+000700 C9                  A  1128                RET
+                           A  1129    
+000701                     A  1130    show_string_de:
+                           A  1131    ;        ld c, BDOS_Print_String = 9
+000701 1A                  A  1132            ld      a,(de)
+000702 FE24                A  1133            cp      '$'
+000704 C8                  A  1134            ret     z
+                           A  1135    ;        push    de
+                           A  1136    ;        rst     10h
+000705 CD 4F 01            A  1137    		call	UART0_serial_TX
+                           A  1138    ;        pop     de
+000708 13                  A  1139            inc     de
+000709 18 F6               A  1140            jr      show_string_de
+                           A  1141    
+00070B                     A  1142    BOARD:
+00070B 00000000            A  1143                DB     00, 00, 00, 00
+00070F 00000000            A  1144                DB     00, 00, 00, 00
+000713 00000000            A  1145                DB     00, 00, 00, 00
+000717 00000000            A  1146                DB     00, 00, 00, 00
+                           A  1147    
+00071B 20202020 20202024   A  1148    SPACER:     DB     "       ", '$'
+                           A  1149    
+000723 3F07                A  1150    LABELPTR:   DW     LABELS
+000725 4707                A  1151                DW     LABELS + 8
+000727 4F07                A  1152                DW     LABELS + 16
+000729 5707                A  1153                DW     LABELS + 24
+00072B 5F07                A  1154                DW     LABELS + 32
+00072D 6707                A  1155                DW     LABELS + 40
+00072F 6F07                A  1156                DW     LABELS + 48
+000731 7707                A  1157                DW     LABELS + 56
+000733 7F07                A  1158                DW     LABELS + 64
+000735 8707                A  1159                DW     LABELS + 72
+000737 8F07                A  1160                DW     LABELS + 80
+000739 9707                A  1161                DW     LABELS + 88
+00073B 9F07                A  1162                DW     LABELS + 96
+00073D A707                A  1163                DW     LABELS + 104
+                           A  1164    
+00073F 202020F9 20202024   A  1165    LABELS:     DB     "   ", 0F9H, "   ", EOS
+000747 20202032 20202024   A  1166                DB     "   2   ", EOS
+00074F 20202034 20202024   A  1167                DB     "   4   ", EOS
+000757 20202038 20202024   A  1168                DB     "   8   ", EOS
+00075F 20202031 36202024   A  1169                DB     "   16  ", EOS
+000767 20202033 32202024   A  1170                DB     "   32  ", EOS
+00076F 20202036 34202024   A  1171                DB     "   64  ", EOS
+000777 20203132 38202024   A  1172                DB     "  128  ", EOS
+00077F 20203235 36202024   A  1173                DB     "  256  ", EOS
+000787 20203531 32202024   A  1174                DB     "  512  ", EOS
+00078F 20313032 34202024   A  1175                DB     " 1024  ", EOS
+000797 20323034 38202024   A  1176                DB     " 2048  ", EOS
+00079F 20343039 36202024   A  1177                DB     " 4096  ", EOS
+0007A7 20383139 32202024   A  1178                DB     " 8192  ", EOS
+                           A  1179    
+0007AF CB07                A  1180    COLORPTR:   DW     COLORS
+0007B1 D407                A  1181                DW     COLORS + 9
+0007B3 DD07                A  1182                DW     COLORS + 18
+0007B5 E607                A  1183                DW     COLORS + 27
+0007B7 EF07                A  1184                DW     COLORS + 36
+0007B9 F807                A  1185                DW     COLORS + 45
+0007BB 0108                A  1186                DW     COLORS + 54
+0007BD 0A08                A  1187                DW     COLORS + 63
+0007BF 1308                A  1188                DW     COLORS + 72
+0007C1 1C08                A  1189                DW     COLORS + 81
+0007C3 2508                A  1190                DW     COLORS + 90
+0007C5 2E08                A  1191                DW     COLORS + 99
+0007C7 3708                A  1192                DW     COLORS + 108
+0007C9 4008                A  1193                DW     COLORS + 117
+                           A  1194    
+0007CB 1B5B3430 3B33376D   A  1195    COLORS:     DB     1BH, "[40;37m", EOS  ; 0
+0007D3 24 
+0007D4 1B5B3434 3B33376D   A  1196                DB     1BH, "[44;37m", EOS  ; 2
+0007DC 24 
+0007DD 1B5B3436 3B33376D   A  1197                DB     1BH, "[46;37m", EOS  ; 4
+0007E5 24 
+0007E6 1B5B3432 3B33376D   A  1198                DB     1BH, "[42;37m", EOS  ; 8
+0007EE 24 
+0007EF 1B5B3433 3B33306D   A  1199                DB     1BH, "[43;30m", EOS  ; 16
+0007F7 24 
+0007F8 1B5B3435 3B33376D   A  1200                DB     1BH, "[45;37m", EOS  ; 32
+000800 24 
+000801 1B5B3431 3B33376D   A  1201                DB     1BH, "[41;37m", EOS  ; 64
+000809 24 
+00080A 1B5B3437 3B33306D   A  1202                DB     1BH, "[47;30m", EOS  ; 128
+000812 24 
+000813 1B5B3434 3B33376D   A  1203                DB     1BH, "[44;37m", EOS  ; 256
+00081B 24 
+00081C 1B5B3436 3B33376D   A  1204                DB     1BH, "[46;37m", EOS  ; 512
+000824 24 
+000825 1B5B3432 3B33376D   A  1205                DB     1BH, "[42;37m", EOS  ; 1024
+00082D 24 
+00082E 1B5B3433 3B33306D   A  1206                DB     1BH, "[43;30m", EOS  ; 2048
+000836 24 
+000837 1B5B3435 3B33376D   A  1207                DB     1BH, "[45;37m", EOS  ; 4096
+00083F 24 
+000840 1B5B3431 3B33376D   A  1208                DB     1BH, "[41;37m", EOS  ; 8192
+000848 24 
+                           A  1209    
+000849 0000                A  1210    POINTS:     DW     0000H
+00084B 0000                A  1211                DW     0000H
+00084D 0400                A  1212                DW     0004H
+00084F 0800                A  1213                DW     0008H
+000851 1600                A  1214                DW     0016H
+000853 3200                A  1215                DW     0032H
+000855 6400                A  1216                DW     0064H
+000857 2801                A  1217                DW     0128H
+000859 5602                A  1218                DW     0256H
+00085B 1205                A  1219                DW     0512H
+00085D 2410                A  1220                DW     1024H
+00085F 4820                A  1221                DW     2048H
+000861 9640                A  1222                DW     4096H
+000863 9281                A  1223                DW     8192H
+                           A  1224    
+000865                     A  1225    INIT:
+000865 1700C100            A  1226    	db	23,0,193,0	;turn off legacy mode so that mode 1 makes sense
+000869 1600                A  1227    	db	22,0		;VDU 22 0 = set mode 0
+00086B 1700FF              A  1228    	db	23,0,255	;VDU 23 0 0xFF = set terminal mode       
+00086E 1B5B3F32 356C1B5B   A  1229    		DB     1BH, "[?25l", 1BH, "[2J", EOS
+000876 324A24 
+000879 7F7F1B5F 23512124   A  1230    TERM:      db		7fh,7fh,ESC,'_#Q!$'	 
+                           A  1231    ;	DB     1BH, "[?25h"
+000881 1B5B306D 24         A  1232    RESET:      DB     1BH, "[0m", EOS
+                           A  1233    
+000886 1B5B3238 4324       A  1234    ADVANCE:    DB     1BH, "[28C", EOS
+                           A  1235    
+00088C DC                  A  1236    TOPBORDER:  DB     0DCH
+00088D DCDCDCDC DCDCDC     A  1237                DB     0DCH, 0DCH, 0DCH, 0DCH, 0DCH, 0DCH, 0DCH
+000894 DCDCDCDC DCDCDC     A  1238                DB     0DCH, 0DCH, 0DCH, 0DCH, 0DCH, 0DCH, 0DCH
+00089B DCDCDCDC DCDCDC     A  1239                DB     0DCH, 0DCH, 0DCH, 0DCH, 0DCH, 0DCH, 0DCH
+0008A2 DCDCDCDC DCDCDC     A  1240                DB     0DCH, 0DCH, 0DCH, 0DCH, 0DCH, 0DCH, 0DCH
+0008A9 DC24                A  1241                DB     0DCH, EOS
+                           A  1242    
+0008AB DF                  A  1243    BTMBORDER:  DB     0DFH
+0008AC DFDFDFDF DFDFDF     A  1244                DB     0DFH, 0DFH, 0DFH, 0DFH, 0DFH, 0DFH, 0DFH
+0008B3 DFDFDFDF DFDFDF     A  1245                DB     0DFH, 0DFH, 0DFH, 0DFH, 0DFH, 0DFH, 0DFH
+0008BA DFDFDFDF DFDFDF     A  1246                DB     0DFH, 0DFH, 0DFH, 0DFH, 0DFH, 0DFH, 0DFH
+0008C1 DFDFDFDF DFDFDF     A  1247                DB     0DFH, 0DFH, 0DFH, 0DFH, 0DFH, 0DFH, 0DFH
+0008C8 DF24                A  1248                DB     0DFH, EOS
                            A  1249    
-                           A  1250    ; variables
-                           A  1251    
-00093E 00                  A  1252    XPOS:       DB     0
-00093F 00                  A  1253    YPOS:       DB     0
-000940 0000                A  1254    BOARDPTR:   DW     0
-000942 00                  A  1255    MOVED:      DB     0
-000943 00                  A  1256    RESULT:     DB     0
-000944 00000000            A  1257    SCORE:      DB     00H, 00H, 00H, 00H
-000948 1B5B306D 20202020   A  1258    SCORESTR:   DB     1BH, "[0m        $"
-000950 20202020 24 
-                           A  1259    
-                           A  1260                END
-                           A  1261    
+0008CA 1B5B306D            A  1250    MSG1:       DB     1BH, "[0m"
+0008CE 20202020 20202020   A  1251                DB     "        w/a/s/d or q        "
+0008D6 772F612F 732F6420 
+0008DE 6F722071 20202020 
+0008E6 20202020 
+0008EA 24                  A  1252                DB     EOS
+0008EB 1B5B306D            A  1253    MSG2:       DB     1BH, "[0m"
+0008EF 20202020 20202020   A  1254                DB     "        QUIT? (y/n)         "
+0008F7 51554954 3F202879 
+0008FF 2F6E2920 20202020 
+000907 20202020 
+00090B 24                  A  1255                DB     EOS
+00090C 1B5B306D            A  1256    MSG3:       DB     1BH, "[0m"
+000910 20202020 20202020   A  1257                DB     "         GAME OVER!         "
+000918 2047414D 45204F56 
+000920 45522120 20202020 
+000928 20202020 
+00092C 070D0A24            A  1258                DB     BEL, CR, LF, EOS
+000930 1B5B306D            A  1259    MSG4:       DB     1BH, "[0m"
+000934 32303438 20202020   A  1260                DB     "2048                     pts"
+00093C 20202020 20202020 
+000944 20202020 20202020 
+00094C 20707473 
+000950 24                  A  1261                DB     EOS
+                           A  1262    
+                           A  1263    ; variables
+                           A  1264    
+000951 00                  A  1265    XPOS:       DB     0
+000952 00                  A  1266    YPOS:       DB     0
+000953 0000                A  1267    BOARDPTR:   DW     0
+000955 00                  A  1268    MOVED:      DB     0
+000956 00                  A  1269    RESULT:     DB     0
+000957 00000000            A  1270    SCORE:      DB     00H, 00H, 00H, 00H
+00095B 1B5B306D 20202020   A  1271    SCORESTR:   DB     1BH, "[0m        $"
+000963 20202020 24 
+                           A  1272    
+                           A  1273                END
+                           A  1274    
 
 
 Errors: 0
 Warnings: 0
-Lines Assembled: 1616
+Lines Assembled: 1629
