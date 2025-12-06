@@ -352,9 +352,13 @@ sauce_lp:
 ;
 
 UART0_wait_CTS:
-		GET_GPIO	PD_DR, 8		; Check Port D, bit 3 (CTS)
-		jr		NZ, UART0_wait_CTS
-		ret
+		IN0		A, (UART0_REG_MSR)
+		BIT		4, A			; check inverted CTS bit, 1 = CTS, 0 = NOT CTS (clear to send)
+		JR		Z, UART0_wait_CTS
+		RET
+;		GET_GPIO	PD_DR, 8		; Check Port D, bit 3 (CTS) - Incorrect older method
+;		jr		NZ, UART0_wait_CTS
+;		ret
 
 ; Write a character to UART0
 ; Parameters:
@@ -364,8 +368,12 @@ UART0_wait_CTS:
 ; - F: NC if timed out
 ;
 UART0_serial_TX:
+		rst		10h
+		ret
+
 		push		BC			; Stack BC
 		push		AF 			; Stack AF
+		call	UART0_wait_CTS	; block on wait for CTS. No timeout.
 		ld		BC,TX_WAIT		; Set CB to the transmit timeout
 UART0_serial_TX1:	in0		A,(UART0_REG_LSR)	; Get the line status register
 		and 		UART_LSR_ETX		; Check for TX empty
@@ -412,7 +420,7 @@ badusage:
 ; usage -- show syntax
 ; 
 usage:	call	inline_print
-		db		CR,LF,'ANSI player for Agon (c) Shawn Sijnstra 16-Sep-2025 v0.8 - MIT license',CR,LF,CR,LF
+		db		CR,LF,'ANSI player for Agon (c) Shawn Sijnstra 28-Sep-2025 v0.8 - MIT license',CR,LF,CR,LF
 		db		'Usage:',CR,LF
 		db		'   ANSIplay [-x] <file>',CR,LF
 		db  	'By default ANSIplay waits for any key to exit once done.',CR,LF
