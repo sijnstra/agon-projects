@@ -24,6 +24,8 @@
 _err_invalid_param:	LD		HL, 19			; The return code: Invalid parameters
 			RET
 
+; To add: turn off cursor and back on again when done.
+; additional parameter for how many seconds to wait before auto-exiting.
 
 ; ASCII
 ;
@@ -41,9 +43,21 @@ _main:
 	dec	a
 	ld	(argc),a
 	jp	z,okusage
-	cp	3	;too many parameters
+	cp	4	;too many parameters
 	jp	nc,badusage
 
+	cp	3
+	jr	c,open_scrfil
+	ld.lil	hl,(IX+9)
+	ld.lil	a,(hl)
+	sub	'1'
+	jp	c,badusage
+	inc	a
+	cp	10
+	jp	nc,badusage
+	ld	(timerfun),a
+
+open_scrfil:
 	LD.LIL		HL,(IX+3)		; HLU: pointer to first argument
 ;	ld.lil	hl,filetest + BASE
 	ld.LIL	a,(HL)
@@ -73,6 +87,13 @@ close:
 ;C: Filehandle, or 0 to close all open files
 ;returns number of still open files - how about we just always close all?
 
+;turn back on cursor first = VDU 23,1,1
+	ld	a,23
+	rst	10h
+	ld	a,1
+	rst	10h
+	rst	10h
+
 	ld	c,0
 	MOSCALL	mos_fclose	
 
@@ -89,6 +110,13 @@ open_ok:
 ;	LD.LIL		HL,(IX+3)
 ;	call	print_HLU
 
+;turn off cursor first = VDU 23,1,0 - seems to not work?
+	ld	a,23
+	rst	10h
+	ld	a,1
+	rst	10h
+	dec	a
+	rst	10h
 
 ; New Method:
 
@@ -589,7 +617,45 @@ inner4_docolchange:
 	jp	c,scr_outer_lp
 
 scr_done:
+	ld		a,(timerfun)
+	or		a
+	jr		z,scr_done_waitkey
+
+	ld  a, 8        ;0x08: mos_sysvars
+	rst 08h         ;IX(U) now has sysvars
+	ld	hl,timerfun	;how many seconds
+	xor	a
+	ld.lil  (ix+sysvar_vkeydown),a
+; c is tickcount - 60 ticks = 1 sec @ 60Hz
+; b is tickcheck
+__keyloop_timerset:
+	ld	c,60		;assume 60Hz
+	ld.lil	b,(IX+sysvar_time)
+__keyloop:
+	ld.lil	a,(IX+sysvar_time)
+	cp	b
+	jr	z,__keyloop_notick
+	ld	b,a
+	dec	c
+	jr	nz,__keyloop_notick
+	dec	(hl)
+	jr	z,__scr_done_exit
+	jr	__keyloop_timerset
+
+__keyloop_notick:
+
+	ld.lil  a,(ix+sysvar_vkeydown)  ;Is a key down?
+	or  a
+	jr  z,__keyloop		;no key down
+	ld.lil  a,(ix+sysvar_keyascii)  ;Is key down returning a character?
+	or  a
+	jr  z,__keyloop    ;if not, return no key down
+	jr	__scr_done_exit
+
+
+scr_done_waitkey:
 	MOSCALL	mos_getkey
+__scr_done_exit:
 	ld		a,22	; VDU 22, mode - back to mode 0 on exit
 	rst		10h
 	xor		a
@@ -650,10 +716,11 @@ badusage:	call usage
 usage:	call	inline_print
 	db	CR,LF,"CPCpic utility for Agon by Shawn Sijnstra (c) 26-Aug-2025",CR,LF,CR,LF
 	db	"Usage:",CR,LF
-;	db	"   CPCpic2 [file.PAL|*] [file.SCR]",CR,LF,"where:",CR,LF
+;	db	"   CPCpic2 [file.PAL|*] [file.SCR] [1-9]",CR,LF,"where:",CR,LF
 ;	db	"   you can specify a palette file [file.PAL] or an asterisk * to use the default palette",CR,LF
 	db	"   CPCpic [file.PAL] [file.SCR]",CR,LF,"where:",CR,LF
 	db	"   requires both a palette file [file.PAL] and the screen image file [file.SCR]",CR,LF
+	db	"   1-9 is an optional parameter to wait for 1-9 seconds before exiting",CR,LF
 	db 	"Works in either /mos or /bin directory. Minimum VDP version 2.3.0.",CR,LF,CR,LF,0	;update minimum...
 	ret
 
@@ -1154,7 +1221,8 @@ create_bitmap_test:
 ;
 ; RAM
 ; 
-
+;pre-set value:
+timerfun:	db	0	;start initalised with a zero
 
 argc:		DS	1	;store argc for later
 pal_handle:	DS	1	;Only needs 1 byte handle

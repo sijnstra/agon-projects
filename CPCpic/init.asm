@@ -37,8 +37,7 @@ RST_30:			DS		8
 ;	
 ; The NMI interrupt vector (not currently used by AGON)
 ;
-RST_38:			EI
-			RETI
+RST_38:						RST.LIS 	38h		; Output
 ;
 ; The header stuff is from byte 64 onwards
 ;

@@ -4,7 +4,9 @@ Loads a CPC palette file and Screen file and displays it as it would have loaded
 You can assemble using `ez80asm CPCpic.asm` or download your the pre-built binary `CPCpic.bin`.
 
 # Usage
-`CPCpic [file.PAL] [file.SCR]` where it requires both a palette file `[file.PAL]` and the screen image file `[file.SCR]`
+`CPCpic [file.PAL] [file.SCR] [1-9]` where it requires both a palette file `[file.PAL]` and the screen image file `[file.SCR]`
+
+The 1-9 is a single digit optional additional parameter to wait 1-9 seconds before exiting automatically. A keypress will still exit early. Without this parameter it will simply wait for a keypress.
 
 Works in either /mos or /bin directory. Minimum VDP version 2.3.0.
 
