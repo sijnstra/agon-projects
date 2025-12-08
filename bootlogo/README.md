@@ -4,7 +4,9 @@ This is a MOSlet to show an Agon boot logo including screen capabilities. It's w
 # usage
 Copy `bootlogo.bin` into your `/mos` then add `bootlogo` to the end of your `autoexec.txt`, and the software will display the current screen capabilities next to the Agon logo.
 
-You can specify *any* parameter to suppress the colour bars. e.g. `bootlogo -` will show the logo except for the colour bars.
+Specify a single parameter of '8' to replace the Agon Light logo with the Console8 logo.
+
+You can specify *any* other parameter to suppress the colour bars. e.g. `bootlogo -` will show the logo except for the colour bars.
 
 The software also takes advantage of user-defined fonts to display the logo, and now resets the font at the end.
 
@@ -14,6 +16,8 @@ Recommended minimum version of VDP to support the codes that are used is Console
 ![bootlogo run in autoexec with defaults](bootlogo_autoexec.PNG)
 
 ![bootlogo from command line in mode 3](bootlogo_mode3.PNG)
+
+![bootlogo run with Console8 switch in mode 8](bootlogo_mode8_C8.PNG)
 
 # Source code
 Source code is provided. The code can be compiled natively using `ez80asm`.
