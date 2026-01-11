@@ -40,3 +40,7 @@ There are some sample images provided in the Images directory, including provide
 * Support other image widths
 * Support images taller than the screen
 * Make the header and format checks more robust
+
+# Example rendering
+To give an idea of the possible image quality, this is one of the example images as displayed on the emulator:
+![PCXview screenshot](Example.png)
