@@ -20,7 +20,7 @@ There are a number of reasons why I chose to display this format on the Agon/Con
 Here are the high-level instructions on creating PCX images in GIMP, noting there are other utilities also supporting this format.
 * Resize the image as required to a supported size, either by adjusting the canvas or scaling
 * adjust the colour depth by selecting Image -> Mode -> Indexed... -> Generate optimum palette
-** Using 4 or 16 colours, depending on the size
+ * Using 4 or 16 colours, depending on the size
 * Export as PCX
 
 # Usage
