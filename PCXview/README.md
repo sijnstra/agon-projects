@@ -15,12 +15,16 @@ You can assemble using `ez80asm PCXview.asm` or download your the pre-built bina
 There are a number of reasons why I chose to display this format on the Agon/Console8.
 * It is an already existing format
 * The format is supported by modern tools, including GIMP
+* It uses a very simple form of compression ideal for 8 bit CPUs
+* The specific choice of 16 colours has additional benefits:
+  * The 16 colours are chosen from within the available 64 colour palette
+  * The 16 colours allows the image to be sent to the VDP with 2 pixels per byte, speeding up the transfer
 
 # GIMP support to create PCX images
 Here are the high-level instructions on creating PCX images in GIMP, noting there are other utilities also supporting this format.
 * Resize the image as required to a supported size, either by adjusting the canvas or scaling
 * adjust the colour depth by selecting Image -> Mode -> Indexed... -> Generate optimum palette
- * Using 4 or 16 colours, depending on the size
+  * Using 4 or 16 colours, depending on the size
 * Export as PCX
 
 # Usage
