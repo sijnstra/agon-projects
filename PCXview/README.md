@@ -1,13 +1,13 @@
 # PCXview
 Loads a .PCX format image on Agon. The following formats are supported:
 
-* 640 wide in 16 colours, up to 480 high
-* 800 wide in 4 colours, up to 600 high
-* 1024 wide in 4 colours, up to 768 high
+* Up to 640 x 480 in 16 colours
+* Up to 800 x 600 in 4 colours
+* Up to 1024 x 768 wide in 4 colours
 
 The loader assumes that the x-offset and y-offset are zero, and that the image is in a single plane with 4 bits per pixel (for either 4 or 16 colours).
 
-Images are vertically centred where possible.
+Images are first checked to see if they fit within 640x480, if not, then checked for 800x600, and finally 1024x768. If the image is too wide for 1024x768, the software will exit. If the image is too tall for 768, it will display the top 768 lines. The images are centred when displayed.
 
 You can assemble using `ez80asm PCXview.asm` or download your the pre-built binary `PCXView.bin`.
 
@@ -37,8 +37,7 @@ Works in either /mos or /bin directory. Minimum VDP version 2.10.0.
 There are some sample images provided in the Images directory, including provided by the [Public Domain Image Archive](https://pdimagearchive.org/).
 
 # Roadmap items for development:
-* Support other image widths
-* Support images taller than the screen
+* Improve support for images taller than the screen
 * Make the header and format checks more robust
 
 # Example rendering

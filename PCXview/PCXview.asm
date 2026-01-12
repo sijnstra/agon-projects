@@ -65,12 +65,9 @@ _main:
 
 open_fil:
 	LD.LIL		HL,(IX+3)		; HLU: pointer to first argument
-;	ld.lil	hl,filetest + BASE
-;	rst	10h	;print first letter of filename - this is a debug
 	ld	c,fa_read	;open read-only for straight through hex dump to the end
 	MOSCALL	mos_fopen
 	or	a
-;	jr	open_ok
 	jr	nz,open_ok
 	call	inline_print
 	db		"Not found:",0
@@ -105,7 +102,7 @@ exit:
 ; bad file format for valid PCX files.
 bad_format:
 	call	inline_print
-	db		"Not a recognised PCX file format.",0
+	db		"Not a supported PCX file format.",0
 	call	close	;close files
 	ld	hl,9	;file not found/could not find file - error opening file [not necessarily correct error though]
 	ret			;exit - should have closed the files too?
@@ -176,7 +173,6 @@ header_check:
 	ld		hl,pal_buffer
 	call	_set_ahl24
 	ld.lil	de,128	;this is the file length of the .PCX header
-;	ld.lil	de,16384	;testing for POC
 	ld	a,(pcx_handle)
 	ld	c,a
 	MOSCALL	mos_fread
@@ -195,20 +191,24 @@ header_check:
 ; 08 	8 	2 bytes 	The maximum x co-ordinate of the image position.
 ; 0A 	10 	2 bytes 	The maximum y co-ordinate of the image position. 
 ; currently assuming the top 2 are zeros.
-	ld		hl,(pal_buffer+8)
+;	ld		hl,(pal_buffer+8)
+	ld		hl,(pal_buffer+0x42)
+	add		hl,hl		;number of stored pixels - note that it should be trimmed but not sure how to do that
 	ex		de,hl		;keep the value in DE
-	ld		hl,1023
+	ld		hl,640
 	or		a		;clear carry
 	sbc		hl,de
-	jr		z,mode_19	;image is 1024 wide
-	ld		hl,639
+	jr		nc,mode_0	;image is 640 wide
+m0_too_tall:
+	ld		hl,800
 	or		a		;clear carry
 	sbc		hl,de
-	jr		z,mode_0	;image is 640 wide
-	ld		hl,799
+	jr		nc,mode_16	;image is 800 wide
+m16_too_tall:
+	ld		hl,1024
 	or		a		;clear carry
 	sbc		hl,de
-	jr		z,mode_16	;image is 1024 wide
+	jr		nc,mode_19	;image is 1024 wide
 
 	jp		bad_format	;image is not a supported size
 ;	jp		nc,bad_format	;image is too large
@@ -221,6 +221,8 @@ header_check:
 ;	ld		a, 9		;mode  9 = 320 x 240 x 16
 
 mode_0:
+	ld		b,h		;save result of how many extra pixels we have
+	ld		c,l
 	ld		a,22	;VDU 22, mode
 	rst		10h
 	xor		a			;mode  0 = 640 x 480 x 16
@@ -231,19 +233,18 @@ mode_0:
 	or		a
 	sbc		hl,de
 	jr		nc,@F
-	ld		de,480		;make sure it's no bigger than this
-	ld		hl,0		;screen is full
+	ld		hl,(pal_buffer+0x42)
+	add		hl,hl		;number of stored pixels - note that it should be trimmed but not sure how to do that
+	ex		de,hl		;keep the value in DE
+	jr		m0_too_tall	;try the larger mode although fewer colours
+;	ld		de,480		;make sure it's no bigger than this
+;	ld		hl,0		;screen is full
 @@:
-	srl		h			;halve the y difference to centre the image
-	rr		l
-	ld		(y_offset),hl
-	ex		de,hl
-	ld		(pcx_max_y),hl
-	ld		hl,640		;this will be adjustable eventually
-	ld		(actual_max_x),hl
 	jp		video_mode_set
 
 mode_16:
+	ld		b,h		;save result of how many extra pixels we have
+	ld		c,l
 	ld		a,22	;VDU 22, mode
 	rst		10h
 	ld		a,16		;mode 16 = 800 x 600 x 4
@@ -254,19 +255,19 @@ mode_16:
 	or		a
 	sbc		hl,de		;HL = 600 - (max_y)
 	jr		nc,@F
-	ld		de,600		;make sure it's no bigger than this
-	ld		hl,0		;screen is full
+	ld		hl,(pal_buffer+0x42)
+	add		hl,hl		;number of stored pixels - note that it should be trimmed but not sure how to do that
+	ex		de,hl		;keep the value in DE
+	jr		m16_too_tall	;maximise the vertical resolution
+;	ld		de,600		;make sure it's no bigger than this
+;	ld		hl,0		;screen is full
+
 @@:
-	srl		h			;halve the y difference to centre the image
-	rr		l
-	ld		(y_offset),hl
-	ex		de,hl
-	ld		(pcx_max_y),hl
-	ld		hl,800		;this will be adjustable eventually
-	ld		(actual_max_x),hl
 	jp		video_mode_set
 
 mode_19:
+	ld		b,h		;save result of how many extra pixels we have
+	ld		c,l
 	ld		a,22	;VDU 22, mode
 	rst		10h
 	ld		a,19		;mode 19 = 1024 x 768 x 4 - requires 2.10.0+
@@ -280,14 +281,19 @@ mode_19:
 	ld		de,768		;make sure it's no bigger than this
 	ld		hl,0		;screen is full
 @@:
+video_mode_set:
 	srl		h			;halve the y difference to centre the image
 	rr		l
 	ld		(y_offset),hl
-	ex		de,hl
-	ld		(pcx_max_y),hl
-	ld		hl,1024		;this will be adjustable eventually
+	srl		b			;halve the x difference to centre the image
+	rr		c
+	ld		(x_offset),bc
+	ld		(pcx_max_y),de
+;	ld		hl,(pal_buffer+8)	;re-fetch the total X
+;	inc		hl			;offset of 1 for the inner loop below to work
+	ld		hl,(pal_buffer+0x42)
+	add		hl,hl		;number of stored pixels - note that it should be trimmed but not sure how to do that
 	ld		(actual_max_x),hl
-video_mode_set:
 	call	physical_layout	;set up the coordinate system to be physical layout
 
 ;First we need to define the working palette (subset of the current)
@@ -415,12 +421,15 @@ scr_load:
 scr_outer_lp:
 ; We need to count the total number of rows, and make sure we havent exceeded the count.
 
-	ld	hl,(actual_max_x)		;this will be set for specific image width
-					;stored the width in create_bitmap string
-	srl	h			;halve it to get the number of bytes sent per row
-	rr	l			;noting we never use the real byte count, only the nibble count
+;	ld	hl,(actual_max_x)		;this will be set for specific image width
+;					;stored the width in create_bitmap string
+;	srl	h			;halve it to get the number of bytes sent per row
+;	rr	l			;noting we never use the real byte count, only the nibble count
+;	inc	hl			;rounding up to the nearest even number as the file format
+;	res	0,l			; pads out to an even number of nibbles.
+	ld	hl,(pal_buffer+0x42)	;number of bytes allocated to the row
 	ld	(pcx_max_x),hl
-	ld	hl,scr_buffer	;quick and dirty for POC
+	ld	hl,scr_buffer	;page aligned buffer
 	ld	(scr_curbyte),hl	;need to convert this into a fetch byte routine for de-blocking
 
 scr_rows_lp:
@@ -556,11 +565,15 @@ scr_inner_chkwidth:
 	rst	10h
 	ld	a,3
 	rst	10h
-	xor	a	;x = 0 - this might get offset later when we do other widths
+;	xor	a	;x = 0 - this might get offset later when we do other widths
+	ld	hl,0	;horizontal offset
+x_offset:	equ	$-2
+	ld	a,l
 	rst	10h
+	ld	a,h
 	rst	10h
 	ld	hl,(pcx_y)
-	ld	de,0
+	ld	de,0	;add vertical offset to row
 y_offset:	equ	$-2
 	add	hl,de
 	ld	a,l		;little endian
@@ -702,11 +715,11 @@ badusage:	call usage
 ; usage -- show syntax
 ; 
 usage:	call	inline_print
-	db	CR,LF,"PCXview utility for Agon by Shawn Sijnstra (c) 11-Jan-2026",CR,LF,CR,LF
+	db	CR,LF,"PCXview utility for Agon by Shawn Sijnstra (c) 12-Jan-2026",CR,LF,CR,LF
 	db	"Usage:",CR,LF
 	db	"   PCXview file.PCX [1-9]",CR,LF,"where:",CR,LF
 	db	"   1-9 is an optional parameter to wait for 1-9 seconds before exiting",CR,LF
-	db	"   Supports images 640 wide in 16 colours, 800 and 1024 wide in 4 colours."
+	db	"   Supports images 640 wide in 16 colours, 800 and 1024 wide in 4 colours.",CR,LF
 	db 	"   Minimum VDP version 2.10.0.",CR,LF,CR,LF,0
 	ret
 
