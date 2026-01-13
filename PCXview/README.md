@@ -1,13 +1,14 @@
 # PCXview
-Loads a .PCX format image on Agon. The following formats are supported:
+Loads a .PCX format image on Agon. The following sizes are supported:
 
+* Up to 512 x 384 in 16 colours
 * Up to 640 x 480 in 16 colours
 * Up to 800 x 600 in 4 colours
 * Up to 1024 x 768 wide in 4 colours
 
-The loader assumes that the x-offset and y-offset are zero, and that the image is in a single plane with 4 bits per pixel (for either 4 or 16 colours).
+The image itself needs to be in a single plane with 4 bits per pixel (for either 4 or 16 colours), or 1 bit per pixel.
 
-Images are first checked to see if they fit within 640x480, if not, then checked for 800x600, and finally 1024x768. If the image is too wide for 1024x768, the software will exit. If the image is too tall for 768, it will display the top 768 lines. The images are centred when displayed.
+Images are first checked to see if they fit within 512x384, if not, then checked for 640x480, if not, then checked for 800x600, and finally 1024x768. If the image is too wide for 1024x768, the software will exit. If the image is too tall for 768, it will display the top 768 lines. The images are centred when displayed.
 
 You can assemble using `ez80asm PCXview.asm` or download your the pre-built binary `PCXView.bin`.
 
@@ -39,6 +40,8 @@ There are some sample images provided in the Images directory, including provide
 # Roadmap items for development:
 * Improve support for images taller than the screen
 * Make the header and format checks more robust
+* Support for 8bpp images
+* Write some notes on Irfanview on conversion to PCX format
 
 # Example rendering
 To give an idea of the possible image quality, this is one of the example images as displayed on the emulator:

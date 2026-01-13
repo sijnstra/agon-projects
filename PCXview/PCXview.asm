@@ -116,13 +116,6 @@ open_ok:
 ;	LD.LIL		HL,(IX+3)
 ;	call	print_HLU
 
-;turn off cursor first = VDU 23,1,0 - seems to not work?
-	ld	a,23
-	rst	10h
-	ld	a,1
-	rst	10h
-	dec	a
-	rst	10h
 
 ; New Method:
 
@@ -151,8 +144,6 @@ open_ok:
 ;1	RGBA2222 (1-bytes per pixel)
 ;2	Mono/Mask (1-bit per pixel)
 ;3	Reserved for internal use by VDP ("native" format)
-; This will always be 480 x 1; format 1.
-
 
 ; VDU 23, 27, 3, x; y;: Draw current bitmap on screen at pixel position x, y
 ; draw_bitmap
@@ -160,12 +151,15 @@ open_ok:
 
 ; map of used buffers:
 ; 256 + 64 = colour map
-; 256 up to 256+25 = input buffers
-; 256 + 32 up to 256 + 32 + 25 = output buffers that become the pixel map.
+; 257 = input buffer
+; 258 = output buffer that is split
+; 259 = output split that becomes the pixel map.
+; 260 = discarded end of the pixel map
 
-; The EGA palette is within the same file as the rest of the file. It's only 128 bytes.
-; We could actually load that first, then load the whole picture file... or load it in pages!
-; If it's in pages, we can keep loading it and keep this utility to a minium size as a moslet rather than whole memory...
+; The EGA palette is within the same file as the rest of the file. The header is only 128 bytes.
+; We could actually load that first, then load the whole picture file or load it in pages over the top.
+; We are using 256 byte blocks, this means we can keep keep this utility to a minium size as a moslet
+; rather than whole memory.
 
 
 header_check:
@@ -179,10 +173,23 @@ header_check:
 	ld	a,(pal_buffer)
 	cp	0x0A		;check magic number
 	jp	nz,bad_format
-	ld	a,(pal_buffer+3)	;The number of bits constituting one plane. Most often 1, 2, 4 or 8. 
-	cp	4			;the only number we support
+	ld	a,(pal_buffer+2)
+	cp	1		; 1 = RLE encoded, 0 = not encoded
+	jp	nz,bad_format	;only support RLE
+	ld	a,(pal_buffer+65)	;number of colour planes
+	cp	1				;only support 1
 	jp	nz,bad_format
-
+	ld	a,(pal_buffer+3)	;The number of bits constituting one plane. Most often 1, 2, 4 or 8. 
+							;would love to support 2, however, I have not seen it used yet so can't test it.
+							;8 will require some more work to get the palette right.
+	cp	4			;4 bits per pixel is supported
+	jr	z,@F
+;	cp	8			;8 bits per pixel will be supported
+;	jr	z,@F
+	cp	1			;1 bits per pixel is supported
+	jr	z,@F
+	jp	bad_format
+@@:					;format is good (still not 100% thorough check though)
 ;	jp	close
 ;now we should check size and set screen size accordingly
 ;Setup steps
@@ -190,11 +197,26 @@ header_check:
 ; 06 	6 	2 bytes 	The minimum y co-ordinate of the image position.
 ; 08 	8 	2 bytes 	The maximum x co-ordinate of the image position.
 ; 0A 	10 	2 bytes 	The maximum y co-ordinate of the image position. 
-; currently assuming the top 2 are zeros.
-;	ld		hl,(pal_buffer+8)
-	ld		hl,(pal_buffer+0x42)
-	add		hl,hl		;number of stored pixels - note that it should be trimmed but not sure how to do that
-	ex		de,hl		;keep the value in DE
+; Let's normalize the dimensions first to make the calculations easier below
+	ld		hl,(pal_buffer+10)
+	ld		de,(pal_buffer+6)
+	or		a
+	sbc		hl,de
+	ld		(pal_buffer+10),hl
+
+	ld		hl,(pal_buffer+8)
+	ld		de,(pal_buffer+4)
+	or		a
+	sbc		hl,de
+	ld		(pal_buffer+8),hl
+
+;	call	calc_width	;DE = the width in stored pixels
+	ld		de,(pal_buffer+8)	;actual width in pixels
+	ld		hl,512
+	or		a		;clear carry
+	sbc		hl,de
+	jr		nc,mode_20	;image is 512 wide
+m20_too_tall:
 	ld		hl,640
 	or		a		;clear carry
 	sbc		hl,de
@@ -219,59 +241,77 @@ m16_too_tall:
 ;general plan will be to check the width and height to see which is the best size
 ;mode_9:
 ;	ld		a, 9		;mode  9 = 320 x 240 x 16
+mode_20:
+	ld		b,h		;save result of how many extra pixels we have
+	ld		c,l
+	ld		hl,(pal_buffer+10)
+	ld		de,384		;max height
+	ex		de,hl
+	or		a
+	sbc		hl,de
+	jr		nc,@F
+;	call	calc_width	;DE = the width in stored pixels
+	ld		de,(pal_buffer+8)	;actual width in pixels
+	jr		m20_too_tall	;try the larger mode although fewer colours
+;	ld		de,384		;make sure it's no bigger than this
+;	ld		hl,0		;screen is full
+@@:
+
+	ld		a,22	;VDU 22, mode
+	rst		10h
+	ld		a,20			;mode  20 = 512 x 384 x 64
+	rst		10h
+	ld		a,16	;for max_pal - could handle 64 but not sure how they are stored yet! 8bpp not working.
+	jp		video_mode_set
 
 mode_0:
 	ld		b,h		;save result of how many extra pixels we have
 	ld		c,l
-	ld		a,22	;VDU 22, mode
-	rst		10h
-	xor		a			;mode  0 = 640 x 480 x 16
-	rst		10h
 	ld		hl,(pal_buffer+10)
 	ld		de,480		;max height
 	ex		de,hl
 	or		a
 	sbc		hl,de
 	jr		nc,@F
-	ld		hl,(pal_buffer+0x42)
-	add		hl,hl		;number of stored pixels - note that it should be trimmed but not sure how to do that
-	ex		de,hl		;keep the value in DE
+;	call	calc_width	;DE = the width in stored pixels
+	ld		de,(pal_buffer+8)	;actual width in pixels
 	jr		m0_too_tall	;try the larger mode although fewer colours
 ;	ld		de,480		;make sure it's no bigger than this
 ;	ld		hl,0		;screen is full
 @@:
+	ld		a,22	;VDU 22, mode
+	rst		10h
+	xor		a			;mode  0 = 640 x 480 x 16
+	rst		10h
+	ld		a,16	;for max_pal
 	jp		video_mode_set
 
 mode_16:
 	ld		b,h		;save result of how many extra pixels we have
 	ld		c,l
-	ld		a,22	;VDU 22, mode
-	rst		10h
-	ld		a,16		;mode 16 = 800 x 600 x 4
-	rst		10h
 	ld		hl,(pal_buffer+10)
 	ld		de,600		;max height allowed
 	ex		de,hl
 	or		a
 	sbc		hl,de		;HL = 600 - (max_y)
 	jr		nc,@F
-	ld		hl,(pal_buffer+0x42)
-	add		hl,hl		;number of stored pixels - note that it should be trimmed but not sure how to do that
-	ex		de,hl		;keep the value in DE
+;	call	calc_width	;DE = the width in stored pixels
+	ld		de,(pal_buffer+8)	;actual width in pixels
 	jr		m16_too_tall	;maximise the vertical resolution
 ;	ld		de,600		;make sure it's no bigger than this
 ;	ld		hl,0		;screen is full
 
 @@:
+	ld		a,22	;VDU 22, mode
+	rst		10h
+	ld		a,16		;mode 16 = 800 x 600 x 4
+	rst		10h
+	ld		a,4		;for max_pal
 	jp		video_mode_set
 
 mode_19:
 	ld		b,h		;save result of how many extra pixels we have
 	ld		c,l
-	ld		a,22	;VDU 22, mode
-	rst		10h
-	ld		a,19		;mode 19 = 1024 x 768 x 4 - requires 2.10.0+
-	rst		10h
 	ld		hl,(pal_buffer+10)
 	ld		de,768		;max height
 	ex		de,hl
@@ -281,7 +321,34 @@ mode_19:
 	ld		de,768		;make sure it's no bigger than this
 	ld		hl,0		;screen is full
 @@:
+	ld		a,22	;VDU 22, mode
+	rst		10h
+	ld		a,19		;mode 19 = 1024 x 768 x 4 - requires 2.10.0+
+	rst		10h
+	ld		a,4		;for max_pal
+	jp		video_mode_set
+
+; This calculates the width of the image, including padding.
+; We do not yet remove padding from images, so this may cause cosmetic issues.
+; i.e. ignores coordinate issues but retains the padding in the image
+; uses A, HL. returns value in DE
+calc_width:
+	ld		a,(pal_buffer+3)	;The number of bits constituting one plane. Most often 1, 2, 4 or 8. 
+	ld		hl,(pal_buffer+0x42)
+	cp		8			; 8 bits per pixel so 1 stored byte = 1 stored pixel
+	jr		z,calc_width_done
+	add		hl,hl		; double the result
+	cp		4			; 4 bits per pixel so 1 stored byte = 2 stored pixels
+	jr		z,calc_width_done
+	add		hl,hl		; double the result for 2 bits per pixel
+	add		hl,hl		; double the result for 1 bit per pixel
+calc_width_done:
+	ex		de,hl		;keep the value in DE
+	ret
+
+; Ready to continue with calculations as we have now chosen the video mode.
 video_mode_set:
+	ld		(max_pal),a	;store the maximum palette size
 	srl		h			;halve the y difference to centre the image
 	rr		l
 	ld		(y_offset),hl
@@ -291,23 +358,61 @@ video_mode_set:
 	ld		(pcx_max_y),de
 ;	ld		hl,(pal_buffer+8)	;re-fetch the total X
 ;	inc		hl			;offset of 1 for the inner loop below to work
-	ld		hl,(pal_buffer+0x42)
-	add		hl,hl		;number of stored pixels - note that it should be trimmed but not sure how to do that
-	ld		(actual_max_x),hl
+;	ld		hl,(pal_buffer+0x42)
+;	add		hl,hl		;number of stored pixels - note that it should be trimmed but not sure how to do that
+;	call	calc_width	;returns width in DE
+	ld		de,(pal_buffer+8)
+	inc		de
+	ld		(actual_max_x),de	;for the bitmap conversion
+	ld		(actual_max_x2),de	;for the splitting
 	call	physical_layout	;set up the coordinate system to be physical layout
+; fix the expansion command to match the number of incoming bits
+	ld		a,(pal_buffer+3)	;set up the expansion command - bits per pixel
+	and		7		;8 is represented as 0 in the switch, otherwise 1 and 2 should work as is
+	or		16
+	ld		(bpp_patch),a
+;turn off cursor first = VDU 23,1,0
+	ld	a,23
+	rst	10h
+	ld	a,1
+	rst	10h
+	dec	a
+	rst	10h
+; hot patch the header if needed. Only works with 2 colours.
+	ld	a,(pal_buffer+3)	;bits per pixel
+	cp	1
+	jr	nz,read_palette
+	ld	hl,pal_buffer+0x10
+	ld	a,(hl)
+	ld	b,5		;5 more to check
+@@:
+	inc	hl
+	or	(hl)
+	djnz	@B
+	or	a	;are they all zeros for the first 6?
+	jr	nz,read_palette
+	ld	a,255
+	ld	(hl),a
+	dec hl
+	ld	(hl),a
+	dec hl
+	ld	(hl),a
+
+
 
 ;First we need to define the working palette (subset of the current)
 ;for Agon: VDU 19, l, p, r, g, b: Define logical colour
 ;b = colour to reassign, c = Gate Array hardware number (should be from 0x40-0x5f but will use a mask for safety)
-phys_palette:
+read_palette:
 	ld	hl,pal_buffer+0x10	; starts at byte 16 for 48 bytes 	The EGA palette for 16-color images in RGB order
 	ld	b,16		;counter
+max_pal:	equ	$-1
 	ld	c,0			;current colour
 @@:
 	ld	a,19	;VDU 19
 	rst	10h	;print it
 	ld	a,c
-	rst	10h	;print it - logical
+	rst	10h	;print it - logcal
 	ld	a,255
 	rst	10h	;use RGB instead of physical map
 	ld	a,(hl)
@@ -412,11 +517,6 @@ scr_load:
 ;this will need adjusting once we centre to add offsets
 	ld	hl,0
 	ld	(pcx_y),hl	;set up row count for number of rows to process
-;	ld	(pcx_x),hl
-;;	ld	hl,768		;this will be set for specific image height
-;;	ld	(pcx_max_y),hl
-
-
 
 scr_outer_lp:
 ; We need to count the total number of rows, and make sure we havent exceeded the count.
@@ -427,8 +527,8 @@ scr_outer_lp:
 ;	rr	l			;noting we never use the real byte count, only the nibble count
 ;	inc	hl			;rounding up to the nearest even number as the file format
 ;	res	0,l			; pads out to an even number of nibbles.
-	ld	hl,(pal_buffer+0x42)	;number of bytes allocated to the row
-	ld	(pcx_max_x),hl
+;	ld	hl,(pal_buffer+0x42)	;number of stored bytes in the file allocated to the row
+;	ld	(pcx_max_x),hl
 	ld	hl,scr_buffer	;page aligned buffer
 	ld	(scr_curbyte),hl	;need to convert this into a fetch byte routine for de-blocking
 
@@ -460,7 +560,7 @@ scr_rows_lp:
 	rst	10h
 	xor	a	;command 0
 	rst	10h
-	ld	hl,(pcx_max_x)
+	ld	hl,(pal_buffer+0x42)
 ;	ld	a, 40h	;half of 640 - there are 2 pixels per byte
 	ld	a,l		;send row data width, little endian
 	rst	10h
@@ -499,7 +599,7 @@ scr_inner_chkwidth:
 
 	ld	(pcx_x),hl	;updated width count
 	ex	de,hl
-	ld	hl,(pcx_max_x)
+	ld	hl,(pal_buffer+0x42)
 	or	a	;reset carry flag
 	sbc	hl,de
 ;	jp	c,close	;debug
@@ -522,6 +622,7 @@ scr_inner_chkwidth:
 	ld	a,72
 	rst	10h
 	ld	a,4+16	;4 bits wide, mapping data is in a buffer - options.
+bpp_patch:	equ	$-1	
 ;	ld	a,4		;4 bits wide
 	rst	10h
 	ld	a,l		;source buffer is HL - 1. L is fixed at 2 for now so this works.
@@ -534,11 +635,50 @@ scr_inner_chkwidth:
 	ld	a,1
 	rst	10h
 
+;Command 19: Split by width into blocks and spread across target buffers
+
+;VDU 23, 0, &A0, bufferId; 19, width; [targetBufferId1;] [targetBufferId2;] ... 65535;
+
+;This command essentially operates the same as command 18, but the block count is determined
+; by the number of target buffers specified. The blocks are spread across the target buffers
+; in the order they are specified, with one block placed in each target.
+
+;Command 17: Split a buffer and spread across blocks, starting at target buffer ID
+
+;VDU 23, 0, &A0, bufferId; 17, blockSize; targetBufferId;
+
+	ld	a,23
+	rst	10h
+	xor	a
+	rst	10h
+	ld	a,0a0h
+	rst	10h
+	ld	a,l	;destination buffer = 258
+	rst	10h
+	ld	a,h
+	rst	10h
+	ld	a,17
+	rst	10h
+	ld	de,0000
+actual_max_x2:	equ	$-2
+	ld	a,e
+	rst	10h
+	ld	a,d
+	rst	10h
+	inc	hl
+	ld	a,l		;Target 1 is HL 259 = HL + 1
+	rst	10h
+	ld	a,h
+	rst	10h
+
+
 
 ; VDU 23, 27, &20, bufferId;              : REM Select bitmap (using a buffer ID)
 ; select_bitmap: (in HL)
 
 	call	select_bitmap
+
+
 
 ; VDU 23, 27, &21, width; height; format  : REM Create bitmap from current buffer
 ;Valid values for the format parameter are:
@@ -557,29 +697,7 @@ scr_inner_chkwidth:
 
 ; VDU 23, 27, 3, x; y;: Draw current bitmap on screen at pixel position x, y
 ; draw_bitmap
-; Might do it inline - it's drawing at x=0, y = (c*8)+20 + scr_row
-; Currently at x=0, y=pcx_y but will later add offsets
-	ld	a,23
-	rst	10h
-	ld	a,27
-	rst	10h
-	ld	a,3
-	rst	10h
-;	xor	a	;x = 0 - this might get offset later when we do other widths
-	ld	hl,0	;horizontal offset
-x_offset:	equ	$-2
-	ld	a,l
-	rst	10h
-	ld	a,h
-	rst	10h
-	ld	hl,(pcx_y)
-	ld	de,0	;add vertical offset to row
-y_offset:	equ	$-2
-	add	hl,de
-	ld	a,l		;little endian
-	rst	10h
-	ld	a,h
-	rst	10h
+	call	draw_bitmap
 
 ; count the rows
 	ld	hl,(pcx_y)
@@ -715,7 +833,7 @@ badusage:	call usage
 ; usage -- show syntax
 ; 
 usage:	call	inline_print
-	db	CR,LF,"PCXview utility for Agon by Shawn Sijnstra (c) 12-Jan-2026",CR,LF,CR,LF
+	db	CR,LF,"PCXview utility for Agon by Shawn Sijnstra (c) 13-Jan-2026",CR,LF,CR,LF
 	db	"Usage:",CR,LF
 	db	"   PCXview file.PCX [1-9]",CR,LF,"where:",CR,LF
 	db	"   1-9 is an optional parameter to wait for 1-9 seconds before exiting",CR,LF
@@ -753,24 +871,31 @@ ClearGfx:
 	ret
 
 ; VDU 23, 27, 3, x; y;: Draw current bitmap on screen at pixel position x, y
-;HL = x; DE = y
+; Uses A, HL and DE
+; Might do it inline - it's drawing at x=0, y = (c*8)+20 + scr_row
+; Drawn at x = x_offset, y = pcx_y + y_offset but will later add offsets
 draw_bitmap:
-	push	af
-	ld		a,23
-	rst		10h
-	ld		a,27
-	rst		10h
-	ld		a,3
-	rst		10h
-	ld		a,l
-	rst		10h
-	ld		a,h
-	rst		10h
-	ld		a,e
-	rst		10h
-	ld		a,d
-	rst		10h
-	pop		af
+	ld	a,23
+	rst	10h
+	ld	a,27
+	rst	10h
+	ld	a,3
+	rst	10h
+;	xor	a	;x = 0 - this might get offset later when we do other widths
+	ld	hl,0	;horizontal offset
+x_offset:	equ	$-2
+	ld	a,l
+	rst	10h
+	ld	a,h
+	rst	10h
+	ld	hl,(pcx_y)
+	ld	de,0	;add vertical offset to row
+y_offset:	equ	$-2
+	add	hl,de
+	ld	a,l		;little endian
+	rst	10h
+	ld	a,h
+	rst	10h
 	ret
 
 ; VDU 23, 27, &20, bufferId;              : REM Select bitmap (using a buffer ID)
@@ -875,7 +1000,7 @@ scr_curbyte:	DS	2	;current byte location to display
 
 ;actual_max_x:	DS	2	;this is the actual width in pixels, i.e. 1024 or 640 etc
 pcx_x:		DS	2	;current screen column in nibbles based on the raw data formats we can use
-pcx_max_x:	DS	2	;maximum screen column - i.e. image width in nibbles
+;pcx_max_x:	DS	2	;maximum screen column - i.e. image width in nibbles
 pcx_y:		DS	2	;current screen row.
 pcx_max_y:	DS	2	;maximum screen row - i.e. image height
 
