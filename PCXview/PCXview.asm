@@ -545,6 +545,12 @@ scr_rows_lp:
 	call	clear_buffer
 	inc	l			;destination buffer = 258
 	call	clear_buffer
+	inc	l			;post split buffer = 259. 260 has the discard from the split.
+	call	clear_buffer
+	inc	l			;post split buffer = 259. 260 has the discard from the split.
+	call	clear_buffer
+	dec	l
+	dec	l
 
 ;	jr	@F	;test by skipping over this buffer routine
 
