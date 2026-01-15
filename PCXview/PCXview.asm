@@ -151,10 +151,7 @@ open_ok:
 
 ; map of used buffers:
 ; 256 + 64 = colour map
-; 257 = input buffer
-; 258 = output buffer that is split
-; 259 = output split that becomes the pixel map.
-; 260 = discarded end of the pixel map
+; 512 up to 512 + height = each row of the image (freed at the end)
 
 ; The EGA palette is within the same file as the rest of the file. The header is only 128 bytes.
 ; We could actually load that first, then load the whole picture file or load it in pages over the top.
@@ -190,6 +187,10 @@ header_check:
 	jr	z,@F
 	jp	bad_format
 @@:					;format is good (still not 100% thorough check though)
+; preserve the current video mode in case we change it
+	moscall mos_sysvars		;I don't use IX so this should remain ok throughout
+	ld		a,(ix + sysvar_scrMode)	;get mode
+	ld		(return_screen_mode),a	;stash it in the restore mode
 ;	jp	close
 ;now we should check size and set screen size accordingly
 ;Setup steps
@@ -352,19 +353,34 @@ video_mode_set:
 	srl		h			;halve the y difference to centre the image
 	rr		l
 	ld		(y_offset),hl
+	ld		(crop_y),hl
 	srl		b			;halve the x difference to centre the image
 	rr		c
 	ld		(x_offset),bc
+	ld		(crop_x),bc
 	ld		(pcx_max_y),de
+	add		hl,de
+	ld		(crop_max_y),hl
 ;	ld		hl,(pal_buffer+8)	;re-fetch the total X
 ;	inc		hl			;offset of 1 for the inner loop below to work
 ;	ld		hl,(pal_buffer+0x42)
 ;	add		hl,hl		;number of stored pixels - note that it should be trimmed but not sure how to do that
-;	call	calc_width	;returns width in DE
-	ld		de,(pal_buffer+8)
-	inc		de
+
+; This method is for cropping via the screen dimensions
+	call	calc_width	;returns width in DE
+
+; This method was for when we cropped the bitmap expansion:
+;	ld		de,(pal_buffer+8)
+;	inc		de
 	ld		(actual_max_x),de	;for the bitmap conversion
-	ld		(actual_max_x2),de	;for the splitting
+;	ld		(actual_max_x2),de	;for the splitting
+;	dec		de
+; new need to recalc how we do this bit
+	ld		de,(pal_buffer+8)
+	ld		h,b
+	ld		l,c
+	add		hl,de
+	ld		(crop_max_x),hl
 	call	physical_layout	;set up the coordinate system to be physical layout
 ; fix the expansion command to match the number of incoming bits
 	ld		a,(pal_buffer+3)	;set up the expansion command - bits per pixel
@@ -509,6 +525,38 @@ done_pal:
 ;	jp		close
 ;	jp		testbuffs
 
+;	jr	@F	;test by skipping over this viewport routine
+
+;VDU 24, left; bottom; right; top;: Set graphics viewport **
+; set up the viewport to allow trimming
+	ld	a,24
+	rst	10h
+	ld	hl,0
+crop_x:	equ	$-2
+	ld	a,l
+	rst	10h
+	ld	a,h
+	rst	10h
+	ld	hl,0
+crop_max_y:	equ	$-2
+	ld	a,l
+	rst	10h
+	ld	a,h
+	rst	10h
+	ld	hl,0
+crop_max_x:	equ	$-2
+	ld	a,l
+	rst	10h
+	ld	a,h
+	rst	10h
+	ld	hl,0
+crop_y:	equ	$-2
+	ld	a,l
+	rst	10h
+	ld	a,h
+	rst	10h
+
+@@:
 
 scr_load:
 ;
@@ -540,17 +588,15 @@ scr_rows_lp:
 ; VDU 23, 0, &A0, bufferId; 0, length; <buffer-data>
 ; Command 2: Clear a buffer
 ; VDU 23, 0, &A0, bufferId; 2
-	ld	hl,0x0101	;buffer 257 for writing data to
-	ld	c,l			;preseve it - might streamline later
+;	ld	hl,0x0101	;buffer 257 for writing data to
+	ld	hl,(pcx_y)	;row+512 for the buffer. Now we are only using a single buffer.
+	inc	h
+	inc	h
 	call	clear_buffer
-	inc	l			;destination buffer = 258
-	call	clear_buffer
-	inc	l			;post split buffer = 259. 260 has the discard from the split.
-	call	clear_buffer
-	inc	l			;post split buffer = 259. 260 has the discard from the split.
-	call	clear_buffer
-	dec	l
-	dec	l
+;	inc	l			;destination buffer = 258
+	ld	(destfix),hl
+;	call	clear_buffer
+
 
 ;	jr	@F	;test by skipping over this buffer routine
 
@@ -560,7 +606,7 @@ scr_rows_lp:
 	rst	10h
 	ld	a,0a0h
 	rst	10h
-	ld	a,c	; buffer for source address
+	ld	a,l	; buffer for source address
 	rst	10h
 	ld	a,h
 	rst	10h
@@ -614,25 +660,26 @@ scr_inner_chkwidth:
 ;convert it to a bitmap now
 ; Command 72: Expand a bitmap
 ; VDU 23, 0, &A0, bufferId; 72, options, sourceBufferId; [width;] <mappingDataBufferId; | mapping-data...>
-	ld	hl,258	;destination buffer
+	ld	hl,257	;destination buffer
+destfix:	equ	$-2
 	ld	a,23
 	rst	10h
 	xor	a
 	rst	10h
 	ld	a,0a0h
 	rst	10h
-	ld	a,l	;destination buffer = 258
+	ld	a,l	;destination buffer from above
 	rst	10h
 	ld	a,h
 	rst	10h
 	ld	a,72
 	rst	10h
-	ld	a,4+16	;4 bits wide, mapping data is in a buffer - options.
+	ld	a,4+16	;4 bits wide, mapping data is in a buffer (default). Adjusted for bit width.
 bpp_patch:	equ	$-1	
 ;	ld	a,4		;4 bits wide
 	rst	10h
 	ld	a,l		;source buffer is HL - 1. L is fixed at 2 for now so this works.
-	dec	a
+;	dec	a
 	rst	10h
 	ld	a,h
 	rst	10h
@@ -640,43 +687,6 @@ bpp_patch:	equ	$-1
 	rst	10h
 	ld	a,1
 	rst	10h
-
-;Command 19: Split by width into blocks and spread across target buffers
-
-;VDU 23, 0, &A0, bufferId; 19, width; [targetBufferId1;] [targetBufferId2;] ... 65535;
-
-;This command essentially operates the same as command 18, but the block count is determined
-; by the number of target buffers specified. The blocks are spread across the target buffers
-; in the order they are specified, with one block placed in each target.
-
-;Command 17: Split a buffer and spread across blocks, starting at target buffer ID
-
-;VDU 23, 0, &A0, bufferId; 17, blockSize; targetBufferId;
-
-	ld	a,23
-	rst	10h
-	xor	a
-	rst	10h
-	ld	a,0a0h
-	rst	10h
-	ld	a,l	;destination buffer = 258
-	rst	10h
-	ld	a,h
-	rst	10h
-	ld	a,17
-	rst	10h
-	ld	de,0000
-actual_max_x2:	equ	$-2
-	ld	a,e
-	rst	10h
-	ld	a,d
-	rst	10h
-	inc	hl
-	ld	a,l		;Target 1 is HL 259 = HL + 1
-	rst	10h
-	ld	a,h
-	rst	10h
-
 
 
 ; VDU 23, 27, &20, bufferId;              : REM Select bitmap (using a buffer ID)
@@ -705,6 +715,14 @@ actual_max_x2:	equ	$-2
 ; draw_bitmap
 	call	draw_bitmap
 
+;VDU 23, 0, &CA: Flush current drawing commands §§§§§
+;	jr	@F		;debug to skip
+;	ld	a,23
+;	rst	10h
+;	xor	a
+;	rst	10h
+;	ld	a,0cah
+;@@:
 ; count the rows
 	ld	hl,(pcx_y)
 	inc	hl
@@ -718,6 +736,26 @@ actual_max_x2:	equ	$-2
 
 	jp	nz,scr_rows_lp
 ;	jp	c,scr_outer_lp
+
+purge_buffers:
+	ld	hl,0
+	ld	(pcx_y),hl	;set up row count for number of rows to process
+purge_loop:
+	ld	hl,(pcx_y)	;row+512 for the buffer. Now we are only using a single buffer.
+	inc	h
+	inc	h
+	call	clear_buffer
+	ld	(destfix),hl
+; count the rows
+	ld	hl,(pcx_y)
+	inc	hl
+	ld	(pcx_y),hl
+	ex	de,hl
+	ld	hl,(pcx_max_y)
+	and	a
+	sbc	hl,de
+
+	jp	nz,purge_loop
 
 scr_done:
 	ld		a,(timerfun)
@@ -761,7 +799,8 @@ scr_done_waitkey:
 __scr_done_exit:
 	ld		a,22	; VDU 22, mode - back to mode 0 on exit
 	rst		10h
-	xor		a
+	ld		a,0		; update with mode grabbed on entry
+return_screen_mode:	equ	$-1
 	rst		10h
 
 	jp	close
@@ -839,7 +878,7 @@ badusage:	call usage
 ; usage -- show syntax
 ; 
 usage:	call	inline_print
-	db	CR,LF,"PCXview utility for Agon by Shawn Sijnstra (c) 13-Jan-2026",CR,LF,CR,LF
+	db	CR,LF,"PCXview utility for Agon by Shawn Sijnstra (c) 15-Jan-2026",CR,LF,CR,LF
 	db	"Usage:",CR,LF
 	db	"   PCXview file.PCX [1-9]",CR,LF,"where:",CR,LF
 	db	"   1-9 is an optional parameter to wait for 1-9 seconds before exiting",CR,LF
@@ -880,14 +919,20 @@ ClearGfx:
 ; Uses A, HL and DE
 ; Might do it inline - it's drawing at x=0, y = (c*8)+20 + scr_row
 ; Drawn at x = x_offset, y = pcx_y + y_offset but will later add offsets
+; Bitmap plots (PLOT codes &E8-&EF)
+; 5 (D) 	Plot absolute in current foreground colour
+; VDU 25, code, x; y;
 draw_bitmap:
-	ld	a,23
+;	ld	a,23
+;	rst	10h
+;	ld	a,27
+;	rst	10h
+;	ld	a,3
+;	rst	10h
+	ld	a,25
 	rst	10h
-	ld	a,27
+	ld	a,0xED
 	rst	10h
-	ld	a,3
-	rst	10h
-;	xor	a	;x = 0 - this might get offset later when we do other widths
 	ld	hl,0	;horizontal offset
 x_offset:	equ	$-2
 	ld	a,l

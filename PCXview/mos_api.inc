@@ -2,7 +2,9 @@
 ; Title:	AGON MOS - API for user projects
 ; Author:	Dean Belfield
 ; Created:	03/08/2022
-; Last Updated:	15/04/2023
+; Last Updated:	11/11/2023
+; Modified by Shawn Sijnstra so that it works well with ez80asm
+; Changes: fixed punctuation, removed .STRUCTs, rewrote MACROs added 24 bit MOS call
 ;
 ; Modinfo:
 ; 05/08/2022:	Added mos_feof
@@ -20,6 +22,11 @@
 ; 29/03/2023:	Added mos_uopen, mos_uclose, mos_ugetc, mos_uputc
 ; 13/04/2023:	Added FatFS file structures (FFOBJID, FIL, DIR, FILINFO)
 ; 15/04/2023:	Added mos_getfil, mos_fread, mos_fwrite and mos_flseek
+; 19/05/2023:	Added sysvar_scrMode
+; 05/06/2023:	Added sysvar_rtcEnable
+; 03/08/2023:	Added mos_setkbvector
+; 10/08/2023:	Added mos_getkbmap
+; 11/11/2023:	Added mos_i2c_open, mos_i2c_close, mos_i2c_write and mos_i2c_read
 
 ; VDP control (VDU 23, 0, n)
 ;
@@ -66,6 +73,13 @@ mos_getfil:		EQU	19h
 mos_fread:		EQU	1Ah
 mos_fwrite:		EQU	1Bh
 mos_flseek:		EQU	1Ch
+mos_setkbvector:	EQU	1Dh
+mos_getkbmap:		EQU	1Eh
+mos_i2c_open:		EQU	1Fh
+mos_i2c_close:		EQU	20h
+mos_i2c_write:		EQU	21h
+mos_i2c_read:		EQU	22h
+
 
 ; FatFS file access functions
 ;
@@ -138,6 +152,9 @@ sysvar_cursorX:		EQU	07h	; 1: Cursor X position
 sysvar_cursorY:		EQU	08h	; 1: Cursor Y position
 sysvar_scrchar:		EQU	09h	; 1: Character read from screen
 sysvar_scrpixel:	EQU	0Ah	; 3: Pixel data read from screen (R,B,G)
+sysvar_scrpixel_R:	EQU	0Ah	; 1: Pixel data read from screen (R,B,G)
+sysvar_scrpixel_G:	EQU	0Bh	; 1: Pixel data read from screen (R,B,G)
+sysvar_scrpixel_B:	EQU	0Ch	; 1: Pixel data read from screen (R,B,G)
 sysvar_audioChannel:	EQU	0Dh	; 1: Audio channel 
 sysvar_audioSuccess:	EQU	0Eh	; 1: Audio channel note queued (0 = no, 1 = yes)
 sysvar_scrWidth:	EQU	0Fh	; 2: Screen width in pixels
@@ -147,12 +164,21 @@ sysvar_scrRows:		EQU	14h	; 1: Screen rows in characters
 sysvar_scrColours:	EQU	15h	; 1: Number of colours displayed
 sysvar_scrpixelIndex:	EQU	16h	; 1: Index of pixel data read from screen
 sysvar_vkeycode:	EQU	17h	; 1: Virtual key code from FabGL
-sysvar_vkeydown:		EQU	18h	; 1: Virtual key state from FabGL (0=up, 1=down)
+sysvar_vkeydown:	EQU	18h	; 1: Virtual key state from FabGL (0=up, 1=down)
 sysvar_vkeycount:	EQU	19h	; 1: Incremented every time a key packet is received
-sysvar_rtc:		EQU	1Ah	; 8: Real time clock data
+sysvar_rtc:		EQU	1Ah	; 6: Real time clock data
+sysvar_spare:		EQU	20h	; 2: Spare, previously used by rtc
 sysvar_keydelay:	EQU	22h	; 2: Keyboard repeat delay
 sysvar_keyrate:		EQU	24h	; 2: Keyboard repeat reat
 sysvar_keyled:		EQU	26h	; 1: Keyboard LED status
+sysvar_scrMode:		EQU	27h	; 1: Screen mode
+sysvar_rtcEnable:	EQU	28h	; 1: RTC enable flag (0: disabled, 1: use ESP32 RTC)
+sysvar_mouseX:		EQU	29h	; 2: Mouse X position
+sysvar_mouseY:		EQU	2Bh	; 2: Mouse Y position
+sysvar_mouseButtons:	EQU	2Dh	; 1: Mouse button state
+sysvar_mouseWheel:	EQU	2Eh	; 1: Mouse wheel delta
+sysvar_mouseXDelta:	EQU	2Fh	; 2: Mouse X delta
+sysvar_mouseYDelta:	EQU	31h	; 2: Mouse Y delta
 	
 ; Flags for the VPD protocol
 ;
@@ -162,66 +188,21 @@ vdp_pflag_point:	EQU	00000100b
 vdp_pflag_audio:	EQU	00001000b
 vdp_pflag_mode:		EQU	00010000b
 vdp_pflag_rtc:		EQU	00100000b
+vdp_pflag_mouse:	EQU	01000000b
+; vdp_pflag_buffered:	EQU	10000000b
 
-;
-; FatFS structures
-; These mirror the structures contained in src_fatfs/ff.h in the MOS project
-;
-; Object ID and allocation information (FFOBJID)
-;
-;FFOBJID:	.STRUCT
-;	fs:		DS	3	; Pointer to the hosting volume of this object
-;	id:		DS	2	; Hosting volume mount ID
-;	attr:		DS	1	; Object attribute
-;	stat:		DS	1	; Object chain status (b1-0: =0:not contiguous, =2:contiguous, =3:fragmented in this session, b2:sub-directory stretched)
-;	sclust:		DS	4	; Object data start cluster (0:no cluster or root directory)
-;	objsize:	DS	4	; Object size (valid when sclust != 0)
-;FFOBJID_SIZE .ENDSTRUCT FFOBJID
-;
-; File object structure (FIL)
-;
-;FIL .STRUCT
-;	obj:		.TAG	FFOBJID	; Object identifier
-;	flag:		DS	1	; File status flags
-;	err:		DS	1	; Abort flag (error code)
-;	fptr:		DS	4	; File read/write pointer (Zeroed on file open)
-;	clust:		DS	4	; Current cluster of fpter (invalid when fptr is 0)
-;	sect:		DS	4	; Sector number appearing in buf[] (0:invalid)
-;	dir_sect:	DS	4	; Sector number containing the directory entry
-;	dir_ptr:	DS	3	; Pointer to the directory entry in the win[]
-;FIL_SIZE .ENDSTRUCT FIL
-;
-; Directory object structure (DIR)
-; 
-;DIR .STRUCT
-;	obj:		.TAG	FFOBJID	; Object identifier
-;	dptr:		DS	4	; Current read/write offset
-;	clust:		DS	4	; Current cluster
-;	sect:		DS	4	; Current sector (0:Read operation has terminated)
-;	dir:		DS	3	; Pointer to the directory item in the win[]
-;	fn:		DS	12	; SFN (in/out) {body[8],ext[3],status[1]}
-;	blk_ofs:	DS	4	; Offset of current entry block being processed (0xFFFFFFFF:Invalid)
-;DIR_SIZE .ENDSTRUCT DIR
-;
-; File information structure (FILINFO)
-;
-;FILINFO .STRUCT
-;	fsize:		DS 	4	; File size
-;	fdate:		DS	2	; Modified date
-;	ftime:		DS	2	; Modified time
-;	fattrib:	DS	1	; File attribute
-;	altname:	DS	13	; Alternative file name
-;	fname:		DS	256	; Primary file name
-;FILINFO_SIZE .ENDSTRUCT FILINFO
 
 ;
 ; Macro for calling the API
 ; Parameters:
 ; - function: One of the function numbers listed above
 ;
-;MOSCALL:		MACRO	function
-			MACRO	MOSCALL	function
+			macro moscall function
 			LD	A, function
 			RST.LIS	08h
-			ENDMACRO 	
-;
+			endmacro	
+
+			macro moscall24 function1
+			LD	A, function1
+			RST.LIL	08h
+			endmacro	
