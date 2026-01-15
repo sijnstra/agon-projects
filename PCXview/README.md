@@ -35,10 +35,10 @@ The 1-9 is a single digit optional additional parameter to wait 1-9 seconds befo
 
 Works in either /mos or /bin directory. Minimum VDP version 2.10.0.
 
-There are some sample images provided in the Images directory, including provided by the [Public Domain Image Archive](https://pdimagearchive.org/).
+There are some sample images provided in the Images directory, including provided by the [Public Domain Image Archive](https://pdimagearchive.org/), as well as Shareware from Stephen A. Hornback - Softscene (MOUNT12A and MICHELLE) and Panthersoft Smartart (SAPR016)
 
 # Roadmap items for development:
-* Improve support for images taller than the screen
+* Improve support for images taller and wider than the screen
 * Make the header and format checks more robust
 * Support for 8bpp images
 * Write some notes on Irfanview on conversion to PCX format
