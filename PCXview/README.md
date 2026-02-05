@@ -6,7 +6,7 @@ Loads a .PCX format image on Agon. The following sizes are supported:
 * Up to 800 x 600 in 4 colours
 * Up to 1024 x 768 wide in 4 colours
 
-The image itself needs to be in a single plane with 4 bits per pixel (for either 4 or 16 colours), or 1 bit per pixel.
+The image itself needs to be in a single plane with 4 bits per pixel (for either 4 or 16 colours), or 1 bit per pixel. The viewer now also supports 2 bits per pixel, however, it is difficult to create these images so a tool has been written to support the conversion from 4 bits per pixel down to two.
 
 Images are first checked to see if they fit within 512x384, if not, then checked for 640x480, if not, then checked for 800x600, and finally 1024x768. If the image is too wide for 1024x768, the software will exit. If the image is too tall for 768, it will display the top 768 lines. The images are centred when displayed.
 

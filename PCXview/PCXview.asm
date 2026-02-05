@@ -183,6 +183,8 @@ header_check:
 	jr	z,@F
 ;	cp	8			;8 bits per pixel will be supported
 ;	jr	z,@F
+	cp	2			;2 bits per pixel - not implemented by zsoft
+	jr	z,@F
 	cp	1			;1 bits per pixel is supported
 	jr	z,@F
 	jp	bad_format
@@ -213,6 +215,11 @@ header_check:
 
 ;	call	calc_width	;DE = the width in stored pixels
 	ld		de,(pal_buffer+8)	;actual width in pixels
+	ld		hl,320
+	or		a		;clear carry
+	sbc		hl,de
+	jr		nc,mode_8	;image is 512 wide
+m8_too_tall:
 	ld		hl,512
 	or		a		;clear carry
 	sbc		hl,de
@@ -242,6 +249,31 @@ m16_too_tall:
 ;general plan will be to check the width and height to see which is the best size
 ;mode_9:
 ;	ld		a, 9		;mode  9 = 320 x 240 x 16
+
+mode_8:
+	ld		b,h		;save result of how many extra pixels we have
+	ld		c,l
+	ld		hl,(pal_buffer+10)
+	ld		de,240		;max height
+	ex		de,hl
+	or		a
+	sbc		hl,de
+	jr		nc,@F
+;	call	calc_width	;DE = the width in stored pixels
+	ld		de,(pal_buffer+8)	;actual width in pixels
+	jr		m8_too_tall	;try the larger mode although fewer colours
+;	ld		de,240		;make sure it's no bigger than this
+;	ld		hl,0		;screen is full
+@@:
+
+	ld		a,22	;VDU 22, mode
+	rst		10h
+	ld		a,8			;mode  8 = 320 x 240 x 64
+	rst		10h
+	ld		a,16	;for max_pal - could handle 64 but not sure how they are stored yet! 8bpp not working.
+	jp		video_mode_set
+
+
 mode_20:
 	ld		b,h		;save result of how many extra pixels we have
 	ld		c,l
@@ -342,6 +374,8 @@ calc_width:
 	cp		4			; 4 bits per pixel so 1 stored byte = 2 stored pixels
 	jr		z,calc_width_done
 	add		hl,hl		; double the result for 2 bits per pixel
+	cp		2			; 2 bits per pixel so 1 stored byte = 2 stored pixels
+	jr		z,calc_width_done
 	add		hl,hl		; double the result for 1 bit per pixel
 calc_width_done:
 	ex		de,hl		;keep the value in DE
@@ -637,11 +671,19 @@ scr_inner_lp:
 ;	or		0x20	;debug
 @@:
 	inc		hl	;bytes sent
+;	push	af	;testing by escaping all characters
+;	ld		a,27
+;	rst		10h
+;	pop		af
 	rst		10h	;add it to the buffer.
 	djnz	@b	;the correct number of times
 	jr		scr_inner_chkwidth	;done
 
 scr_inner_literal:
+;	push	af	;testing by escaping all characters
+;	ld		a,27
+;	rst		10h
+;	pop		af
 	ld		hl,(pcx_x)	;get current width count
 	inc		hl	;bytes sent
 ;	or		0x20	;debug
@@ -745,7 +787,7 @@ purge_loop:
 	inc	h
 	inc	h
 	call	clear_buffer
-	ld	(destfix),hl
+
 ; count the rows
 	ld	hl,(pcx_y)
 	inc	hl
@@ -878,7 +920,7 @@ badusage:	call usage
 ; usage -- show syntax
 ; 
 usage:	call	inline_print
-	db	CR,LF,"PCXview utility for Agon by Shawn Sijnstra (c) 15-Jan-2026",CR,LF,CR,LF
+	db	CR,LF,"PCXview utility for Agon by Shawn Sijnstra (c) 2-Feb-2026",CR,LF,CR,LF
 	db	"Usage:",CR,LF
 	db	"   PCXview file.PCX [1-9]",CR,LF,"where:",CR,LF
 	db	"   1-9 is an optional parameter to wait for 1-9 seconds before exiting",CR,LF
