@@ -13,7 +13,7 @@ Images are first checked to see if they fit within 512x384, if not, then checked
 # Building PCXview and PCX422
 Both are written to use Envenomator's excellent ez80asm assembler so they can be built natively on Agon or on your favourite platform.
 
-Take note that both `init.asm` and `equs.inc` are required to compile either PCXview or PCX422. You can assemble using `ez80asm PCXview.asm` or download your the pre-built binary `PCXView.bin`, and similarly with PCX422.
+Take note that `init.asm`, `mos_api.inc`, and `equs.inc` are required to assemble either PCXview or PCX422. You can assemble using `ez80asm PCXview.asm` or download your the pre-built binary `PCXView.bin`, and similarly with PCX422.
 
 # Why PCX?
 There are a number of reasons why I chose to display this format on the Agon/Console8.
