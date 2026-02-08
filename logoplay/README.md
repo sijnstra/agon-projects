@@ -4,7 +4,7 @@ Assets and an example `obey` file (also works with `exec`) to run are in the c8l
 
 This requires at least MOS 2 for `exec` or MOS 3 for `obey` and requires version 2.10.0 or later for the VDP for the graphics and sound to work.
 
-Please note: The loose notes below are draft, and not intended to be full notes. I intent to improve the detail on this at a later date.
+Please note: The loose notes below are draft, and not intended to be full notes. I intend to improve the detail on this at a later date.
 
 # Asset creation
 The original video was downloaded from [[https://heber.co.uk/agon-cosole8/]]
