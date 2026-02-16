@@ -62,6 +62,9 @@ The binary is included in the strings/Release directory. Copy `strings.bin` into
 # telnet
 [telnet.bin](https://github.com/sijnstra/agon-projects/tree/main/telnet) is an early release telnet client running natively on Agon MOS with an ESP8266 wifi module. Copy `telnet.bin` into your `/mos` directory and enjoy. Some documbinentation is included when run without parameters.
 
+# TinyBASIC
+[TinyBASIC.BIN](https://github.com/sijnstra/agon-projects/tree/main/TinyBASIC) is your chance to program in BASIC like it's 1976! Source and documentation is provided.
+
 # TRSCOLR
 [TRSCOLR/CMD](https://github.com/sijnstra/agon-projects/tree/main/TRSCOLR) is a utility to change text colour from the command line under TRS-OS on the Agon Light computer.
 
