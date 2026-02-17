@@ -2,7 +2,7 @@
 
 This is the Tiny Basic port done by [Doug Gabbard](http://retrodepot.net/) for the Z80.  Tiny Basic was developed by Palo Alto, written by Dr Li-Chen Wang in 1976.
 
-I've taken the version for the [TEC-1F written by Brian Chiha](https://github.com/bchiha/Tiny-Basic-Z80) as he has corrected some minor errors and, and converted to a MOSlet. I've minimized the changes to keep it faithful to the original rommable version.
+I've taken the version for the [TEC-1F written by Brian Chiha](https://github.com/bchiha/Tiny-Basic-Z80) as he has corrected some minor errors and, and then I converted it to a MOSlet. I've minimized the changes to keep it faithful to the original rommable version.
 
 Refer to the attached PDF for a full documentation.
 
