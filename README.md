@@ -41,7 +41,10 @@ into your `/mos` directory and enjoy!
 [memsave.bin](https://github.com/sijnstra/agon-projects/tree/main/memsave) is a general tool to dump memory to a file. Note that this utility is built to run at 0x0B0000, so it will need to be run from the mos directory and will overwrite that address. Copy `memsave.bin` into your `/mos` directory and enjoy!
 
 # logoplay
-[logoplay.bin](https://github.com/sijnstra/agon-projects/tree/main/logoplay) will play the assets provided to give an animated 10 second boot logo with matching sound, using a down-sampled version of the original Heber logo render.
+[logoplay.bin](https://github.com/sijnstra/agon-projects/tree/main/logoplay) will play the video and audio assets provided to give an animated 10 second boot logo with matching sound, using a down-sampled version of the original Heber logo render.
+
+# logoplay2
+[logoplay2.bin](https://github.com/sijnstra/agon-projects/tree/main/logoplay2) will play the video and audio assets provided to give an animated 4.5 second boot logo with matching sound, using a cropped, higher resolution version of the original Heber logo render than the original logoplay.
 
 # OSboot
 [OSboot.bin](https://github.com/sijnstra/agon-projects/tree/main/OSboot) tool to boot up [TRS-OS](https://danielpaulmartin.com/home/research/) which in turn opens the door to run well-behaved TRS-80 Model 4 software natively on the Agon. This needs to run from the `/mos` directory. Only a binary is available at the moment. Source may be released in future. There are additional parameters which are explaned when you click through, including selecting colour and an optional disk image. The memory map also allows for import and export of files via this loading method.
