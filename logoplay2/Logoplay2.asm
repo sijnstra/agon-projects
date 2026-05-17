@@ -45,10 +45,9 @@ _main:
 	jp	z,okusage
 	cp	4	;too many parameters
 	jp	nc,badusage
-
-	cp	4
-	jr	c,open_fil
-	ld.lil	hl,(IX+6)
+	cp	3
+	jr	nz,open_fil
+	ld.lil	hl,(IX+9)
 	ld.lil	a,(hl)
 	sub	'1'
 	jp	c,badusage
@@ -824,8 +823,8 @@ drawtest:
 
 purge_buffers:
 	ld	hl,512	;first buffer to purge from the large set. Ignoring the palette at the moment.
-;	ld	b,16	;150	;number of buffers to purge
-	ld	b,150
+	ld	b,16	;150	;number of buffers to purge
+;	ld	b,150
 purge_loop:
 	call	clear_buffer
 	inc		hl
@@ -934,9 +933,10 @@ badusage:	call usage
 ; usage -- show syntax
 ; 
 usage:	call	inline_print
-	db	CR,LF,"PCZview utility for Agon by Shawn Sijnstra (c) 04-May-2026",CR,LF,CR,LF
+	db	CR,LF,"PCZview utility for Agon by Shawn Sijnstra (c) 17-May-2026",CR,LF,CR,LF
 	db	"Usage:",CR,LF
 	db	"   Customised PCXview file.PCX.blob audio.PCM [1-9]",CR,LF
+	db	"       where the optional 1-9 is wait in seconds unless key pressed",CR,LF
 	db 	"   Minimum VDP version 2.10.0.",CR,LF,CR,LF,0
 	ret
 
