@@ -44,6 +44,15 @@ There are some sample images provided in the Images directory, including provide
 
 I have also included a sample 4 colour AI generated image, including both 4 and 2 bits per pixel versions so you can compare the differences on a known working sample.
 
+# PCX422
+This is used to convert a 4 colour image exported from GIMP (or similar) into a more efficient format. Typically, due to the plugin limitations, a 4 colour image is stored in a 16 colour file format; i.e. using 4 bits per pixel where only 2 are used. As you can imagine, this is iniefficient for both file size, and doubles the amount of data that is sent to the vdp for the same amount of image data.
+
+`PCX422` solves this by covnerting the format to storing only 2 bits per pixel. The `PCXView` utility will then display newly generated file of the exact same (lossless) image in around 1/2 the time as the original image exported from GIMP.
+
+`PCX422` runs from the /mos directory.
+
+Note that there are very few checks and balances on this utility. It trusts you to do the right thing. If you don't, the resulting file won't be very useful.
+
 # Roadmap items for development:
 * Improve support for images taller and wider than the screen
 * Make the header and format checks more robust
